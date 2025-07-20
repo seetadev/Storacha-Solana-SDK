@@ -16,11 +16,11 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 
 ## Monorepo Structure
 
-storacha-payments/
+program/ # Solana payment contract (Anchor framework)
 
-├── program/ # Solana payment contract (Anchor framework)
-├── backend/ # Node.js backend API with UCAN storage delegation
-├── sdk/ # TypeScript SDK (@storacha/sol-sdk)
+backend/ # Node.js backend API with UCAN storage delegation
+
+sdk/ # TypeScript SDK (@storacha/sol-sdk)
 
 
 
