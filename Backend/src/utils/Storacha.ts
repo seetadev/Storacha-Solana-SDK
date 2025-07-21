@@ -1,9 +1,10 @@
-import * as Client from "@web3-storage/w3up-client";
-import { StoreMemory } from "@web3-storage/w3up-client/stores/memory";
-import * as Proof from "@web3-storage/w3up-client/proof";
-import { Signer } from "@web3-storage/w3up-client/principal/ed25519";
-import { QuoteInput } from "../types/StorachaTypes";
-import { ADMIN_CONFIG } from "../config/config";
+import { create } from "@storacha/client";
+import * as Client from "@storacha/client";
+import { StoreMemory } from "@storacha/client/stores/memory";
+import * as Proof from "@storacha/client/proof";
+import { Signer } from "@storacha/client/principal/ed25519";
+import { QuoteInput } from "../types/StorachaTypes.js";
+import { ADMIN_CONFIG } from "../config/config.js";
 
 /**
  * Initializes a Storacha client using user-provided key and proof.
@@ -18,7 +19,7 @@ export async function initStorachaClient(
 ): Promise<Client.Client> {
   const principal = Signer.parse(key);
   const store = new StoreMemory();
-  const client = await Client.create({ principal, store });
+  const client = await create({ principal, store });
 
   const proof = await Proof.parse(proofStr);
   const space = await client.addSpace(proof);

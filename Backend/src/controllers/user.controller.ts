@@ -1,16 +1,15 @@
 import { Request, Response } from "express";
-import { getQuoteForFileUpload, initStorachaClient } from "../utils/Storacha";
-import { DelegationInput, QuoteOutput } from "../types/StorachaTypes";
-import * as Proof from "@web3-storage/w3up-client/proof";
+import {
+  getQuoteForFileUpload,
+  initStorachaClient,
+} from "../utils/Storacha.js";
+import { DelegationInput, QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
 import * as DID from "@ipld/dag-ucan/did";
 import { Link } from "@ucanto/core/schema";
-import {
-  Signer,
-  Capabilities,
-} from "@web3-storage/w3up-client/principal/ed25519";
-import { depositAccount } from "../db/schema";
-import { db } from "../db/db";
+import { Capabilities } from "@storacha/client/types";
+import { depositAccount } from "../db/schema.js";
+import { db } from "../db/db.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -30,6 +29,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
       storachaKey,
     } = req.body;
 
+    console.log("The request body is", req.body);
     const client = await initStorachaClient(storachaKey, proof);
     const spaceDID = client.agent.did();
     const audience = DID.parse(recipientDID);
@@ -58,7 +58,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Delegation created successfully",
-      delegation: Buffer.from(archive.ok).toString("base64"),
+      // delegation: Buffer.from(archive.ok).toString("base64"),
     });
   } catch (err) {
     console.error("Error creating UCAN delegation:", err);
