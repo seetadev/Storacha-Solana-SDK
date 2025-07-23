@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 declare_id!("11111111111111111111111111111111"); // Placeholder
 
 #[program]
-pub mod storacha_payments {
+pub mod solana_programs {
     use super::*;
 
     // Initialize the global config (admin only)
@@ -30,7 +30,6 @@ pub mod storacha_payments {
         deposit_amount: u64,
     ) -> Result<()> {
         let config = &ctx.accounts.config;
-        let deposit = &mut ctx.accounts.deposit;
         
         // Validate minimum duration
         require!(
@@ -39,7 +38,7 @@ pub mod storacha_payments {
         );
 
         // Calculate required amount
-        let file_size = 1024; // This would come from IPFS/Storacha
+        let file_size = 1024; // This will come from Storacha
         let required_amount = file_size * duration_days as u64 * config.rate_per_byte_per_day;
         
         require!(
@@ -48,16 +47,20 @@ pub mod storacha_payments {
         );
 
         // Transfer SOL from user to deposit account
-        let cpi_ctx = CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            anchor_lang::system_program::Transfer {
-                from: ctx.accounts.user.to_account_info(),
-                to: ctx.accounts.deposit.to_account_info(),
-            },
-        );
-        anchor_lang::system_program::transfer(cpi_ctx, deposit_amount)?;
+        // Use separate scope to avoid borrow conflicts
+        {
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.user.to_account_info(),
+                    to: ctx.accounts.deposit.to_account_info(),
+                },
+            );
+            anchor_lang::system_program::transfer(cpi_ctx, deposit_amount)?;
+        }
 
-        // Set deposit data
+        // Now set deposit data (after transfer is complete)
+        let deposit = &mut ctx.accounts.deposit;
         deposit.deposit_key = ctx.accounts.user.key();
         deposit.content_cid = content_cid;
         deposit.duration_days = duration_days;
@@ -95,32 +98,32 @@ pub mod storacha_payments {
     }
 }
 
-// Account Structures (like your database schema)
+// Account Structures
 #[account]
 pub struct Config {
-    pub admin_key: Pubkey,           // 32 bytes
-    pub rate_per_byte_per_day: u64,  // 8 bytes
-    pub min_duration_days: u32,      // 4 bytes
-    pub withdrawal_wallet: Pubkey,   // 32 bytes
+    pub admin_key: Pubkey,           
+    pub rate_per_byte_per_day: u64,  
+    pub min_duration_days: u32,      
+    pub withdrawal_wallet: Pubkey,   
 }
 
 #[account]
 pub struct Deposit {
-    pub deposit_key: Pubkey,         // 32 bytes (user's wallet)
-    pub content_cid: String,         // Variable (IPFS hash)
-    pub duration_days: u32,          // 4 bytes
-    pub deposit_amount: u64,         // 8 bytes (lamports)
-    pub deposit_slot: u64,           // 8 bytes (when created)
-    pub last_claimed_slot: u64,      // 8 bytes (last reward claim)
+    pub deposit_key: Pubkey,         
+    pub content_cid: String,         
+    pub duration_days: u32,          
+    pub deposit_amount: u64,         
+    pub deposit_slot: u64,           
+    pub last_claimed_slot: u64,      
 }
 
-// Context structs (define which accounts each instruction needs)
+// Context structs
 #[derive(Accounts)]
 pub struct InitializeConfig<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + 32 + 8 + 4 + 32, // discriminator + Config size
+        space = 8 + 32 + 8 + 4 + 32,
         seeds = [b"config"],
         bump
     )]
@@ -138,7 +141,7 @@ pub struct CreateDeposit<'info> {
     #[account(
         init,
         payer = user,
-        space = 8 + 32 + 4 + content_cid.len() + 4 + 8 + 8 + 8, // Dynamic size
+        space = 8 + 32 + 4 + content_cid.len() + 4 + 8 + 8 + 8,
         seeds = [b"deposit", user.key().as_ref(), content_cid.as_bytes()],
         bump
     )]
