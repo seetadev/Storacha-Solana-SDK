@@ -1,13 +1,19 @@
-import { Address } from '@solana/kit'
-import { CID } from 'multiformats'
+import { Address } from '@solana/kit';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { CID } from 'multiformats';
 
 export type FeeEstimationArgs = {
   /** size of the file in bytes */
-  size: number
+  size: number;
   /** duration in days to store this data */
-  durationDays: number,
+  durationDays: number;
   /** rpc url for connecting to the Solana network */
-  rpcUrl?: string
+  rpcUrl?: string;
+};
+
+export interface ServerOptions {
+  /** URL pointing to the backend (mostly Storacha's) */
+  url?: string
 }
 
 /**
@@ -15,15 +21,17 @@ export type FeeEstimationArgs = {
  */
 export interface UploadOptions {
   /** content identifier for the data to be uploaded */
-  cid: CID
+  cid: CID;
   /** file/upload size in bytes */
-  size: number
+  size: number;
   /** duration in days for how long the data should be retained */
-  duration: number
+  duration: number;
   /** wallet responsible for paying the deposit */
-  payer: Address
+  payer: Address;
   /** optional Solana connection override (for testing or custom RPC) */
-  connection?: any
+  connection?: any;
+  /** Signature or transaction hash as proof of on-chain deposit */
+  signature?: string
 }
 
 /**
@@ -31,13 +39,13 @@ export interface UploadOptions {
  */
 export interface UploadResult {
   /** CID of the uploaded content */
-  cid: CID
+  cid: CID;
   /** full URL where the content was uploaded to */
-  url: string
+  url: string;
   /** size of the uploaded content (in bytes) */
-  size: number
+  size: number;
   /** UNIX timestamp (in seconds) when the storage expires */
-  expiresAt: number
+  expiresAt: number;
 }
 
 /**
@@ -45,11 +53,11 @@ export interface UploadResult {
  */
 export interface WalletItem {
   /** CID of the stored item */
-  cid: CID
+  cid: CID;
   /** file size in bytes */
-  size: number
+  size: number;
   /** expiration timestamp in seconds */
-  expiresAt: number
+  expiresAt: number;
 }
 
 /**
@@ -57,11 +65,11 @@ export interface WalletItem {
  */
 export interface OnChainConfig {
   /** current rate in lamports per byte per day */
-  ratePerBytePerDay: bigint
+  ratePerBytePerDay: bigint;
   /** minimum required duration in days */
-  minDurationDays: number
+  minDurationDays: number;
   /** wallet where provider can withdraw claimed funds */
-  withdrawalWallet: Address
+  withdrawalWallet: Address;
 }
 
 /**
@@ -69,17 +77,28 @@ export interface OnChainConfig {
  */
 export interface OnChainDeposit {
   /** public key of the depositor */
-  depositor: Address
+  depositor: Address;
   /** CID for the content paid for */
-  cid: CID
+  cid: CID;
   /** size of the content (bytes) */
-  size: number
+  size: number;
   /** storage duration (days) */
-  duration: number
+  duration: number;
   /** amount deposited in lamports */
-  depositAmount: bigint
+  depositAmount: bigint;
   /** slot when deposit was made */
-  depositSlot: number
+  depositSlot: number;
   /** last claimed slot for reward release */
-  lastClaimedSlot: number
+  lastClaimedSlot: number;
+}
+
+export interface CreateDepositArgs
+  extends Omit<
+    OnChainDeposit,
+    'depositAmount' | 'depositor' | 'depositSlot' | 'lastClaimedSlot'
+  > {
+  /** Public key of the user paying for the upload */
+  payer: PublicKey;
+  /** Wallet connection used to query chain state or recent blockhash */
+  connection: Connection;
 }
