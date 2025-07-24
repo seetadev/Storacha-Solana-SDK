@@ -1,25 +1,35 @@
-import { Address, getProgramDerivedAddress } from "@solana/kit"
-import { FeeEstimationArgs, OnChainConfig } from "./types"
-import { publicKey, struct, u32, u64 } from "@coral-xyz/borsh"
-import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js"
+import { Address, getProgramDerivedAddress } from '@solana/kit';
+import { CreateDepositArgs, FeeEstimationArgs, OnChainConfig } from './types';
+import {
+  clusterApiUrl,
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import { configLayout, encodeDepositInstructionData } from './layouts';
 
-const PROGRAM_ADDRESS = 'dummy_program_address' as Address // this should provided by dhruv(?). need to sync.
-const CONFIG_SEED = 'config' // dummy stuff here too
+const PROGRAM_ADDRESS = 'dummy_program_address' as Address; // this should provided by dhruv(?). need to sync.
+const CONFIG_SEED = 'config'; // dummy stuff here too
+const DEPOSIT_SEED = 'deposit';
 
-const configLayout = struct([
-  publicKey('admin'),
-  u64('ratePerBytePerDay'),
-  u32('minDurationDays'),
-  publicKey('withdrawalWallet')
-])
+const programConfig = async () => {
+  const [configpda] = await getProgramDerivedAddress({
+    programAddress: PROGRAM_ADDRESS,
+    seeds: [CONFIG_SEED],
+  });
+
+  return configpda;
+};
 
 function decodeConfigAccount(data: Buffer): OnChainConfig {
-  const decoded = configLayout.decode(data)
+  const decoded = configLayout.decode(data);
   return {
     ratePerBytePerDay: decoded.ratePerBytePerDay,
     withdrawalWallet: decoded.withdrawalWallet.toBase58() as Address,
-    minDurationDays: decoded.minDurationDays
-  }
+    minDurationDays: decoded.minDurationDays,
+  };
 }
 
 /**Estimate total storage cost in lamports for a file upload based on its size and duration
@@ -38,20 +48,70 @@ function decodeConfigAccount(data: Buffer): OnChainConfig {
  *
  * @throws If the on-chain `ConfigAccount` cannot be fetched or decoded.
  */
-export async function estimateFees(args: FeeEstimationArgs): Promise<bigint>  {
-  const connection = new Connection(args.rpcUrl ?? clusterApiUrl('devnet'), 'confirmed' )
+export async function estimateFees(args: FeeEstimationArgs): Promise<bigint> {
+  const connection = new Connection(
+    args.rpcUrl ?? clusterApiUrl('devnet'),
+    'confirmed'
+  );
+  const configPda = await programConfig();
 
-  const [configpda] = await getProgramDerivedAddress({
+  const accountInfo = await connection.getAccountInfo(new PublicKey(configPda));
+  if (!accountInfo) throw new Error('ConfigAccount not found on-chain');
+
+  const config = decodeConfigAccount(accountInfo.data);
+  const rate = BigInt(config.ratePerBytePerDay);
+  const fee = BigInt(args.size) * BigInt(args.durationDays) * rate;
+
+  return fee;
+}
+
+/**
+ * Create a signed deposit transaction for uploading a file to Storacha.
+ * The transaction must be signed and submitted by the dapp user externally.
+ */
+export async function createDepositTxn({
+  cid,
+  size,
+  duration,
+  payer,
+  connection,
+}: CreateDepositArgs): Promise<Transaction> {
+  const config = await programConfig();
+
+  /**
+   * Derives the PDA for the Deposit account using the user's public key and the content CID.
+   * matching the Anchor seed `[b"deposit", user.key().as_ref(), content_cid.as_bytes()]`
+   */
+  const depositPda = await getProgramDerivedAddress({
     programAddress: PROGRAM_ADDRESS,
-    seeds: [CONFIG_SEED]
-  })
+    // we need to ensure anyone can derive the Deposit Account off-chain
+    // from the supplied CID
+    seeds: [DEPOSIT_SEED, payer.toBytes(), cid.bytes],
+  });
 
-  const accountInfo = await connection.getAccountInfo(new PublicKey(configpda))
-  if (!accountInfo) throw new Error('ConfigAccount not found on-chain')
+  const { blockhash } = await connection.getLatestBlockhash();
+  // args for the txn
+  const txnInstructionData = encodeDepositInstructionData(
+    cid.toString(),
+    size,
+    duration
+  );
 
-  const config = decodeConfigAccount(accountInfo.data)
-  const rate = BigInt(config.ratePerBytePerDay)
-  const fee = BigInt(args.size) * BigInt(args.durationDays) * rate
+  const ix = new TransactionInstruction({
+    programId: new PublicKey(PROGRAM_ADDRESS),
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: new PublicKey(config), isSigner: false, isWritable: false },
+      { pubkey: new PublicKey(depositPda), isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data: txnInstructionData,
+  });
 
-  return fee
+  const tx = new Transaction();
+  tx.feePayer = payer;
+  tx.recentBlockhash = blockhash;
+  tx.add(ix);
+
+  return tx;
 }
