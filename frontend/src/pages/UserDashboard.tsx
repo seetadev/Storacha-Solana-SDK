@@ -134,7 +134,7 @@ const UserDashboard: React.FC = () => {
 
       {error && (
         <div className="error">
-          <strong>⚠️ Error:</strong> {error}
+          <strong>Error:</strong> {error}
           <button
             onClick={clearError}
             style={{
@@ -217,10 +217,10 @@ const UserDashboard: React.FC = () => {
               title={!walletConnected ? "Connect your Solana wallet first" : ""}
             >
               {loading === "upload"
-                ? "🔄 Uploading..."
+                ? "Uploading..."
                 : !walletConnected
-                ? "🔒 Connect Wallet to Upload"
-                : "📤 Upload File"}
+                ? "Connect Wallet to Upload"
+                : "Upload File"}
             </button>
 
             {file && walletConnected && (
@@ -229,13 +229,13 @@ const UserDashboard: React.FC = () => {
                 className="button-secondary"
                 onClick={fillQuoteFromFile}
               >
-                💰 Get Quote for This File
+                Get Quote for This File
               </button>
             )}
 
             {walletConnected && solanaPublicKey && (
               <div className="text-secondary" style={{ fontSize: "0.9rem" }}>
-                📍 Uploading as:{" "}
+                Uploading as:{" "}
                 <code>
                   {solanaPublicKey.slice(0, 8)}...{solanaPublicKey.slice(-8)}
                 </code>
@@ -246,7 +246,7 @@ const UserDashboard: React.FC = () => {
 
         {uploadResult && (
           <div className="result-container">
-            <h3 className="text-success">✅ Upload Successful!</h3>
+            <h3 className="text-success">Upload Successful!</h3>
             {solanaPublicKey && (
               <div className="info mb-2" style={{ fontSize: "0.95rem" }}>
                 <div
@@ -257,14 +257,14 @@ const UserDashboard: React.FC = () => {
                   }}
                 >
                   <div>
-                    <strong>🌟 Solana Public Key:</strong>
+                    <strong>Solana Public Key:</strong>
                     <br />
                     <code style={{ fontSize: "0.8rem" }}>
                       {solanaPublicKey}
                     </code>
                   </div>
                   <div>
-                    <strong>💰 Wallet Balance:</strong>
+                    <strong>Wallet Balance:</strong>
                     <br />
                     <span className="text-accent">
                       {solanaBalance !== null
@@ -283,7 +283,6 @@ const UserDashboard: React.FC = () => {
       {/* Get Quote Section */}
       <div className="card">
         <div className="card-header">
-          <div className="card-icon">💰</div>
           <div>
             <h2 className="mb-1">Storage Cost Calculator</h2>
             <p className="mb-0 text-secondary">
@@ -330,13 +329,13 @@ const UserDashboard: React.FC = () => {
             disabled={loading === "quote"}
             className={`button-success ${loading === "quote" ? "loading" : ""}`}
           >
-            {loading === "quote" ? "🔄 Calculating..." : "💰 Get Quote"}
+            {loading === "quote" ? "Calculating..." : "Get Quote"}
           </button>
         </form>
 
         {quoteResult && (
           <div className="result-container">
-            <h3 className="text-success">💰 Storage Quote</h3>
+            <h3 className="text-success">Storage Quote</h3>
             <div
               style={{
                 display: "grid",
@@ -372,7 +371,6 @@ const UserDashboard: React.FC = () => {
       {/* Create Delegation Section */}
       <div className="card">
         <div className="card-header">
-          <div className="card-icon">🔐</div>
           <div>
             <h2 className="mb-1">Create UCAN Delegation</h2>
             <p className="mb-0 text-secondary">
@@ -382,8 +380,8 @@ const UserDashboard: React.FC = () => {
         </div>
 
         <div className="warning mb-3">
-          <strong>🔒 Security Notice:</strong> Never share your private keys.
-          This is for testing purposes only.
+          <strong>Security Notice:</strong> Never share your private keys. This
+          is for testing purposes only.
         </div>
 
         <form onSubmit={handleCreateDelegation}>
@@ -422,15 +420,13 @@ const UserDashboard: React.FC = () => {
             disabled={loading === "delegation"}
             className={loading === "delegation" ? "loading" : ""}
           >
-            {loading === "delegation"
-              ? "🔄 Creating..."
-              : "🔐 Create Delegation"}
+            {loading === "delegation" ? "Creating..." : "Create Delegation"}
           </button>
         </form>
 
         {delegationResult && (
           <div className="result-container">
-            <h3 className="text-success">✅ Delegation Created!</h3>
+            <h3 className="text-success">Delegation Created!</h3>
             <pre>{JSON.stringify(delegationResult, null, 2)}</pre>
           </div>
         )}
