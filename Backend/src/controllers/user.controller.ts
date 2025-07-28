@@ -120,7 +120,10 @@ export const uploadFile = async (req: Request, res: Response) => {
  */
 export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
-    const { duration, size } = req.body;
+    console.log(req.query);
+    const duration = parseInt(req.query.duration as string, 10);
+    const size = parseInt(req.query.size as string, 10);
+    console.log("The status is", duration, size);
     const QuoteObject: QuoteOutput = getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
@@ -130,6 +133,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (err) {
+    console.log("The error is", err);
     return res.status(400).json({
       quoteObject: null,
       success: false,
