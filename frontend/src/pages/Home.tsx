@@ -21,11 +21,6 @@ const Home: React.FC = () => {
           capabilities powered by Storacha's infrastructure and Solana's
           high-performance blockchain.
         </p>
-
-        <div className="info mb-3">
-          <strong>🔗 Integration Status:</strong> Frontend connected to backend
-          API at <code>localhost:3000</code>
-        </div>
       </div>
 
       <div className="form-row">

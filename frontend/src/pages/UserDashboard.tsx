@@ -6,6 +6,8 @@ const UserDashboard: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [key, setKey] = useState("");
   const [proof, setProof] = useState("");
+  const [cid, setCid] = useState("");
+  const [recipientDid, setRecipientDid] = useState("");
   const [sizeInBytes, setSizeInBytes] = useState("");
   const [durationInUnits, setDurationInUnits] = useState("");
   const [uploadResult, setUploadResult] = useState<any>(null);
@@ -63,8 +65,8 @@ const UserDashboard: React.FC = () => {
 
   const handleCreateDelegation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!key || !proof) {
-      setError("Please provide both key and proof");
+    if (!key || !proof || !cid || !recipientDid) {
+      setError("Please provide key, proof, CID, and recipient DID");
       return;
     }
 
@@ -73,7 +75,12 @@ const UserDashboard: React.FC = () => {
     setDelegationResult(null);
 
     try {
-      const result = await userApi.createDelegation({ key, proof });
+      const result = await userApi.createDelegation({
+        key,
+        proof,
+        cid,
+        recipientDid,
+      });
       setDelegationResult(result);
     } catch (err: any) {
       setError(
@@ -115,6 +122,12 @@ const UserDashboard: React.FC = () => {
     if (file) {
       setSizeInBytes(file.size.toString());
       setDurationInUnits("30"); // Default 30 days
+    }
+  };
+
+  const fillCidFromUpload = () => {
+    if (uploadResult && uploadResult.cid) {
+      setCid(uploadResult.cid);
     }
   };
 
@@ -374,7 +387,8 @@ const UserDashboard: React.FC = () => {
           <div>
             <h2 className="mb-1">Create UCAN Delegation</h2>
             <p className="mb-0 text-secondary">
-              Generate secure access delegations for space management
+              Generate secure access delegations for specific files and
+              recipients
             </p>
           </div>
         </div>
@@ -415,6 +429,53 @@ const UserDashboard: React.FC = () => {
             </small>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="cid">File CID (Content Identifier):</label>
+            <div
+              style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}
+            >
+              <div style={{ flex: 1 }}>
+                <input
+                  type="text"
+                  id="cid"
+                  value={cid}
+                  onChange={(e) => setCid(e.target.value)}
+                  placeholder="bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+                  required
+                />
+                <small className="text-secondary">
+                  The Content ID of the file for which delegation is being
+                  created
+                </small>
+              </div>
+              {uploadResult && uploadResult.cid && (
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={fillCidFromUpload}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  Use Uploaded File CID
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="recipientDid">Recipient DID:</label>
+            <input
+              type="text"
+              id="recipientDid"
+              value={recipientDid}
+              onChange={(e) => setRecipientDid(e.target.value)}
+              placeholder="did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+              required
+            />
+            <small className="text-secondary">
+              The Decentralized Identifier (DID) of the person receiving access
+            </small>
+          </div>
+
           <button
             type="submit"
             disabled={loading === "delegation"}
@@ -427,6 +488,30 @@ const UserDashboard: React.FC = () => {
         {delegationResult && (
           <div className="result-container">
             <h3 className="text-success">Delegation Created!</h3>
+            <div className="info mb-2" style={{ fontSize: "0.95rem" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <strong>File CID:</strong>
+                  <br />
+                  <code style={{ fontSize: "0.8rem", wordBreak: "break-all" }}>
+                    {cid}
+                  </code>
+                </div>
+                <div>
+                  <strong>Recipient DID:</strong>
+                  <br />
+                  <code style={{ fontSize: "0.8rem", wordBreak: "break-all" }}>
+                    {recipientDid}
+                  </code>
+                </div>
+              </div>
+            </div>
             <pre>{JSON.stringify(delegationResult, null, 2)}</pre>
           </div>
         )}

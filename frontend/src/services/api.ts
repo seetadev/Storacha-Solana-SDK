@@ -23,7 +23,12 @@ export const userApi = {
         return response.data;
     },
 
-    createDelegation: async (data: { key: string; proof: string }) => {
+    createDelegation: async (data: {
+        key: string;
+        proof: string;
+        cid: string;
+        recipientDid: string;
+    }) => {
         const response = await axios.post(`${API_BASE_URL}/user/createDelegation`, data);
         return response.data;
     },
