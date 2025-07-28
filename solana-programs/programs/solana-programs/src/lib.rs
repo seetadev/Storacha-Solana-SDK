@@ -1,12 +1,15 @@
 use anchor_lang::prelude::*;
 
-declare_id!("11111111111111111111111111111111"); // Placeholder
+pub mod types;
+pub use types::*;
+
+declare_id!("11111111111111111111111111111111"); // TODO: Replace with actual program ID
 
 #[program]
 pub mod solana_programs {
     use super::*;
 
-    // Initialize the global config (admin only)
+    /// Initialize the global config (admin only)
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
         admin_key: Pubkey,
@@ -19,13 +22,19 @@ pub mod solana_programs {
         config.rate_per_byte_per_day = rate_per_byte_per_day;
         config.min_duration_days = min_duration_days;
         config.withdrawal_wallet = withdrawal_wallet;
+
+        let escrow = &mut ctx.accounts.escrow_vault;
+        escrow.total_deposits = 0;
+        escrow.total_claimed = 0;
+
         Ok(())
     }
 
-    // User creates a deposit for file storage
+    /// User creates a deposit for file storage
     pub fn create_deposit(
         ctx: Context<CreateDeposit>,
         content_cid: String,
+        file_size: u64,
         duration_days: u32,
         deposit_amount: u64,
     ) -> Result<()> {
@@ -34,160 +43,154 @@ pub mod solana_programs {
         // Validate minimum duration
         require!(
             duration_days >= config.min_duration_days,
-            ErrorCode::DurationTooShort
+            StorachaError::DurationTooShort
         );
 
         // Calculate required amount
-        let file_size = 1024; // This will come from Storacha
         let required_amount = file_size * duration_days as u64 * config.rate_per_byte_per_day;
         
         require!(
             deposit_amount >= required_amount,
-            ErrorCode::InsufficientDeposit
+            StorachaError::InsufficientDeposit
         );
 
-        // Transfer SOL from user to deposit account
-        // Use separate scope to avoid borrow conflicts
+        // Transfer SOL from user to escrow vault
         {
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 anchor_lang::system_program::Transfer {
                     from: ctx.accounts.user.to_account_info(),
-                    to: ctx.accounts.deposit.to_account_info(),
+                    to: ctx.accounts.escrow_vault.to_account_info(),
                 },
             );
             anchor_lang::system_program::transfer(cpi_ctx, deposit_amount)?;
         }
 
-        // Now set deposit data (after transfer is complete)
+        // Set deposit data
         let deposit = &mut ctx.accounts.deposit;
         deposit.deposit_key = ctx.accounts.user.key();
-        deposit.content_cid = content_cid;
+        deposit.content_cid = content_cid.clone();
+        deposit.file_size = file_size;
         deposit.duration_days = duration_days;
         deposit.deposit_amount = deposit_amount;
         deposit.deposit_slot = Clock::get()?.slot;
         deposit.last_claimed_slot = Clock::get()?.slot;
+        deposit.total_claimed = 0;
+
+        // Update escrow vault totals
+        let escrow = &mut ctx.accounts.escrow_vault;
+        escrow.total_deposits = escrow.total_deposits.checked_add(deposit_amount).unwrap();
+
+        // Emit event
+        emit!(DepositCreated {
+            user: ctx.accounts.user.key(),
+            content_cid,
+            file_size,
+            duration_days,
+            deposit_amount,
+            slot: Clock::get()?.slot,
+        });
 
         Ok(())
     }
 
-    // Admin can withdraw accumulated fees
+    /// Service provider claims accrued rewards (linear release over time)
+    pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
+        let deposit = &mut ctx.accounts.deposit;
+        let current_slot = Clock::get()?.slot;
+        
+        // Calculate slots elapsed since last claim
+        let slots_since_last_claim = current_slot.saturating_sub(deposit.last_claimed_slot);
+        
+        // Calculate total slots for the entire duration (assuming ~2.5 slots per second, ~86400 seconds per day)
+        let slots_per_day = 216_000; // Approximate
+        let total_slots = deposit.duration_days as u64 * slots_per_day;
+        
+        // Calculate claimable amount (linear release)
+        let claimable_per_slot = deposit.deposit_amount / total_slots;
+        let claimable_amount = claimable_per_slot * slots_since_last_claim;
+        
+        // Ensure we don't claim more than deposited
+        let remaining_amount = deposit.deposit_amount.saturating_sub(deposit.total_claimed);
+        let actual_claim = claimable_amount.min(remaining_amount);
+        
+        require!(actual_claim > 0, StorachaError::NothingToClaim);
+
+        // Transfer from escrow vault to service provider
+        **ctx.accounts.escrow_vault.to_account_info().try_borrow_mut_lamports()? -= actual_claim;
+        **ctx.accounts.service_provider_wallet.to_account_info().try_borrow_mut_lamports()? += actual_claim;
+
+        // Update deposit state
+        deposit.last_claimed_slot = current_slot;
+        deposit.total_claimed += actual_claim;
+
+        // Update escrow vault
+        let escrow = &mut ctx.accounts.escrow_vault;
+        escrow.total_claimed = escrow.total_claimed.checked_add(actual_claim).unwrap();
+
+        emit!(RewardsClaimed {
+            deposit_key: deposit.deposit_key,
+            service_provider: ctx.accounts.service_provider.key(),
+            amount: actual_claim,
+            slot: current_slot,
+        });
+
+        Ok(())
+    }
+
+    /// Admin withdraws accumulated fees
     pub fn withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
-        // Validate admin
         require!(
             ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
-            ErrorCode::UnauthorizedAdmin
+            StorachaError::UnauthorizedAdmin
         );
 
-        // Transfer from deposit to withdrawal wallet
-        **ctx.accounts.deposit.to_account_info().try_borrow_mut_lamports()? -= amount;
+        // Transfer from escrow vault to withdrawal wallet
+        **ctx.accounts.escrow_vault.to_account_info().try_borrow_mut_lamports()? -= amount;
         **ctx.accounts.withdrawal_wallet.to_account_info().try_borrow_mut_lamports()? += amount;
+
+        emit!(FeesWithdrawn {
+            admin: ctx.accounts.admin.key(),
+            amount,
+            slot: Clock::get()?.slot,
+        });
 
         Ok(())
     }
 
-    // Update the rate (admin only)
+    /// Update the rate (admin only)
     pub fn update_rate(ctx: Context<UpdateConfig>, new_rate: u64) -> Result<()> {
         require!(
             ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
-            ErrorCode::UnauthorizedAdmin
+            StorachaError::UnauthorizedAdmin
         );
         
+        let old_rate = ctx.accounts.config.rate_per_byte_per_day;
         ctx.accounts.config.rate_per_byte_per_day = new_rate;
+        
+        emit!(RateUpdated {
+            old_rate,
+            new_rate,
+        });
+        
         Ok(())
     }
-}
 
-// Account Structures
-#[account]
-pub struct Config {
-    pub admin_key: Pubkey,           
-    pub rate_per_byte_per_day: u64,  
-    pub min_duration_days: u32,      
-    pub withdrawal_wallet: Pubkey,   
-}
-
-#[account]
-pub struct Deposit {
-    pub deposit_key: Pubkey,         
-    pub content_cid: String,         
-    pub duration_days: u32,          
-    pub deposit_amount: u64,         
-    pub deposit_slot: u64,           
-    pub last_claimed_slot: u64,      
-}
-
-// Context structs
-#[derive(Accounts)]
-pub struct InitializeConfig<'info> {
-    #[account(
-        init,
-        payer = admin,
-        space = 8 + 32 + 8 + 4 + 32,
-        seeds = [b"config"],
-        bump
-    )]
-    pub config: Account<'info, Config>,
-    
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-#[instruction(content_cid: String)]
-pub struct CreateDeposit<'info> {
-    #[account(
-        init,
-        payer = user,
-        space = 8 + 32 + 4 + content_cid.len() + 4 + 8 + 8 + 8,
-        seeds = [b"deposit", user.key().as_ref(), content_cid.as_bytes()],
-        bump
-    )]
-    pub deposit: Account<'info, Deposit>,
-    
-    #[account(seeds = [b"config"], bump)]
-    pub config: Account<'info, Config>,
-    
-    #[account(mut)]
-    pub user: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawFees<'info> {
-    #[account(mut)]
-    pub deposit: Account<'info, Deposit>,
-    
-    #[account(seeds = [b"config"], bump)]
-    pub config: Account<'info, Config>,
-    
-    pub admin: Signer<'info>,
-    
-    /// CHECK: This is the withdrawal wallet from config
-    #[account(mut)]
-    pub withdrawal_wallet: UncheckedAccount<'info>,
-}
-
-#[derive(Accounts)]
-pub struct UpdateConfig<'info> {
-    #[account(mut, seeds = [b"config"], bump)]
-    pub config: Account<'info, Config>,
-    
-    pub admin: Signer<'info>,
-}
-
-// Error codes
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Duration must be at least minimum days")]
-    DurationTooShort,
-    
-    #[msg("Deposit amount insufficient for storage cost")]
-    InsufficientDeposit,
-    
-    #[msg("Only admin can perform this action")]
-    UnauthorizedAdmin,
+    /// Update minimum duration (admin only)
+    pub fn update_min_duration(ctx: Context<UpdateConfig>, new_min_duration: u32) -> Result<()> {
+        require!(
+            ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
+            StorachaError::UnauthorizedAdmin
+        );
+        
+        let old_duration = ctx.accounts.config.min_duration_days;
+        ctx.accounts.config.min_duration_days = new_min_duration;
+        
+        emit!(MinDurationUpdated {
+            old_duration,
+            new_duration: new_min_duration,
+        });
+        
+        Ok(())
+    }
 }
