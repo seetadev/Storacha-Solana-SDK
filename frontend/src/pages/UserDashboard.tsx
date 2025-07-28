@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { userApi } from "../services/api";
 import { useWallet } from "../contexts/WalletContext";
+import {
+  ConvertTimeToSeconds,
+  DAY_TIME_IN_SECONDS,
+} from "../utils/helperFunctions";
 
 const UserDashboard: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -14,6 +18,8 @@ const UserDashboard: React.FC = () => {
   const [delegationResult, setDelegationResult] = useState<any>(null);
   const [quoteResult, setQuoteResult] = useState<any>(null);
   const [loading, setLoading] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
@@ -47,7 +53,10 @@ const UserDashboard: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-
+      formData.append("proof", proof);
+      formData.append("storachaKey", key);
+      formData.append("publicKey", solanaPublicKey);
+      formData.append("duration", (30 * DAY_TIME_IN_SECONDS).toString());
       const result = await userApi.uploadFile(
         formData,
         solanaPublicKey,
@@ -63,8 +72,7 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateDelegation = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDelegation = async () => {
     if (!key || !proof || !cid || !recipientDid) {
       setError("Please provide key, proof, CID, and recipient DID");
       return;
@@ -73,13 +81,19 @@ const UserDashboard: React.FC = () => {
     setLoading("delegation");
     setError("");
     setDelegationResult(null);
-
+    //bafybeigqsh7skobaa456gmpuzd7zp7gxgwsvkrcbzr424pxntdghclhvwe
     try {
+      const startTimeSeconds = ConvertTimeToSeconds(startTime);
+      const endTimeSeconds = ConvertTimeToSeconds(endTime);
+      const baseCapabilities = ["file/upload"];
       const result = await userApi.createDelegation({
-        key,
+        storachaKey: key,
         proof,
-        cid,
-        recipientDid,
+        fileCID: cid,
+        recipientDID: recipientDid,
+        notBefore: startTimeSeconds.toString(),
+        baseCapabilities,
+        deadline: endTimeSeconds.toString(),
       });
       setDelegationResult(result);
     } catch (err: any) {
@@ -221,7 +235,35 @@ const UserDashboard: React.FC = () => {
               upload request.
             </div>
           )}
+          <div className="form-group">
+            <label htmlFor="key">Private Key (Base64 Encoded):</label>
+            <textarea
+              id="key"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="Enter your base64 encoded private key (e.g., MgCZT5vrdXIm...)"
+              rows={3}
+              required
+            />
+            <small className="text-secondary">
+              This should be a base64 encoded Ed25519 private key
+            </small>
+          </div>
 
+          <div className="form-group">
+            <label htmlFor="proof">UCAN Proof String:</label>
+            <textarea
+              id="proof"
+              value={proof}
+              onChange={(e) => setProof(e.target.value)}
+              placeholder="Enter your UCAN proof string"
+              rows={3}
+              required
+            />
+            <small className="text-secondary">
+              The UCAN proof that grants access to your space
+            </small>
+          </div>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <button
               type="submit"
@@ -398,7 +440,23 @@ const UserDashboard: React.FC = () => {
           is for testing purposes only.
         </div>
 
-        <form onSubmit={handleCreateDelegation}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateDelegation();
+          }}
+        >
+          <div className="form-group">
+            <label htmlFor="proof">Recipient DID:</label>
+            <textarea
+              id="proof"
+              value={recipientDid}
+              onChange={(e) => setRecipientDid(e.target.value)}
+              placeholder="Enter DID of the recipient"
+              rows={3}
+              required
+            />
+          </div>
           <div className="form-group">
             <label htmlFor="key">Private Key (Base64 Encoded):</label>
             <textarea
@@ -461,25 +519,46 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="recipientDid">Recipient DID:</label>
-            <input
-              type="text"
-              id="recipientDid"
-              value={recipientDid}
-              onChange={(e) => setRecipientDid(e.target.value)}
-              placeholder="did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-              required
-            />
-            <small className="text-secondary">
-              The Decentralized Identifier (DID) of the person receiving access
-            </small>
+          <div className="DeadlineContainer">
+            <div className="form-group">
+              <label htmlFor="startTime">Start Time:</label>
+              <input
+                type="datetime-local"
+                id="startTime"
+                value={startTime}
+                onChange={(e) => {
+                  setStartTime(e.target.value);
+                }}
+                required
+              />
+              <small className="text-secondary">
+                When the delegation should begin
+              </small>
+            </div>
+            <div className="form-group">
+              <label htmlFor="endTime">End Time:</label>
+              <input
+                type="datetime-local"
+                id="endTime"
+                value={endTime}
+                onChange={(e) => {
+                  setEndTime(e.target.value);
+                }}
+                required
+              />
+              <small className="text-secondary">
+                When the delegation should expire
+              </small>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading === "delegation"}
             className={loading === "delegation" ? "loading" : ""}
+            onClick={() => {
+              handleCreateDelegation();
+            }}
           >
             {loading === "delegation" ? "Creating..." : "Create Delegation"}
           </button>

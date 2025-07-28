@@ -10,6 +10,7 @@ import { Link } from "@ucanto/core/schema";
 import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
 import { db } from "../db/db.js";
+import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -28,13 +29,10 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
       proof,
       storachaKey,
     } = req.body;
-
-    console.log("The request body is", req.body);
     const client = await initStorachaClient(storachaKey, proof);
     const spaceDID = client.agent.did();
     const audience = DID.parse(recipientDID);
     const agent = client.agent;
-
     const capabilities: Capabilities = baseCapabilities.map((can: string) => ({
       with: `${spaceDID}`,
       can,
@@ -46,8 +44,8 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
     const ucan = await Delegation.delegate({
       issuer: agent.issuer,
       audience,
-      expiration: deadline,
-      notBefore,
+      expiration: Number(deadline),
+      notBefore: Number(notBefore),
       capabilities,
     });
 
@@ -58,7 +56,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Delegation created successfully",
-      // delegation: Buffer.from(archive.ok).toString("base64"),
+      delegation: Buffer.from(archive.ok).toString("base64"),
     });
   } catch (err) {
     console.error("Error creating UCAN delegation:", err);
@@ -74,28 +72,38 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
-    const { file, proof, storachaKey, publicKey, duration } = req.body;
-    const files = [new File([file], file.name, { type: file.type })];
+    const file = (req.files as { [fieldname: string]: Express.Multer.File[] })[
+      "file"
+    ]?.[0];
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const { proof, storachaKey, publicKey, duration } = req.body;
+    const durationInSeconds = parseInt(duration as string, 10);
+    const files = [
+      new File([file.buffer], file.originalname, { type: file.mimetype }),
+    ];
     const client = await initStorachaClient(storachaKey, proof);
     const cid = await client.uploadDirectory(files);
     const uploadObject = {
       cid: cid.toString(),
-      filename: file.name,
+      filename: file.originalname,
       size: file.size,
-      type: file.type,
-      url: `https://w3s.link/ipfs/${cid}/${file.name}`, // direct access of file
+      type: file.mimetype,
+      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
       uploadedAt: new Date().toISOString(),
     };
+
     const QuoteObject: QuoteOutput = getQuoteForFileUpload({
-      durationInUnits: duration,
+      durationInUnits: durationInSeconds,
       sizeInBytes: file.size,
     });
-    const duration_days = Math.floor(duration / 86400);
+    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
     const depositItem: typeof depositAccount.$inferInsert = {
       deposit_amount: QuoteObject.totalCost,
       duration_days,
       content_cid: cid.toString(),
-      deposit_key: publicKey,
+      deposit_key: publicKey.toLowerCase(),
       deposit_slot: 1,
       last_claimed_slot: 1,
     };
@@ -120,10 +128,8 @@ export const uploadFile = async (req: Request, res: Response) => {
  */
 export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
-    console.log(req.query);
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
-    console.log("The status is", duration, size);
     const QuoteObject: QuoteOutput = getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,

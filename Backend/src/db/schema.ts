@@ -1,4 +1,4 @@
-import { integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { bigint, integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
 
 export const configTable = pgTable("config", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -13,7 +13,9 @@ export const depositAccount = pgTable("deposit", {
   deposit_key: varchar({ length: 44 }).notNull(),
   content_cid: text().notNull(),
   duration_days: integer().notNull(),
-  deposit_amount: integer().notNull(),
+  deposit_amount: bigint({
+    mode: "number",
+  }).notNull(),
   deposit_slot: integer().notNull(),
   last_claimed_slot: integer().notNull(),
 });
