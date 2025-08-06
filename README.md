@@ -26,8 +26,8 @@ sdk/              # TypeScript SDK (@storacha/sol-sdk)
 ### **1. Prerequisites**
 
 - [Rust & Cargo](https://www.rust-lang.org/tools/install)
-- [Solana CLI](https://docs.solana.com/cli/install-solana-cli)
-- [Anchor Framework](https://book.anchor-lang.com/chapter_2/installation.html)
+- [Solana CLI](https://solana.com/docs/intro/installation)
+- [Anchor Framework](https://www.anchor-lang.com/docs/installation)
 - [Node.js >= 20](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation)
 - (Optional) [Docker](https://www.docker.com/) for test validators
 
