@@ -10,11 +10,15 @@ import idl from "../../../../solana-programs/target/idl/solana_programs.json" wi
 import { encodeDepositInstructionData } from "./layouts.js";
 import fs from "fs/promises";
 import path from "path";
+import { sha256 } from "js-sha256";
+import { fileURLToPath } from "url";
 
 const PROGRAM_ADDRESS = new PublicKey(idl.address);
 const CONFIG_SEED = "config";
 const DEPOSIT_SEED = "deposit";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 export const connection = new Connection("http://127.0.0.1:8899", "confirmed"); // will update for mainnet
 
 let PROGRAM_KEYPAIR: Keypair | null = null;
@@ -28,8 +32,9 @@ export async function loadProgramKeypair(): Promise<Keypair> {
 
   const keypairData = await fs.readFile(
     path.resolve(
-      process.cwd(),
-      "solana-programs/target/deploy/solana_programs-keypair.json",
+      __dirname,
+      // we'll update this to use a secret manager or something when it is time
+      "../../../../solana-programs/target/deploy/solana_programs-keypair.json",
     ),
     "utf-8",
   );
@@ -61,10 +66,14 @@ export async function createDepositInstruction(
   duration: number,
 ): Promise<TransactionInstruction> {
   const configPda = await getProgramDerivedAddress([Buffer.from(CONFIG_SEED)]);
+  // each seed passed to the `findProgramAddressSync` method must be <= 32 bytes
+  // CIDs can be greater than 32 bytes, and when that happens, deruving the program address fails
+  const cidHash = Buffer.from(sha256.digest(cid));
+
   const depositPda = await getProgramDerivedAddress([
     Buffer.from(DEPOSIT_SEED),
     userPubkey.toBytes(),
-    Buffer.from(cid),
+    cidHash,
   ]);
 
   const ixData = encodeDepositInstructionData(cid, size, duration);
