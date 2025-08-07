@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 pub mod types;
 pub use types::*;
 
-declare_id!("11111111111111111111111111111111"); // TODO: Replace with actual program ID
+declare_id!("8GdsZx2WiMxF4timRwWRiddWxsk5VDMZZ7E8VUqUVW4S");
 
 #[program]
 pub mod solana_programs {
@@ -39,7 +39,7 @@ pub mod solana_programs {
         deposit_amount: u64,
     ) -> Result<()> {
         let config = &ctx.accounts.config;
-        
+
         // Validate minimum duration
         require!(
             duration_days >= config.min_duration_days,
@@ -48,7 +48,7 @@ pub mod solana_programs {
 
         // Calculate required amount
         let required_amount = file_size * duration_days as u64 * config.rate_per_byte_per_day;
-        
+
         require!(
             deposit_amount >= required_amount,
             StorachaError::InsufficientDeposit
@@ -98,22 +98,22 @@ pub mod solana_programs {
     pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         let deposit = &mut ctx.accounts.deposit;
         let current_slot = Clock::get()?.slot;
-        
+
         // Calculate slots elapsed since last claim
         let slots_since_last_claim = current_slot.saturating_sub(deposit.last_claimed_slot);
-        
+
         // Calculate total slots for the entire duration (assuming ~2.5 slots per second, ~86400 seconds per day)
         let slots_per_day = 216_000; // Approximate
         let total_slots = deposit.duration_days as u64 * slots_per_day;
-        
+
         // Calculate claimable amount (linear release)
         let claimable_per_slot = deposit.deposit_amount / total_slots;
         let claimable_amount = claimable_per_slot * slots_since_last_claim;
-        
+
         // Ensure we don't claim more than deposited
         let remaining_amount = deposit.deposit_amount.saturating_sub(deposit.total_claimed);
         let actual_claim = claimable_amount.min(remaining_amount);
-        
+
         require!(actual_claim > 0, StorachaError::NothingToClaim);
 
         // Transfer from escrow vault to service provider
@@ -164,15 +164,15 @@ pub mod solana_programs {
             ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
             StorachaError::UnauthorizedAdmin
         );
-        
+
         let old_rate = ctx.accounts.config.rate_per_byte_per_day;
         ctx.accounts.config.rate_per_byte_per_day = new_rate;
-        
+
         emit!(RateUpdated {
             old_rate,
             new_rate,
         });
-        
+
         Ok(())
     }
 
@@ -182,15 +182,15 @@ pub mod solana_programs {
             ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
             StorachaError::UnauthorizedAdmin
         );
-        
+
         let old_duration = ctx.accounts.config.min_duration_days;
         ctx.accounts.config.min_duration_days = new_min_duration;
-        
+
         emit!(MinDurationUpdated {
             old_duration,
             new_duration: new_min_duration,
         });
-        
+
         Ok(())
     }
 }
