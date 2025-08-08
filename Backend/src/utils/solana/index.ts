@@ -1,31 +1,47 @@
 import {
   Connection,
-  PublicKey,
   Keypair,
-  SystemProgram,
   Transaction,
   TransactionInstruction,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import idl from "../../../../solana-programs/target/idl/solana_programs.json" with { type: "json" };
-import { encodeDepositInstructionData } from "./layouts.js";
 import fs from "fs/promises";
 import path from "path";
 import { sha256 } from "js-sha256";
 import { fileURLToPath } from "url";
-
-const PROGRAM_ADDRESS = new PublicKey(idl.address);
-const CONFIG_SEED = "config";
-const DEPOSIT_SEED = "deposit";
+import { Idl, Program, AnchorProvider, web3 } from "@coral-xyz/anchor";
+import BN from "bn.js";
+import idl from "../../../../solana-programs/target/idl/solana_programs.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-export const connection = new Connection("http://127.0.0.1:8899", "confirmed"); // will update for mainnet
+
+const CONFIG_SEED = "config";
+const DEPOSIT_SEED = "deposit";
+
+// we'll switch this interchangeably between mainnet/testnet/localnet/devnet
+export const connection = new Connection(
+  "https://api.testnet.solana.com",
+  "confirmed",
+);
 
 let PROGRAM_KEYPAIR: Keypair | null = null;
+let CACHED_IDL: any = null;
+let PROGRAM_ID: web3.PublicKey | null = null;
 
 /**
- * Loads the Program Signer Keypair from local file (once) we'll change this
- * when we decide to publish on mainnet
+ * Loads the IDL and sets up the program ID
+ */
+async function getIdlAndProgramId() {
+  if (!CACHED_IDL) {
+    CACHED_IDL = idl;
+    PROGRAM_ID = new web3.PublicKey(CACHED_IDL.address);
+  }
+  return { idl: CACHED_IDL, programId: PROGRAM_ID! };
+}
+
+/**
+ * Loads the Program Signer Keypair from local file (once)
  */
 export async function loadProgramKeypair(): Promise<Keypair> {
   if (PROGRAM_KEYPAIR) return PROGRAM_KEYPAIR;
@@ -33,7 +49,6 @@ export async function loadProgramKeypair(): Promise<Keypair> {
   const keypairData = await fs.readFile(
     path.resolve(
       __dirname,
-      // we'll update this to use a secret manager or something when it is time
       "../../../../solana-programs/target/deploy/solana_programs-keypair.json",
     ),
     "utf-8",
@@ -47,63 +62,160 @@ export async function loadProgramKeypair(): Promise<Keypair> {
 }
 
 /**
- * Derives a PDA for given seeds and program address
+ * Creates an Initialize Config Instruction (admin only
+ * we'll look for a way to ensure this is programmatic from the server
  */
-async function getProgramDerivedAddress(
-  seeds: (Buffer | Uint8Array)[],
-): Promise<PublicKey> {
-  const [pda] = PublicKey.findProgramAddressSync(seeds, PROGRAM_ADDRESS);
-  return pda;
-}
-
-/**
- * Creates a Deposit Instruction (unsigned)
- */
-export async function createDepositInstruction(
-  userPubkey: PublicKey,
-  cid: string,
-  size: number,
-  duration: number,
+export async function createInitializeConfigInstruction(
+  adminPubkey: web3.PublicKey,
+  ratePerBytePerDay: number,
+  minDurationDays: number,
+  withdrawalWallet: web3.PublicKey,
 ): Promise<TransactionInstruction> {
-  const configPda = await getProgramDerivedAddress([Buffer.from(CONFIG_SEED)]);
-  // each seed passed to the `findProgramAddressSync` method must be <= 32 bytes
-  // CIDs can be greater than 32 bytes, and when that happens, deruving the program address fails
-  const cidHash = Buffer.from(sha256.digest(cid));
+  const { idl, programId } = await getIdlAndProgramId();
 
-  const depositPda = await getProgramDerivedAddress([
-    Buffer.from(DEPOSIT_SEED),
-    userPubkey.toBytes(),
-    cidHash,
-  ]);
+  // the anchor provider needs a wallet arg. doesn't really do much
+  // without it, the constructor breaks. we basically just need for the admin I/O
+  const wallet = {
+    publicKey: web3.Keypair.generate().publicKey,
+    signTransaction: async (tx: any) => tx,
+    signAllTransactions: async (txs: any[]) => txs,
+  };
 
-  const ixData = encodeDepositInstructionData(cid, size, duration);
+  const provider = new AnchorProvider(connection, wallet as any, {});
+  const program = new Program(idl as Idl, provider);
 
-  return new TransactionInstruction({
-    programId: PROGRAM_ADDRESS,
-    keys: [
-      { pubkey: userPubkey, isSigner: true, isWritable: true },
-      { pubkey: configPda, isSigner: false, isWritable: false },
-      { pubkey: depositPda, isSigner: false, isWritable: true },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    ],
-    data: ixData,
-  });
+  const [configPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED)],
+    programId,
+  );
+
+  const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow")],
+    programId,
+  );
+
+  // Create instruction with required accounts per IDL:
+  // 1. config (writable, pda)
+  // 2. escrowVault (writable, pda)
+  // 3. admin (writable, signer)
+  // 4. systemProgram
+  // if we don't do this the program is nver initialized and we'd run into a lot of tranasction mismatch issues
+  return await program.methods
+    .initializeConfig(
+      adminPubkey,
+      new BN(ratePerBytePerDay),
+      minDurationDays,
+      withdrawalWallet,
+    )
+    .accounts({
+      config: configPda,
+      escrowVault: escrowVaultPda,
+      admin: adminPubkey,
+      systemProgram: web3.SystemProgram.programId,
+    })
+    .instruction();
 }
 
 /**
- * Sends and confirms a transaction signed by the backend signer
+ * Check if config is initialized, and initialize it if not
  */
-export async function sendTransaction(ixs: TransactionInstruction[]) {
-  const programKeypair = await loadProgramKeypair();
+ export async function ensureConfigInitialized(): Promise<void> {
+   const { programId } = await getIdlAndProgramId();
 
-  const { blockhash } = await connection.getLatestBlockhash();
-  const tx = new Transaction().add(...ixs);
-  tx.feePayer = programKeypair.publicKey;
-  tx.recentBlockhash = blockhash;
+   const [configPda] = web3.PublicKey.findProgramAddressSync(
+     [Buffer.from(CONFIG_SEED)],
+     programId,
+   );
 
-  const signature = await connection.sendTransaction(tx, [programKeypair]);
-  await connection.confirmTransaction(signature, "confirmed");
+   const configAccount = await connection.getAccountInfo(configPda);
 
-  console.log("Transaction Signature:", signature);
-  return signature;
-}
+   if (!configAccount) {
+     console.log("Config not found — initializing it now...");
+
+     const adminKeypair = await loadProgramKeypair();
+
+     const initIx = await createInitializeConfigInstruction(
+       adminKeypair.publicKey,
+       1000,
+       1,
+       adminKeypair.publicKey,
+     );
+
+     const { blockhash } = await connection.getLatestBlockhash();
+
+     const tx = new Transaction();
+     tx.add(initIx);
+     tx.feePayer = adminKeypair.publicKey;
+     tx.recentBlockhash = blockhash;
+
+     tx.sign(adminKeypair);
+
+     try {
+       const sig = await connection.sendRawTransaction(tx.serialize(), {
+         skipPreflight: false,
+         preflightCommitment: "confirmed",
+       });
+       await connection.confirmTransaction(sig, "confirmed");
+       console.log(`✅ Config initialized. Tx: ${sig}`);
+     } catch (err) {
+       console.error("Failed to send init transaction:", err);
+       throw err;
+     }
+   } else {
+     console.log("✅ Config already exists — no backend init needed.");
+   }
+ }
+
+/**
+ * Creates a Deposit Instruction
+ */
+ export async function createDepositInstruction(
+   userPubkey: web3.PublicKey,
+   cid: string,
+   size: number,
+   duration: number,
+   depositAmountSol: number,
+ ): Promise<TransactionInstruction> {
+   const { idl, programId } = await getIdlAndProgramId();
+
+   const dummyWallet = {
+     publicKey: web3.Keypair.generate().publicKey,
+     signTransaction: async (tx: any) => tx,
+     signAllTransactions: async (txs: any[]) => txs,
+   };
+
+   const provider = new AnchorProvider(connection, dummyWallet as any, {});
+   const program = new Program(idl as Idl, provider);
+
+   const depositAmountLamports = Math.floor(depositAmountSol * LAMPORTS_PER_SOL);
+
+   const [configPda] = web3.PublicKey.findProgramAddressSync(
+     [Buffer.from(CONFIG_SEED)],
+     programId,
+   );
+
+   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
+     [Buffer.from("escrow")],
+     programId,
+   );
+
+
+   // each seed passed to the `findProgramAddressSync` method must be <= 32 bytes
+   // CIDs can be greater than 32 bytes, and when that happens, deriving the program address fails
+   const cidHash = Buffer.from(sha256.digest(cid));
+   const [depositPda] = web3.PublicKey.findProgramAddressSync(
+     [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
+     programId,
+   );
+
+   return await program.methods
+     .createDeposit(cid, new BN(size), duration, new BN(depositAmountLamports))
+     .accounts({
+       deposit: depositPda,
+       escrowVault: escrowVaultPda,
+       config: configPda,
+       user: userPubkey,
+       systemProgram: web3.SystemProgram.programId,
+     })
+     .instruction();
+ }
