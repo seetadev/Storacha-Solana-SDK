@@ -122,7 +122,15 @@ pnpm test
 
 ---
 
-## Side Notes & Gotchas
+## Testing and actually using the program
+
+Install a Solana wallet like Phantom wallet in your browser. Go your settings and click on "Developer Settings".
+
+Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.com/) to airdrop SOL into your wallet. You'll need to copy your testnet address for this.
+
+When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto-sol) to basically test that you can make a deposit. The backend server has to be running locally for this to work. Please ensure that is right.
+
+## Side Notes
 
 * **Program IDL:**
   After building, the generated IDL will be in `target/idl/solana_programs.json`.
