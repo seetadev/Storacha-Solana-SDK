@@ -6,12 +6,12 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 
 ## Features
 
-* **Onchain Payments** – Pay storage fees directly with SOL.
-* **No Credit Cards** – Pure crypto-native flow.
-* **Escrow-based Rewards** – Funds released linearly per block to service providers.
-* **Backend API with UCAN Delegation** – Secure storage delegation via UCAN tokens.
-* **TypeScript SDK** – Easily integrate with dapps (supports Solana Mobile dapp publishing).
-* **Extensible** – Designed for multi-chain support (Phase 2).
+- **Onchain Payments** – Pay storage fees directly with SOL.
+- **No Credit Cards** – Pure crypto-native flow.
+- **Escrow-based Rewards** – Funds released linearly per block to service providers.
+- **Backend API with UCAN Delegation** – Secure storage delegation via UCAN tokens.
+- **TypeScript SDK** – Easily integrate with dapps (supports Solana Mobile dapp publishing).
+- **Extensible** – Designed for multi-chain support (Phase 2).
 
 ## Monorepo Structure
 
@@ -31,11 +31,12 @@ sdk/              # TypeScript SDK (@storacha/sol-sdk)
 - [Node.js >= 20](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation)
 - (Optional) [Docker](https://www.docker.com/) for test validators
 
-  * **IMPORTANT:** Install using the Anza installer to avoid SSL/archive issues:
+  - **IMPORTANT:** Install using the Anza installer to avoid SSL/archive issues:
 
     ```bash
     sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
     ```
+
 * [Anchor Framework](https://www.anchor-lang.com/docs/installation)
 * [Node.js >= 20](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation)
 * (Optional) [Docker](https://www.docker.com/) for test validators
@@ -120,23 +121,49 @@ cd sdk
 pnpm test
 ```
 
+## **Backend Database Migration Workflow**
+
+1. **Navigate to the Backend directory**
+
+   ```bash
+   cd Backend
+   ```
+
+2. **Generate migration files**
+   Creates a migration script based on the differences between the current database schema and your updated schema definitions.
+
+   ```bash
+   pnpm migrations-generate
+   ```
+
+3. **Apply migrations to the database**
+   Runs the generated migration scripts to update the database schema.
+
+   ```bash
+   pnpm migrations-apply
+   ```
+
 ---
 
 ## Side Notes & Gotchas
 
-* **Program IDL:**
+- **Program IDL:**
   After building, the generated IDL will be in `target/idl/solana_programs.json`.
 
-* **Program ID:**
+- **Program ID:**
   The Solana program ID is fixed to a pre-generated keypair located at `solana-programs/target/deploy/solana_programs-keypair.json`.
   You don’t need to manually generate new ones unless you're deploying to devnet/mainnet.
 
-* **Copyfile Disable on MacOS:**
+- **Copyfile Disable on MacOS:**
   Always set `export COPYFILE_DISABLE=true` before running `solana-test-validator` to prevent `.DS_Store`/`._genesis.bin` issues.
 
-* **Solana CLI Versioning:**
+- **Solana CLI Versioning:**
   Use the **Anza installer** as shown above to avoid inconsistent binary issues.
 
-* **Anchor Versioning:**
+- **Anchor Versioning:**
   Ensure your `anchor-lang` version in Cargo.toml matches the Anchor CLI version.
   You might need to tweak `[features]` in Anchor.toml if the need arises
+
+```
+
+```
