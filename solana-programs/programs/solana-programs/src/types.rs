@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use sha2::{Digest, Sha256};
 
 // ============================================================================
 // ACCOUNT STRUCTURES (State)
@@ -76,7 +77,7 @@ pub struct InitializeConfig<'info> {
         bump
     )]
     pub config: Account<'info, Config>,
-    
+
     #[account(
         init,
         payer = admin,
@@ -85,10 +86,10 @@ pub struct InitializeConfig<'info> {
         bump
     )]
     pub escrow_vault: Account<'info, EscrowVault>,
-    
+
     #[account(mut)]
     pub admin: Signer<'info>,
-    
+
     pub system_program: Program<'info, System>,
 }
 
@@ -97,23 +98,26 @@ pub struct InitializeConfig<'info> {
 #[instruction(content_cid: String)]
 pub struct CreateDeposit<'info> {
     #[account(
-        init,
-        payer = user,
-        space = Deposit::len(&content_cid),
-        seeds = [b"deposit", user.key().as_ref(), content_cid.as_bytes()],
-        bump
+      init,
+      payer = user,
+      space = Deposit::len(&content_cid),
+      // the CIDs can be greater than 32bytes so this is
+      // neccessary to that borsh doesn't yell at us when we're trying to
+      // construct the deposit instruction
+      seeds = [b"deposit", user.key().as_ref(), &Sha256::digest(content_cid.as_bytes())],
+      bump
     )]
     pub deposit: Account<'info, Deposit>,
-    
+
     #[account(mut, seeds = [b"escrow"], bump)]
     pub escrow_vault: Account<'info, EscrowVault>,
-    
+
     #[account(seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
-    
+
     #[account(mut)]
     pub user: Signer<'info>,
-    
+
     pub system_program: Program<'info, System>,
 }
 
@@ -122,15 +126,15 @@ pub struct CreateDeposit<'info> {
 pub struct ClaimRewards<'info> {
     #[account(mut)]
     pub deposit: Account<'info, Deposit>,
-    
+
     #[account(mut, seeds = [b"escrow"], bump)]
     pub escrow_vault: Account<'info, EscrowVault>,
-    
+
     #[account(seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
-    
+
     pub service_provider: Signer<'info>,
-    
+
     /// CHECK: This can be any wallet address provided by the service provider
     #[account(mut)]
     pub service_provider_wallet: UncheckedAccount<'info>,
@@ -141,12 +145,12 @@ pub struct ClaimRewards<'info> {
 pub struct WithdrawFees<'info> {
     #[account(mut, seeds = [b"escrow"], bump)]
     pub escrow_vault: Account<'info, EscrowVault>,
-    
+
     #[account(seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
-    
+
     pub admin: Signer<'info>,
-    
+
     /// CHECK: This address is validated against config.withdrawal_wallet in the instruction
     #[account(mut)]
     pub withdrawal_wallet: UncheckedAccount<'info>,
@@ -157,7 +161,7 @@ pub struct WithdrawFees<'info> {
 pub struct UpdateConfig<'info> {
     #[account(mut, seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
-    
+
     pub admin: Signer<'info>,
 }
 
@@ -210,31 +214,31 @@ pub struct FeesWithdrawn {
 pub enum StorachaError {
     #[msg("Duration must be at least the minimum required days")]
     DurationTooShort,
-    
+
     #[msg("Deposit amount is insufficient for the storage cost (size × duration × rate)")]
     InsufficientDeposit,
-    
+
     #[msg("Only the program admin can perform this action")]
     UnauthorizedAdmin,
-    
+
     #[msg("No rewards are available to claim at this time")]
     NothingToClaim,
-    
+
     #[msg("Storage duration has expired")]
     StorageExpired,
-    
+
     #[msg("Invalid file size - must be greater than 0")]
     InvalidFileSize,
-    
+
     #[msg("Invalid duration - must be greater than 0")]
     InvalidDuration,
-    
+
     #[msg("Arithmetic overflow occurred")]
     ArithmeticOverflow,
-    
+
     #[msg("Insufficient funds in escrow vault")]
     InsufficientEscrowFunds,
-    
+
     #[msg("Invalid CID format")]
     InvalidCid,
 }

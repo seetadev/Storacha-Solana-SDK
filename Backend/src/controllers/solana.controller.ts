@@ -1,12 +1,20 @@
 import { Request, Response } from "express";
 import { PublicKey } from "@solana/web3.js";
-import { createDepositInstruction } from "../utils/solana/index.js";
+import {
+  createDepositInstruction,
+  createInitializeConfigInstruction,
+  ensureConfigInitialized,
+} from "../utils/solana/index.js";
 
 export const createDepositTransaction = async (req: Request, res: Response) => {
-  console.log("Received deposit request", req.body);
-
   try {
-    const { publicKey: userPublicKey, size, cid, duration } = req.body;
+    const {
+      publicKey: userPublicKey,
+      size,
+      cid,
+      duration,
+      depositAmount,
+    } = req.body;
 
     if (!userPublicKey || !cid || !size || !duration) {
       return res.status(400).json({ error: "Missing required parameters" });
@@ -20,19 +28,17 @@ export const createDepositTransaction = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid size or duration" });
     }
 
+    await ensureConfigInitialized();
     const depositIx = await createDepositInstruction(
       userPubkey,
       cid,
       sizeNum,
       durationNum,
+      Number(depositAmount),
     );
 
-    // instead of returning the blockhash we delegate this to the sdk/client
-    // to construct teh transaction on their own.
-    // after series of attempts sending the block hash, it is always invalidated whenever
-    // i try to make a deposit with the solana wallet
-    return res.status(200).json({
-      instruction: {
+    const serializedInstructions = [
+      {
         programId: depositIx.programId.toBase58(),
         keys: depositIx.keys.map((key) => ({
           pubkey: key.pubkey.toBase58(),
@@ -41,11 +47,53 @@ export const createDepositTransaction = async (req: Request, res: Response) => {
         })),
         data: depositIx.data.toString("base64"),
       },
+    ];
+
+    return res.status(200).json({
+      instructions: serializedInstructions,
+      message: "Deposit instruction ready — user must sign",
     });
   } catch (err) {
     console.error("Error creating deposit transaction:", err);
-    return res
+    return res.status(500).json({
+      error: "Failed to create deposit transaction",
+      details: err instanceof Error ? err.message : String(err),
+    });
+  }
+};
+
+export const initializeConfig = async (req: Request, res: Response) => {
+  try {
+    const { adminPubkey } = req.body;
+    if (!adminPubkey) {
+      return res.status(400).json({ error: "Missing adminPubkey" });
+    }
+
+    const adminKey = new PublicKey(adminPubkey);
+    // For testing, adminPubkey is the wallet address (you sign from frontend)
+    const initIx = await createInitializeConfigInstruction(
+      adminKey,
+      1000,
+      1,
+      adminKey,
+    );
+
+    // Serialize instruction to send to frontend
+    const serializedInstruction = {
+      programId: initIx.programId.toBase58(),
+      keys: initIx.keys.map((k) => ({
+        pubkey: k.pubkey.toBase58(),
+        isSigner: k.isSigner,
+        isWritable: k.isWritable,
+      })),
+      data: initIx.data.toString("base64"),
+    };
+
+    res.status(200).json({ instructions: [serializedInstruction] });
+  } catch (err) {
+    console.error("Error creating initializeConfig instruction:", err);
+    res
       .status(500)
-      .json({ error: "Failed to create deposit transaction" });
+      .json({ error: "Failed to create initializeConfig instruction" });
   }
 };
