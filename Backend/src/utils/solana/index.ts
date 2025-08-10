@@ -11,7 +11,7 @@ import { sha256 } from "js-sha256";
 import { fileURLToPath } from "url";
 import { Idl, Program, AnchorProvider, web3 } from "@coral-xyz/anchor";
 import BN from "bn.js";
-import idl from "../../../../solana-programs/target/idl/solana_programs.json" with { type: "json" };
+import idl from "./idl.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
