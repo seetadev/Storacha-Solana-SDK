@@ -11,7 +11,6 @@ import { sha256 } from "js-sha256";
 import { fileURLToPath } from "url";
 import { Idl, Program, AnchorProvider, web3 } from "@coral-xyz/anchor";
 import BN from "bn.js";
-import idl from "./idl.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,19 +33,22 @@ let PROGRAM_ID: web3.PublicKey | null = null;
  */
 export async function getIdlAndProgramId() {
   if (!CACHED_IDL) {
-    if (process.env.NODE_ENV === "production") {
-      if (!process.env.SOLANA_PROGRAM_IDL) {
-        throw new Error("SOLANA_PROGRAM_IDL env var not set in production");
-      }
-      CACHED_IDL = JSON.parse(process.env.SOLANA_PROGRAM_IDL);
-    } else {
-      CACHED_IDL = idl;
+    if (!process.env.SOLANA_PROGRAM_IDL) {
+      throw new Error("❌ SOLANA_PROGRAM_IDL environment variable is not set");
     }
 
-    PROGRAM_ID = new web3.PublicKey(CACHED_IDL.address);
+    try {
+      CACHED_IDL = JSON.parse(process.env.SOLANA_PROGRAM_IDL) as Idl;
+    } catch (err) {
+      throw new Error(
+        `❌ Failed to parse SOLANA_PROGRAM_IDL: ${(err as Error).message}`,
+      );
+    }
+
+    PROGRAM_ID = new web3.PublicKey((CACHED_IDL as any).address);
   }
 
-  return { idl: CACHED_IDL, programId: PROGRAM_ID! };
+  return { idl: CACHED_IDL!, programId: PROGRAM_ID! };
 }
 
 /**
