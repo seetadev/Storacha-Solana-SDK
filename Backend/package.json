@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@ipld/dag-ucan": "^3.4.5",
     "@neondatabase/serverless": "^1.0.1",
     "@project-serum/anchor": "^0.26.0",
     "@solana/web3.js": "^1.98.4",
@@ -53,7 +54,9 @@
     "path": "^0.12.7",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
+    "schema": "link:@ucanto/core/schema",
     "ts-jest": "^29.4.0",
     "zod": "^4.0.5"
-  }
+  },
+  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
 }
