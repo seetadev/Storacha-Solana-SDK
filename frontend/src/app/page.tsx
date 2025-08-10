@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 const Home: React.FC = () => {
   return (
@@ -48,7 +48,7 @@ const Home: React.FC = () => {
             </li>
           </ul>
 
-          <Link to="/user">
+          <Link href="/user">
             <button className="button-success" style={{ width: "100%" }}>
               Access User Dashboard →
             </button>
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
             </li>
           </ul>
 
-          <Link to="/admin">
+          <Link href="/admin">
             <button className="button-secondary" style={{ width: "100%" }}>
               Access Admin Dashboard →
             </button>

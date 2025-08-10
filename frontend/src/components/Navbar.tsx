@@ -1,35 +1,41 @@
+"use client";
+
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import WalletConnection from "./WalletConnection";
 import { useWallet } from "../contexts/WalletContext";
 
 const Navbar: React.FC = () => {
-  const location = useLocation();
+  const pathname = usePathname();
   const { handleWalletConnected, handleWalletDisconnected } = useWallet();
 
   return (
     <nav className="navbar">
       <ul>
         <li>
-          <div className="navbar-brand">Storacha × Solana</div>
+          <div className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.5rem' }}>🚀</span>
+            <span>Storacha × Solana</span>
+          </div>
         </li>
         <li>
-          <Link to="/" className={location.pathname === "/" ? "active" : ""}>
+          <Link href="/" className={pathname === "/" ? "active" : ""}>
             Home
           </Link>
         </li>
         <li>
           <Link
-            to="/user"
-            className={location.pathname === "/user" ? "active" : ""}
+            href="/user"
+            className={pathname === "/user" ? "active" : ""}
           >
             User Dashboard
           </Link>
         </li>
         <li>
           <Link
-            to="/admin"
-            className={location.pathname === "/admin" ? "active" : ""}
+            href="/admin"
+            className={pathname === "/admin" ? "active" : ""}
           >
             Admin Dashboard
           </Link>
