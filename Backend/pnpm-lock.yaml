@@ -26,6 +26,9 @@ importers:
       '@types/bn.js':
         specifier: ^5.2.0
         version: 5.2.0
+      '@ucanto/core':
+        specifier: ^10.4.0
+        version: 10.4.0
       '@web3-storage/w3cli':
         specifier: ^7.12.0
         version: 7.12.0(encoding@0.1.13)

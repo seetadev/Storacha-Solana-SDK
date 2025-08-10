@@ -24,7 +24,7 @@ export const createDepositTransaction = async (req: Request, res: Response) => {
       userPubkey,
       cid,
       sizeNum,
-      durationNum,
+      durationNum
     );
 
     // instead of returning the blockhash we delegate this to the sdk/client

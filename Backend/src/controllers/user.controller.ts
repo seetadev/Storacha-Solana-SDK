@@ -5,13 +5,13 @@ import {
 } from "../utils/Storacha.js";
 import { DelegationInput, QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
-import * as DID from "@ipld/dag-ucan/did";
+import { DID } from "@ucanto/core";
 import { Link } from "@ucanto/core/schema";
 import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
 import { db } from "../db/db.js";
 import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
-
+import { createDepositInstruction } from "../utils/solana/index.js";
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
  * @param req
@@ -94,7 +94,7 @@ export const uploadFile = async (req: Request, res: Response) => {
       uploadedAt: new Date().toISOString(),
     };
 
-    const QuoteObject: QuoteOutput = getQuoteForFileUpload({
+    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: durationInSeconds,
       sizeInBytes: file.size,
     });
@@ -108,9 +108,24 @@ export const uploadFile = async (req: Request, res: Response) => {
       last_claimed_slot: 1,
     };
     await db.insert(depositAccount).values(depositItem).returning();
+    const depositIx = await createDepositInstruction(
+      publicKey,
+      uploadObject.cid,
+      uploadObject.size,
+      durationInSeconds
+    );
     res.status(200).json({
       message: "Successfully uploaded the object",
       object: uploadObject,
+      instruction: {
+        programId: depositIx.programId.toBase58(),
+        keys: depositIx.keys.map((key) => ({
+          pubkey: key.pubkey.toBase58(),
+          isSigner: key.isSigner,
+          isWritable: key.isWritable,
+        })),
+        data: depositIx.data.toString("base64"),
+      },
     });
   } catch (error: any) {
     console.error("Error uploading file to Storacha:", error);
@@ -130,7 +145,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
-    const QuoteObject: QuoteOutput = getQuoteForFileUpload({
+    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
     });
