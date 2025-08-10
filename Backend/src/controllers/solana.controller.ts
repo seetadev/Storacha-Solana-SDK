@@ -3,11 +3,14 @@ import { PublicKey } from "@solana/web3.js";
 import { createDepositInstruction } from "../utils/solana/index.js";
 
 export const createDepositTransaction = async (req: Request, res: Response) => {
-  console.log("Received deposit request", req.body);
-
   try {
-    const { publicKey: userPublicKey, size, cid, duration } = req.body;
-
+    const {
+      publicKey: userPublicKey,
+      size,
+      cid,
+      duration,
+      depositAmount,
+    } = req.body;
     if (!userPublicKey || !cid || !size || !duration) {
       return res.status(400).json({ error: "Missing required parameters" });
     }
@@ -24,7 +27,8 @@ export const createDepositTransaction = async (req: Request, res: Response) => {
       userPubkey,
       cid,
       sizeNum,
-      durationNum
+      durationNum,
+      depositAmount
     );
 
     // instead of returning the blockhash we delegate this to the sdk/client

@@ -12,6 +12,7 @@ import { depositAccount } from "../db/schema.js";
 import { db } from "../db/db.js";
 import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
 import { createDepositInstruction } from "../utils/solana/index.js";
+import { setDefaultAutoSelectFamilyAttemptTimeout } from "net";
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
  * @param req
@@ -112,7 +113,8 @@ export const uploadFile = async (req: Request, res: Response) => {
       publicKey,
       uploadObject.cid,
       uploadObject.size,
-      durationInSeconds
+      durationInSeconds,
+      depositItem.deposit_amount
     );
     res.status(200).json({
       message: "Successfully uploaded the object",
