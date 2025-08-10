@@ -12,12 +12,12 @@ A React-based frontend application for testing the Storacha Solana SDK backend A
 
 1. Install dependencies:
 ```bash
-npm install
+pnpm install
 ```
 
 2. Start the development server:
 ```bash
-npm run dev
+pnpm dev
 ```
 
 The frontend will be available at `http://localhost:5173` and will proxy API requests to the backend at `http://localhost:3000`.
