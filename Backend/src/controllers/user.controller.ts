@@ -3,7 +3,7 @@ import {
   getQuoteForFileUpload,
   initStorachaClient,
 } from "../utils/Storacha.js";
-import { DelegationInput, QuoteOutput } from "../types/StorachaTypes.js";
+import { QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
 import * as DID from "@ipld/dag-ucan/did";
 import { Link } from "@ucanto/core/schema";
@@ -11,6 +11,8 @@ import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
 import { db } from "../db/db.js";
 import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
+import { computeCID } from "../utils/compute-cid.js";
+import { createDepositTransaction } from "./solana.controller.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -20,16 +22,9 @@ import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
  */
 export const createUCANDelegation = async (req: Request, res: Response) => {
   try {
-    const {
-      recipientDID,
-      deadline,
-      notBefore,
-      baseCapabilities,
-      fileCID,
-      proof,
-      storachaKey,
-    } = req.body;
-    const client = await initStorachaClient(storachaKey, proof);
+    const { recipientDID, deadline, notBefore, baseCapabilities, fileCID } =
+      req.body;
+    const client = await initStorachaClient();
     const spaceDID = client.agent.did();
     const audience = DID.parse(recipientDID);
     const agent = client.agent;
@@ -78,21 +73,16 @@ export const uploadFile = async (req: Request, res: Response) => {
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    const { proof, storachaKey, publicKey, duration } = req.body;
+    const { publicKey, duration } = req.body;
     const durationInSeconds = parseInt(duration as string, 10);
     const files = [
       new File([file.buffer], file.originalname, { type: file.mimetype }),
     ];
-    const client = await initStorachaClient(storachaKey, proof);
-    const cid = await client.uploadDirectory(files);
-    const uploadObject = {
-      cid: cid.toString(),
-      filename: file.originalname,
-      size: file.size,
-      type: file.mimetype,
-      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
-      uploadedAt: new Date().toISOString(),
+
+    const fileMap: Record<string, Uint8Array> = {
+      [file.originalname]: new Uint8Array(file.buffer),
     };
+    const computedCID = await computeCID(fileMap);
 
     const QuoteObject: QuoteOutput = getQuoteForFileUpload({
       durationInUnits: durationInSeconds,
@@ -102,14 +92,56 @@ export const uploadFile = async (req: Request, res: Response) => {
     const depositItem: typeof depositAccount.$inferInsert = {
       deposit_amount: QuoteObject.totalCost,
       duration_days,
-      content_cid: cid.toString(),
+      content_cid: computedCID,
       deposit_key: publicKey.toLowerCase(),
       deposit_slot: 1,
       last_claimed_slot: 1,
     };
+
+    const sizeBytes = file.size;
+    // rate in lamports. we'll switch it later (make it dynamic)
+    // same thing we set in the config initialization
+    const ratePerBytePerDay = 1000;
+    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
+
+    if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
+      throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
+    }
+
+    const durationNum = Number(duration);
+    if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
+
+    const depositInstructions = await createDepositTransaction({
+      publicKey,
+      contentCID: computedCID,
+      fileSize: sizeBytes,
+      durationDays: duration_days,
+      depositAmount: amountInLamports,
+    });
+
+    const client = await initStorachaClient();
+    const cid = await client.uploadFile(files[0]);
+
+    if (cid.toString() !== computedCID) {
+      throw new Error(
+        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
+      );
+    }
+
+    const uploadObject = {
+      cid: cid.toString(),
+      filename: file.originalname,
+      size: file.size,
+      type: file.mimetype,
+      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
+      uploadedAt: new Date().toISOString(),
+    };
+
     await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
-      message: "Successfully uploaded the object",
+      message: "Deposit instruction ready — sign to finalize upload",
+      cid: computedCID,
+      instructions: depositInstructions,
       object: uploadObject,
     });
   } catch (error: any) {
