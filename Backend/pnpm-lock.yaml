@@ -11,6 +11,9 @@ importers:
       '@coral-xyz/anchor':
         specifier: ^0.31.1
         version: 0.31.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10)
+      '@ipld/dag-ucan':
+        specifier: ^3.4.5
+        version: 3.4.5
       '@neondatabase/serverless':
         specifier: ^1.0.1
         version: 1.0.1
@@ -26,6 +29,9 @@ importers:
       '@types/bn.js':
         specifier: ^5.2.0
         version: 5.2.0
+      '@ucanto/core':
+        specifier: ^10.4.0
+        version: 10.4.0
       '@web3-storage/w3cli':
         specifier: ^7.12.0
         version: 7.12.0(encoding@0.1.13)
@@ -71,6 +77,9 @@ importers:
       postgres:
         specifier: ^3.4.7
         version: 3.4.7
+      schema:
+        specifier: link:@ucanto/core/schema
+        version: link:@ucanto/core/schema
       ts-jest:
         specifier: ^29.4.0
         version: 29.4.1(@babel/core@7.28.0)(@jest/transform@30.0.5)(@jest/types@30.0.5)(babel-jest@29.7.0(@babel/core@7.28.0))(esbuild@0.25.8)(jest-util@30.0.5)(jest@30.0.5(@types/node@24.2.1)(esbuild-register@3.6.0(esbuild@0.25.8))(ts-node@10.9.2(@types/node@24.2.1)(typescript@5.9.2)))(typescript@5.9.2)

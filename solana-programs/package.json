@@ -1,8 +1,12 @@
 {
+  "name": "solana-programs",
+  "version": "1.0.0",
   "license": "ISC",
   "scripts": {
-    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint:fix": "prettier \"**/*.{js,ts,json}\" -w",
+    "lint": "prettier \"**/*.{js,ts,json}\" --check",
+    "format:rust": "cargo fmt",
+    "check:rust": "cargo check"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",

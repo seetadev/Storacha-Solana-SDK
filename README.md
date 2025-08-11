@@ -17,7 +17,8 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 
 ```
 solana-programs/  # Solana payment contract (Anchor framework)
-backend/          # Node.js backend API with UCAN storage delegation
+Backend/          # Node.js backend API with UCAN storage delegation
+frontend/         # React frontend application
 sdk/              # TypeScript SDK (@storacha/sol-sdk)
 ```
 
@@ -46,6 +47,8 @@ sdk/              # TypeScript SDK (@storacha/sol-sdk)
 ```bash
 git clone https://github.com/seetadev/storacha-solana-sdk.git
 cd storacha-solana-sdk
+
+# Install all workspace dependencies
 pnpm install
 ```
 
@@ -87,13 +90,32 @@ Check if you've started the test-validator before requesting for the airdrop
 ### **6. Backend Server**
 
 ```bash
-cd backend
+# From root directory
+pnpm dev:backend
+
+# Or navigate to Backend directory
+cd Backend
 pnpm dev
 ```
 
-### **7. SDK**
+### **7. Frontend Development**
 
 ```bash
+# From root directory
+pnpm dev:frontend
+
+# Or navigate to frontend directory
+cd frontend
+pnpm dev
+```
+
+### **8. SDK**
+
+```bash
+# From root directory
+pnpm build:sdk
+
+# Or navigate to sdk directory
 cd sdk
 pnpm build
 ```
@@ -110,38 +132,83 @@ anchor test
 ### **Backend Tests**
 
 ```bash
-cd backend
+# From root directory
+pnpm test:backend
+
+# Or navigate to Backend directory
+cd Backend
+pnpm test
+```
+
+### **Frontend Tests**
+
+```bash
+# From root directory
+pnpm --filter storacha-frontend test
+
+# Or navigate to frontend directory
+cd frontend
 pnpm test
 ```
 
 ### **SDK Tests**
 
 ```bash
+# From root directory
+pnpm --filter storacha-sol-sdk test
+
+# Or navigate to sdk directory
 cd sdk
 pnpm test
 ```
 
 ## **Backend Database Migration Workflow**
 
-1. **Navigate to the Backend directory**
-
-   ```bash
-   cd Backend
-   ```
-
-2. **Generate migration files**
+1. **Generate migration files**
    Creates a migration script based on the differences between the current database schema and your updated schema definitions.
 
    ```bash
+   # From root directory
+   pnpm --filter storacha-solana-pay migrations-generate
+   
+   # Or navigate to Backend directory
+   cd Backend
    pnpm migrations-generate
    ```
 
-3. **Apply migrations to the database**
+2. **Apply migrations to the database**
    Runs the generated migration scripts to update the database schema.
 
    ```bash
+   # From root directory
+   pnpm --filter storacha-solana-pay migrations-apply
+   
+   # Or navigate to Backend directory
+   cd Backend
    pnpm migrations-apply
    ```
+
+## **Workspace Commands**
+
+The monorepo uses pnpm workspaces for efficient dependency management:
+
+```bash
+# Install all dependencies across workspaces
+pnpm install
+
+# Build all projects
+pnpm build:all
+
+# Clean all node_modules and dist folders
+pnpm clean
+
+# Run commands in specific workspaces
+pnpm --filter <package-name> <command>
+
+# Lint Solana programs
+pnpm lint:solana
+pnpm lint:fix:solana
+```
 
 ---
 
@@ -171,7 +238,3 @@ When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto
 - **Anchor Versioning:**
   Ensure your `anchor-lang` version in Cargo.toml matches the Anchor CLI version.
   You might need to tweak `[features]` in Anchor.toml if the need arises
-
-```
-
-```

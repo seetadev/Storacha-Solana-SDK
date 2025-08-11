@@ -88,3 +88,4 @@ public
 # Temporary folders
 tmp/
 temp/
+pnpm-lock.yaml

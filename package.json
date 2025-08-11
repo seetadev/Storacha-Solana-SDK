@@ -1,0 +1,27 @@
+{
+  "name": "storacha-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Storacha Solana Pay monorepo",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "install:all": "pnpm install",
+    "dev:backend": "pnpm --filter storacha-solana-pay dev",
+    "dev:frontend": "pnpm --filter storacha-frontend dev",
+    "build:sdk": "pnpm --filter storacha-sol-sdk build",
+    "build:frontend": "pnpm --filter storacha-frontend build",
+    "test:backend": "pnpm --filter storacha-solana-pay test",
+    "lint:solana": "pnpm --filter solana-programs lint",
+    "lint:fix:solana": "pnpm --filter solana-programs lint:fix",
+    "format:rust": "pnpm --filter solana-programs format:rust",
+    "check:rust": "pnpm --filter solana-programs check:rust",
+    "clean": "pnpm -r exec rm -rf node_modules dist",
+    "build:all": "pnpm --filter storacha-sol-sdk build && pnpm --filter storacha-frontend build"
+  },
+  "workspaces": [
+    "Backend",
+    "frontend", 
+    "sdk",
+    "solana-programs"
+  ]
+}
