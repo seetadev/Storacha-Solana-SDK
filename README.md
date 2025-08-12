@@ -153,6 +153,8 @@ Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.
 
 When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto-sol) to basically test that you can make a deposit. The backend server has to be running locally for this to work. Please ensure that is right.
 
+You can also the test the sdk locally without publishing it by cloning this [react-example](https://github.com/HarshS1611/Storacha-Solana-SDK-Example) to test the desposit. Follow the setup instructions to link the sdk with the project.
+
 ## Side Notes
 
 - **Program IDL:**
@@ -175,3 +177,4 @@ When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto
 ```
 
 ```
+
