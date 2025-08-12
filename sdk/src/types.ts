@@ -2,15 +2,6 @@ import { Address } from '@solana/kit';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { CID } from 'multiformats';
 
-export type FeeEstimationArgs = {
-  /** size of the file in bytes */
-  size: number;
-  /** duration in days to store this data */
-  durationDays: number;
-  /** rpc url for connecting to the Solana network */
-  rpcUrl?: string;
-};
-
 export interface ServerOptions {
   /** URL pointing to the backend (mostly Storacha's) */
   url?: string
@@ -78,10 +69,8 @@ export interface OnChainConfig {
 export interface OnChainDeposit {
   /** public key of the depositor */
   depositor: Address;
-  /** CID for the content paid for */
-  cid: CID;
-  /** size of the content (bytes) */
-  size: number;
+  /** file object containing metadata about the upload */
+  file: File;
   /** storage duration (days) */
   duration: number;
   /** amount deposited in lamports */

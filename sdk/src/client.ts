@@ -1,24 +1,38 @@
 import { PublicKey, Connection, Transaction } from '@solana/web3.js';
 import { createDepositTxn } from './payment';
 
+export enum Environment {
+  mainnet = 'mainnet-beta',
+  testnet = 'testnet',
+  devnet = 'devnet',
+}
+
+export function getRpcUrl(env: Environment): string {
+  switch (env) {
+    case Environment.mainnet:
+      return 'https://api.mainnet-beta.solana.com';
+    case Environment.testnet:
+      return 'https://api.testnet.solana.com';
+    case Environment.devnet:
+      return 'https://api.devnet.solana.com';
+    default:
+      throw new Error(`Unsupported environment: ${env}`);
+  }
+}
+
+
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
-  rpcUrl: string;
-  /** Server URL for backend API calls */
-  serverUrl: string;
+  environment: Environment;
 }
 
 export interface DepositParams {
   /** Wallet public key of the payer */
   payer: PublicKey;
-  /** Content Identifier (CID) of the file */
-  cid: string;
-  /** File size in bytes */
-  size: number;
+  /** File to be stored */
+  file: File;
   /** Duration in days to store the data */
   durationDays: number;
-  /** Deposit amount in SOL */
-  depositAmount: number;
 }
 
 /**
@@ -26,13 +40,9 @@ export interface DepositParams {
  */
 export class Client {
   private rpcUrl: string;
-  private serverUrl: string;
 
   constructor(options: ClientOptions) {
-    this.rpcUrl =
-      options.rpcUrl; // Default RPC
-    this.serverUrl =
-      options.serverUrl; // Default API
+    this.rpcUrl = getRpcUrl(options.environment);
   }
 
   /**
@@ -40,21 +50,17 @@ export class Client {
    */
   async createDeposit({
     payer,
-    cid,
-    size,
+    file,
     durationDays,
-    depositAmount,
   }: DepositParams): Promise<Transaction> {
+    console.log('Creating deposit transaction with enviroment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
     return await createDepositTxn({
-      cid,
-      size,
-      duration: durationDays,
+      file,
+      duration: durationDays * 86400,
       payer,
       connection,
-      depositAmount,
-      apiUrl: `${this.serverUrl}/api/solana/deposit`,
     });
   }
 }
