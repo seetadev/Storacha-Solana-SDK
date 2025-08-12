@@ -6,60 +6,58 @@ import {
   ensureConfigInitialized,
 } from "../utils/solana/index.js";
 
-export const createDepositTransaction = async (req: Request, res: Response) => {
-  try {
-    const {
-      publicKey: userPublicKey,
-      size,
-      cid,
-      duration,
-      depositAmount,
-    } = req.body;
+type DepositItem = {
+  depositAmount: number;
+  durationDays: number;
+  contentCID: string;
+  publicKey: string;
+  fileSize: number;
+};
 
-    if (!userPublicKey || !cid || !size || !duration) {
-      return res.status(400).json({ error: "Missing required parameters" });
-    }
+export const createDepositTransaction = async (payload: DepositItem) => {
+  const {
+    publicKey: userPublicKey,
+    contentCID,
+    durationDays,
+    fileSize,
+    depositAmount,
+  } = payload;
 
-    const userPubkey = new PublicKey(userPublicKey);
-    const sizeNum = Number(size);
-    const durationNum = Number(duration);
-
-    if (isNaN(sizeNum) || isNaN(durationNum)) {
-      return res.status(400).json({ error: "Invalid size or duration" });
-    }
-
-    await ensureConfigInitialized();
-    const depositIx = await createDepositInstruction(
-      userPubkey,
-      cid,
-      sizeNum,
-      durationNum,
-      Number(depositAmount),
-    );
-
-    const serializedInstructions = [
-      {
-        programId: depositIx.programId.toBase58(),
-        keys: depositIx.keys.map((key) => ({
-          pubkey: key.pubkey.toBase58(),
-          isSigner: key.isSigner,
-          isWritable: key.isWritable,
-        })),
-        data: depositIx.data.toString("base64"),
-      },
-    ];
-
-    return res.status(200).json({
-      instructions: serializedInstructions,
-      message: "Deposit instruction ready — user must sign",
-    });
-  } catch (err) {
-    console.error("Error creating deposit transaction:", err);
-    return res.status(500).json({
-      error: "Failed to create deposit transaction",
-      details: err instanceof Error ? err.message : String(err),
-    });
+  if (!userPublicKey || !contentCID || !fileSize || !durationDays) {
+    console.log("userpub keey", userPublicKey);
+    console.log("content CID", contentCID);
+    console.log("file size", fileSize);
+    console.log("durationDays", durationDays);
+    throw new Error("Missing required parameters");
   }
+
+  const userPubkey = new PublicKey(userPublicKey);
+  const sizeNum = Number(fileSize);
+  const durationNum = Number(durationDays);
+
+  if (isNaN(sizeNum) || isNaN(durationNum))
+    throw new Error("Invalid size or duration");
+
+  await ensureConfigInitialized();
+  const depositIx = await createDepositInstruction(
+    userPubkey,
+    contentCID,
+    sizeNum,
+    durationNum,
+    Number(depositAmount),
+  );
+
+  return [
+    {
+      programId: depositIx.programId.toBase58(),
+      keys: depositIx.keys.map((key) => ({
+        pubkey: key.pubkey.toBase58(),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable,
+      })),
+      data: depositIx.data.toString("base64"),
+    },
+  ];
 };
 
 export const initializeConfig = async (req: Request, res: Response) => {

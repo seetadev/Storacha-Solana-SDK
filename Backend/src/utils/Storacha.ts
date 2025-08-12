@@ -9,19 +9,14 @@ import { ADMIN_CONFIG } from "../config/config.js";
 /**
  * Initializes a Storacha client using user-provided key and proof.
  *
- * @param {string} key - The base64-encoded private key string.
- * @param {string} proofStr - The UCAN proof string.
  * @returns {Promise<Client.Client>} Initialized W3UP client
  */
-export async function initStorachaClient(
-  key: string,
-  proofStr: string
-): Promise<Client.Client> {
-  const principal = Signer.parse(key);
+export async function initStorachaClient(): Promise<Client.Client> {
+  const principal = Signer.parse(process.env.STORACHA_KEY!);
   const store = new StoreMemory();
   const client = await create({ principal, store });
 
-  const proof = await Proof.parse(proofStr);
+  const proof = await Proof.parse(process.env.STORACHA_PROOF!);
   const space = await client.addSpace(proof);
 
   await client.setCurrentSpace(space.did());

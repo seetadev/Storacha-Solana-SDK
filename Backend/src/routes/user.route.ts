@@ -7,14 +7,8 @@ export const userRouter = express.Router();
 
 userRouter.post(
   "/uploadFile",
-  upload.fields([
-    { name: "file", maxCount: 1 },
-    { name: "proof" },
-    { name: "storachaKey" },
-    { name: "publicKey" },
-    { name: "duration" },
-  ]),
-  userController.uploadFile
+  upload.fields([{ name: "file", maxCount: 1 }]),
+  userController.uploadFile,
 );
 userRouter.post("/createDelegation", userController.createUCANDelegation);
 userRouter.get("/getQuote", userController.GetQuoteForFileUpload);
