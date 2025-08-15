@@ -7,7 +7,7 @@
   --purple-bg: rgba(153, 69, 255, 0.1);
   --purple-glow: rgba(153, 69, 255, 0.3);
 
-  --bg-primary: #0a0a0a;
+  --bg-primary: #F0F0F0;
   --bg-secondary: #141414;
   --bg-card: #1a1a1a;
   --bg-accent: #262626;
@@ -89,19 +89,6 @@ p {
   margin-bottom: 1rem;
   font-size: 1.125rem;
   line-height: 1.7;
-}
-
-button {
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: inherit;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 button:hover:not(:disabled) {
