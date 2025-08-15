@@ -47,18 +47,6 @@ body {
   color: var(--text-primary);
 }
 
-a {
-  font-weight: 500;
-  color: var(--accent-color);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-a:hover {
-  color: var(--light-purple);
-  opacity: 0.8;
-}
-
 h1 {
   font-size: 3.5rem;
   font-weight: 800;

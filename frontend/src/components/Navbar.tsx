@@ -11,13 +11,15 @@ const Navbar: React.FC = () => {
   const { handleWalletConnected, handleWalletDisconnected } = useWallet();
 
   return (
-    <nav className="w-full flex flex-row gap-8 py-8 items-center justify-between p-4">
+    <nav className="w-full flex flex-row gap-8 py-8 px-8 items-center justify-between p-4 text-purple-600">
       <div className="flex items-center gap-2">
-        <img
-          src="/Storacha.png"
-          alt="Storacha Logo"
-          style={{ width: "164px" }}
-        />
+        <Link href="/">
+          <img
+            src="/Storacha.png"
+            alt="Storacha Logo"
+            style={{ width: "164px" }}
+          />
+        </Link>
       </div>
 
       <div>
@@ -34,6 +36,7 @@ const Navbar: React.FC = () => {
         <WalletConnection
           onWalletConnected={handleWalletConnected}
           onWalletDisconnected={handleWalletDisconnected}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg"
         />
       </div>
     </nav>

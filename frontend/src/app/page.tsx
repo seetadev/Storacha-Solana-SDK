@@ -15,7 +15,8 @@ import { SiFarcaster } from "react-icons/si";
 import { FaBluesky } from "react-icons/fa6";
 
 const Home: React.FC = () => {
-  const { handleWalletConnected, handleWalletDisconnected } = useWallet();
+  const { handleWalletConnected, handleWalletDisconnected, walletConnected } =
+    useWallet();
 
   return (
     <div>
@@ -29,18 +30,28 @@ const Home: React.FC = () => {
             Go to User Dashboard
           </div>
           <div className="text-sm text-gray-500 mb-5">
-            First, connect your Solana wallet
+            {walletConnected
+              ? "File management and delegation"
+              : "First, connect your Solana wallet"}
           </div>
 
-          <WalletConnection
-            onWalletConnected={handleWalletConnected}
-            onWalletDisconnected={handleWalletDisconnected}
-            className="w-full bg-purple-600 text-white text-center py-2 rounded-lg "
-          />
+          {walletConnected ? (
+            <div className="w-full bg-purple-600 text-white text-center py-2 rounded-lg">
+              <Link className="text-white" href="/user">
+                Go to User Dashboard
+              </Link>
+            </div>
+          ) : (
+            <WalletConnection
+              onWalletConnected={handleWalletConnected}
+              onWalletDisconnected={handleWalletDisconnected}
+              className="w-full bg-purple-600 text-white text-center py-2 rounded-lg "
+            />
+          )}
         </div>
       </div>
 
-      <footer className="bg-white border-purple-600 border-2 rounded-4xl p-8 mt-16">
+      <footer className="border-purple-600 border-2 rounded-4xl p-8 mt-16">
         <div className="flex justify-between items-start mb-12">
           <button className="bg-purple-600 text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-purple-700 transition-colors">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
