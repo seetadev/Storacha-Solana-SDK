@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
-import { adminApi } from "../services/api";
+import { adminApi } from "../../services/api";
 
 const AdminDashboard: React.FC = () => {
   const [apiKey, setApiKey] = useState("");
@@ -101,7 +103,6 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* API Key Section */}
       <div className="card">
         <div className="card-header">
           <div>
@@ -137,7 +138,6 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="form-row">
-        {/* Update Rate Section */}
         <div className="card">
           <div className="card-header">
             <div>
@@ -192,7 +192,6 @@ const AdminDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Update Minimum Duration Section */}
         <div className="card">
           <div className="card-header">
             <div>
@@ -240,43 +239,6 @@ const AdminDashboard: React.FC = () => {
               <pre>{JSON.stringify(durationResult, null, 2)}</pre>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* System Information */}
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h3 className="mb-1">System Information</h3>
-            <p className="mb-0 text-secondary">
-              Current configuration overview
-            </p>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1rem",
-            marginTop: "1rem",
-          }}
-        >
-          <div className="info">
-            <strong>📊 Current Rate:</strong>
-            <br />
-            {newRate || "Not set"} SOL per byte per day
-          </div>
-          <div className="info">
-            <strong>⏱️ Minimum Duration:</strong>
-            <br />
-            {newMinDuration || "Not set"} days
-          </div>
-          <div className="info">
-            <strong>🔐 Authentication:</strong>
-            <br />
-            {apiKey ? "Configured" : "Required"}
-          </div>
         </div>
       </div>
     </div>

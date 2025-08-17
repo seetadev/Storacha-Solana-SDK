@@ -1,10 +1,12 @@
+"use client";
+
 import React, { useState } from "react";
-import { userApi } from "../services/api";
-import { useWallet } from "../contexts/WalletContext";
+import { userApi } from "../../services/api";
+import { useWallet } from "../../contexts/WalletContext";
 import {
   ConvertTimeToSeconds,
   DAY_TIME_IN_SECONDS,
-} from "../utils/helperFunctions";
+} from "../../utils/helperFunctions";
 
 const UserDashboard: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -81,7 +83,7 @@ const UserDashboard: React.FC = () => {
     setLoading("delegation");
     setError("");
     setDelegationResult(null);
-    //bafybeigqsh7skobaa456gmpuzd7zp7gxgwsvkrcbzr424pxntdghclhvwe
+
     try {
       const startTimeSeconds = ConvertTimeToSeconds(startTime);
       const endTimeSeconds = ConvertTimeToSeconds(endTime);
@@ -135,7 +137,7 @@ const UserDashboard: React.FC = () => {
   const fillQuoteFromFile = () => {
     if (file) {
       setSizeInBytes(file.size.toString());
-      setDurationInUnits("30"); // Default 30 days
+      setDurationInUnits("30");
     }
   };
 
@@ -179,7 +181,6 @@ const UserDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* File Upload Section */}
       <div className="card">
         <div className="card-header">
           <div className="card-icon">📁</div>
@@ -335,7 +336,6 @@ const UserDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Get Quote Section */}
       <div className="card">
         <div className="card-header">
           <div>
@@ -423,7 +423,6 @@ const UserDashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Create Delegation Section */}
       <div className="card">
         <div className="card-header">
           <div>
@@ -447,9 +446,9 @@ const UserDashboard: React.FC = () => {
           }}
         >
           <div className="form-group">
-            <label htmlFor="proof">Recipient DID:</label>
+            <label htmlFor="recipientDid">Recipient DID:</label>
             <textarea
-              id="proof"
+              id="recipientDid"
               value={recipientDid}
               onChange={(e) => setRecipientDid(e.target.value)}
               placeholder="Enter DID of the recipient"
@@ -458,9 +457,9 @@ const UserDashboard: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="key">Private Key (Base64 Encoded):</label>
+            <label htmlFor="delegationKey">Private Key (Base64 Encoded):</label>
             <textarea
-              id="key"
+              id="delegationKey"
               value={key}
               onChange={(e) => setKey(e.target.value)}
               placeholder="Enter your base64 encoded private key (e.g., MgCZT5vrdXIm...)"
@@ -473,9 +472,9 @@ const UserDashboard: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="proof">UCAN Proof String:</label>
+            <label htmlFor="delegationProof">UCAN Proof String:</label>
             <textarea
-              id="proof"
+              id="delegationProof"
               value={proof}
               onChange={(e) => setProof(e.target.value)}
               placeholder="Enter your UCAN proof string"

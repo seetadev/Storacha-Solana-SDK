@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { PublicKey, Connection, clusterApiUrl } from "@solana/web3.js";
 
@@ -20,6 +22,7 @@ declare global {
 }
 
 interface WalletConnectionProps {
+  className?: string;
   onWalletConnected?: (publicKey: string, balance?: number) => void;
   onWalletDisconnected?: () => void;
 }
@@ -49,7 +52,6 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
     if (provider) {
       setWallet(provider);
 
-      // Check if already connected
       if (provider.publicKey) {
         setConnected(true);
         const pubKey = provider.publicKey.toString();
@@ -81,14 +83,14 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
         provider.removeListener("disconnect", handleDisconnect);
       };
     }
-  }, [onWalletConnected, onWalletDisconnected]);
+  }, []);
 
   const fetchBalance = async (
     pubKey: PublicKey
   ): Promise<number | undefined> => {
     try {
       const lamports = await connection.getBalance(pubKey);
-      const solBalance = lamports / 1e9; // Convert lamports to SOL
+      const solBalance = lamports / 1e9;
       return solBalance;
     } catch (error) {
       console.error("Failed to fetch balance:", error);
@@ -103,7 +105,13 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
     }
 
     try {
-      await wallet.connect();
+      const response = await wallet.connect();
+      if (response.publicKey) {
+        setConnected(true);
+        const pubKey = response.publicKey.toString();
+        const balance = await fetchBalance(response.publicKey);
+        onWalletConnected?.(pubKey, balance);
+      }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
     }
