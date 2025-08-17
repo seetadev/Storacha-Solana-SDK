@@ -30,6 +30,7 @@ interface WalletConnectionProps {
 const WalletConnection: React.FC<WalletConnectionProps> = ({
   onWalletConnected,
   onWalletDisconnected,
+  className,
 }) => {
   const [wallet, setWallet] = useState<SolanaWallet | null>(null);
   const [connected, setConnected] = useState(false);
@@ -129,7 +130,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
 
   if (!wallet) {
     return (
-      <button onClick={connectWallet} className="button-secondary">
+      <button onClick={connectWallet} className={className}>
         Install Phantom
       </button>
     );
@@ -138,11 +139,13 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
   return (
     <div>
       {connected ? (
-        <button onClick={disconnectWallet} className="button-secondary">
+        <button onClick={disconnectWallet} className={className}>
           Disconnect
         </button>
       ) : (
-        <button onClick={connectWallet}>Connect Wallet</button>
+        <button onClick={connectWallet} className={className}>
+          Connect Wallet
+        </button>
       )}
     </div>
   );

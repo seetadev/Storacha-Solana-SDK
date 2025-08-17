@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <WalletProvider>
           <Navbar />
-          <div className="container">{children}</div>
+          <div>{children}</div>
         </WalletProvider>
       </body>
     </html>
