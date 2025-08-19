@@ -4,7 +4,6 @@ import { StoreMemory } from "@storacha/client/stores/memory";
 import * as Proof from "@storacha/client/proof";
 import { Signer } from "@storacha/client/principal/ed25519";
 import { QuoteInput } from "../types/StorachaTypes.js";
-import { ADMIN_CONFIG } from "../config/config.js";
 import { db } from "../db/db.js";
 import { configTable } from "../db/schema.js";
 
