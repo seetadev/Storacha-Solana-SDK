@@ -12,21 +12,18 @@ const Home: React.FC = () => {
     useWallet();
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-12">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-16">
-          <div className="text-black font-semibold text-4xl sm:text-5xl lg:text-6xl">
-            Storacha Solana SDK
-          </div>
-
-          <Card className="w-full lg:w-1/2">
-            <div className="text-lg text-black font-bold">
-              Go to User Dashboard
+    <div>
+      {/* Hero Section */}
+      <section className="landing-hero h-screen px-4 sm:px-6 lg:px-8 py-16">
+        <div className="relative z-10 w-full  max-w-3xl mx-auto">
+          <Card className="w-full h-full">
+            <div className="text-xl text-black font-semibold mb-1">
+              Storacha Solana SDK
             </div>
             <div className="text-sm text-gray-500 mb-5">
               {walletConnected
                 ? "File management and delegation"
-                : "First, connect your Solana wallet"}
+                : "To begin, connect your Solana wallet"}
             </div>
 
             {walletConnected ? (
@@ -44,9 +41,7 @@ const Home: React.FC = () => {
             )}
           </Card>
         </div>
-
-        <SocialFooter />
-      </div>
+      </section>
     </div>
   );
 };

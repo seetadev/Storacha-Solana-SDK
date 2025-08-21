@@ -46,3 +46,16 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
+
+/* Landing hero background with gradient and optional demo image overlay */
+.landing-hero {
+  position: relative;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url('/landing-bg-demo.png');
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}

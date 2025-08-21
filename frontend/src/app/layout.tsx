@@ -30,7 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <WalletProvider>
-          <Navbar />
+          {/* <Navbar /> */}
           <div>{children}</div>
         </WalletProvider>
       </body>
