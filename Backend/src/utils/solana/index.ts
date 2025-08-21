@@ -3,7 +3,6 @@ import {
   Keypair,
   Transaction,
   TransactionInstruction,
-  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import fs from "fs/promises";
 import path from "path";
@@ -11,6 +10,7 @@ import { sha256 } from "js-sha256";
 import { fileURLToPath } from "url";
 import { Idl, Program, AnchorProvider, web3 } from "@coral-xyz/anchor";
 import BN from "bn.js";
+import { SolanaPrograms as StorachaSolProgram } from "./program.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,7 +100,7 @@ export async function createInitializeConfigInstruction(
   };
 
   const provider = new AnchorProvider(connection, wallet as any, {});
-  const program = new Program(idl as Idl, provider);
+  const program = new Program(idl as StorachaSolProgram, provider);
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
@@ -192,41 +192,46 @@ export async function createDepositInstruction(
   cid: string,
   size: number,
   duration: number,
-  depositAmountSol: number,
+  depositAmountLamports: number,
 ): Promise<TransactionInstruction> {
   const { idl, programId } = await getIdlAndProgramId();
-
   const dummyWallet = {
     publicKey: web3.Keypair.generate().publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
   };
-
   const provider = new AnchorProvider(connection, dummyWallet as any, {});
   const program = new Program(idl as Idl, provider);
-
-  const depositAmountLamports = Math.floor(depositAmountSol * LAMPORTS_PER_SOL);
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
   );
-
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from("escrow")],
     programId,
   );
 
-  // each seed passed to the `findProgramAddressSync` method must be <= 32 bytes
-  // CIDs can be greater than 32 bytes, and when that happens, deriving the program address fails
   const cidHash = Buffer.from(sha256.digest(cid));
   const [depositPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
     programId,
   );
 
+  const durationNum = Number(duration);
+  if (!Number.isFinite(durationNum)) {
+    throw new Error("Invalid duration");
+  }
+
+  const depositAmountLamportsBN = new BN(depositAmountLamports.toString());
+
   return await program.methods
-    .createDeposit(cid, new BN(size), duration, new BN(depositAmountLamports))
+    .createDeposit(
+      cid,
+      new BN(size.toString()),
+      new BN(durationNum.toString()),
+      depositAmountLamportsBN,
+    )
     .accounts({
       deposit: depositPda,
       escrowVault: escrowVaultPda,

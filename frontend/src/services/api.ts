@@ -1,9 +1,8 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 
-// User API calls
 export const userApi = {
   uploadFile: async (
     formData: FormData,
@@ -52,7 +51,6 @@ export const userApi = {
   },
 };
 
-// Admin API calls
 export const adminApi = {
   updateRate: async (rate: number, apiKey: string) => {
     const response = await axios.post(
