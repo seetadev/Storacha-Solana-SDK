@@ -5,7 +5,7 @@ import {
 } from "../utils/Storacha.js";
 import { QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
-import * as DID from "@ipld/dag-ucan/did";
+import { DID } from "@ucanto/core";
 import { Link } from "@ucanto/core/schema";
 import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
@@ -84,7 +84,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     };
     const computedCID = await computeCID(fileMap);
 
-    const QuoteObject: QuoteOutput = getQuoteForFileUpload({
+    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: durationInSeconds,
       sizeInBytes: file.size,
     });
@@ -124,7 +124,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     if (cid.toString() !== computedCID) {
       throw new Error(
-        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
+        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`
       );
     }
 
@@ -162,7 +162,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
-    const QuoteObject: QuoteOutput = getQuoteForFileUpload({
+    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
     });
