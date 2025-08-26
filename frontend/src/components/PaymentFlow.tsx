@@ -48,7 +48,7 @@ const PaymentFlow: React.FC<PaymentFlowProps> = ({ cost, onPaymentComplete }) =>
             Confirm Payment
           </h3>
           <p className="text-gray-600 mb-6">
-            You're about to pay for secure blockchain storage
+            You&apos;re about to pay for secure blockchain storage
           </p>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-6">

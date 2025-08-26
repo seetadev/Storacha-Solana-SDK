@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 interface FileUploadProps {
   onFilesSelected: (files: File[]) => void;
   maxFiles?: number;
-  maxSize?: number; // in bytes
+  maxSize?: number; // bytes
   acceptedTypes?: string[];
 }
 
@@ -17,41 +17,49 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onFilesSelected,
   maxFiles = 10,
   maxSize = 100 * 1024 * 1024, // 100MB
-  acceptedTypes = []
+  acceptedTypes = [],
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
-    if (rejectedFiles.length > 0) {
-      rejectedFiles.forEach(({ file, errors }) => {
-        errors.forEach((error: any) => {
-          if (error.code === 'file-too-large') {
-            toast.error(`File ${file.name} is too large. Max size: ${maxSize / (1024 * 1024)}MB`);
-          } else if (error.code === 'file-invalid-type') {
-            toast.error(`File ${file.name} has invalid type`);
-          } else {
-            toast.error(`Error with file ${file.name}: ${error.message}`);
-          }
+  const onDrop = useCallback(
+    (acceptedFiles: File[], rejectedFiles: any[]) => {
+      if (rejectedFiles.length > 0) {
+        rejectedFiles.forEach(({ file, errors }) => {
+          errors.forEach((error: any) => {
+            if (error.code === 'file-too-large') {
+              toast.error(
+                `File ${file.name} is too large. Max size: ${maxSize / (1024 * 1024)}MB`
+              );
+            } else if (error.code === 'file-invalid-type') {
+              toast.error(`File ${file.name} has invalid type`);
+            } else {
+              toast.error(`Error with file ${file.name}: ${error.message}`);
+            }
+          });
         });
-      });
-    }
+      }
 
-    if (acceptedFiles.length > 0) {
-      const newFiles = [...selectedFiles, ...acceptedFiles].slice(0, maxFiles);
-      setSelectedFiles(newFiles);
-      onFilesSelected(newFiles);
-      toast.success(`${acceptedFiles.length} file(s) added successfully!`);
-    }
-  }, [selectedFiles, onFilesSelected, maxFiles, maxSize]);
+      if (acceptedFiles.length > 0) {
+        const newFiles = [...selectedFiles, ...acceptedFiles].slice(0, maxFiles);
+        setSelectedFiles(newFiles);
+        onFilesSelected(newFiles);
+        toast.success(`${acceptedFiles.length} file(s) added successfully!`);
+      }
+    },
+    [selectedFiles, onFilesSelected, maxFiles, maxSize]
+  );
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
     maxFiles,
     maxSize,
-    accept: acceptedTypes.length > 0 ? acceptedTypes.reduce((acc, type) => {
-      acc[type] = [];
-      return acc;
-    }, {} as Record<string, string[]>) : undefined
+    accept:
+      acceptedTypes.length > 0
+        ? acceptedTypes.reduce((acc, type) => {
+            acc[type] = [];
+            return acc;
+          }, {} as Record<string, string[]>)
+        : undefined,
   });
 
   const formatFileSize = (bytes: number): string => {
@@ -64,8 +72,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Drop Zone */}
-      <motion.div
+      {/* Drop Zone wrapper */}
+      <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
           isDragActive && !isDragReject
@@ -74,11 +82,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
             ? 'border-red-400 bg-red-50'
             : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50'
         }`}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
       >
         <input {...getInputProps()} />
-        
+
+        {/* Animated Icon */}
         <motion.div
           animate={{
             y: isDragActive ? -10 : 0,
@@ -92,6 +99,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           )}
         </motion.div>
 
+        {/* Dropzone text */}
         <div>
           {isDragActive ? (
             isDragReject ? (
@@ -99,9 +107,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <p className="text-lg font-semibold text-red-600 mb-2">
                   Some files are not supported
                 </p>
-                <p className="text-sm text-red-500">
-                  Please check file types and sizes
-                </p>
+                <p className="text-sm text-red-500">Please check file types and sizes</p>
               </>
             ) : (
               <>
@@ -122,7 +128,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 Drag and drop files here, or click to browse
               </p>
               <div className="text-xs text-gray-400 space-y-1">
-                <p>Maximum {maxFiles} files • Max size per file: {formatFileSize(maxSize)}</p>
+                <p>
+                  Maximum {maxFiles} files • Max size per file: {formatFileSize(maxSize)}
+                </p>
                 {acceptedTypes.length > 0 && (
                   <p>Accepted types: {acceptedTypes.join(', ')}</p>
                 )}
@@ -130,7 +138,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </>
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Selected Files Preview */}
       <AnimatePresence>
@@ -143,11 +151,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
           >
             <div className="flex items-center gap-2 text-green-600">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">
-                {selectedFiles.length} file(s) selected
-              </span>
+              <span className="font-medium">{selectedFiles.length} file(s) selected</span>
             </div>
-            
+
             <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 rounded-lg p-3">
               {selectedFiles.map((file, index) => (
                 <motion.div

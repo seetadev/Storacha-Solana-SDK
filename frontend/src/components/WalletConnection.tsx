@@ -9,6 +9,8 @@ import CustomWalletModal from './CustomWalletModal';
 interface WalletConnectionProps {
   className?: string;
   showDisconnect?: boolean;
+  onWalletConnected?:  () => void
+  onWalletDisconnected?: () => void
 }
 
 const WalletConnection: React.FC<WalletConnectionProps> = ({
