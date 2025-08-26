@@ -1,38 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { WalletProvider } from "../contexts/WalletContext";
-import Navbar from "../components/Navbar";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import ClientProviders from '@/components/ClientProviders';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Storacha × Solana SDK",
-  description: "Decentralized Storage Testing Platform",
+  title: 'Storacha Solana SDK - Decentralized File Storage',
+  description: 'Secure, decentralized file storage platform for investors built on Solana blockchain',
+  keywords: 'solana, blockchain, file storage, decentralized, web3, investors',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <WalletProvider>
-          <Navbar />
-          <div>{children}</div>
-        </WalletProvider>
+      <body className={inter.className}>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );
