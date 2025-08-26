@@ -1,551 +1,361 @@
 @import "tailwindcss";
 
-:root {
-  --primary-purple: #9945FF;
-  --light-purple: #B85EFF;
-  --dark-purple: #7928FF;
-  --purple-bg: rgba(153, 69, 255, 0.1);
-  --purple-glow: rgba(153, 69, 255, 0.3);
-
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #141414;
-  --bg-card: #1a1a1a;
-  --bg-accent: #262626;
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-muted: #737373;
-  --border-color: #333333;
-  --accent-color: var(--primary-purple);
-  --success-color: #10b981;
-  --error-color: #ef4444;
-  --warning-color: #f59e0b;
-
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  line-height: 1.6;
-  font-weight: 400;
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  min-height: 100vh;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+/* Custom Wallet Modal Styling */
+.wallet-adapter-modal-wrapper {
+  background: #fff !important; /* Purple background */
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 
-* {
-  box-sizing: border-box;
+.wallet-adapter-modal {
+  background: linear-gradient(145deg, #1f2937, #374151) !important; /* Dark gradient */
+  border-radius: 24px !important;
+  border: 2px solid rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(139, 92, 246, 0.3) !important;
+  max-width: 420px !important;
+  overflow: hidden !important;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+/* Modal Header */
+.wallet-adapter-modal-title {
+  color: #ffffff !important;
+  height: fit-content;
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  margin-bottom: 0.5rem !important;
+  background: linear-gradient(135deg, #8B5CF6, #EC4899) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
-a {
-  font-weight: 500;
-  color: var(--accent-color);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-a:hover {
-  color: var(--light-purple);
-  opacity: 0.8;
-}
-
-h1 {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: var(--accent-color);
-  line-height: 1.3;
-}
-
-p {
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  font-size: 1.125rem;
-  line-height: 1.7;
-}
-
-button {
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: inherit;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-button:hover:not(:disabled) {
-  background: var(--bg-accent);
-  color: var(--text-primary);
-  border-color: var(--accent-color);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-button:active:not(:disabled) {
-  background: var(--bg-secondary);
-  transform: translateY(0);
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.button-secondary {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
-
-.button-secondary:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: var(--accent-color);
-}
-
-.button-primary {
-  background: linear-gradient(135deg, var(--primary-purple), var(--dark-purple));
-  border: none;
-  color: white;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.button-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--light-purple), var(--primary-purple));
-  box-shadow: 0 12px 30px var(--purple-glow);
-  transform: translateY(-3px);
-}
-
-.button-success {
-  background: linear-gradient(135deg, var(--success-color), #0fa968);
-  border: none;
-  color: white;
-  font-weight: 700;
-}
-
-.button-success:hover:not(:disabled) {
-  box-shadow: 0 8px 25px rgba(20, 241, 149, 0.4);
-  transform: translateY(-2px);
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  min-height: 100vh;
-}
-
-.navbar {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 1rem 2rem;
-  margin-bottom: 2rem;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.navbar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.navbar li {
-  position: relative;
-}
-
-.navbar a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0;
-  transition: all 0.3s ease;
-  font-weight: 500;
+/* Add subtitle */
+.wallet-adapter-modal-title::after {
+  content: "Select your preferred Solana wallet";
   display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7);
+  background: none;
 }
 
-.navbar a:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border: none;
+/* Modal List Container */
+.wallet-adapter-modal-list {
+  margin: 1.5rem 0 !important;
+  padding: 0 1.5rem !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
 }
 
-.navbar a.active {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  box-shadow: none;
+/* Individual Wallet Items */
+.wallet-adapter-modal-list li {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(139, 92, 246, 0.2) !important;
+  border-radius: 16px !important;
+  margin: 12px 0 !important;
+  padding: 16px 20px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(10px) !important;
 }
 
-.navbar-brand {
-  font-size: 1.5rem;
+.wallet-adapter-modal-list li:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.1)) !important;
+  border: 1px solid rgba(139, 92, 246, 0.5) !important;
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Wallet Button Styling */
+.wallet-adapter-modal-list li button {
+  width: 100% !important;
+  text-align: left !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+}
+
+.wallet-adapter-modal-list li button img {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) !important;
+}
+
+/* Detected Badge Styling */
+.wallet-adapter-modal-list li button::after {
+  content: "Detected";
+  margin-left: auto;
+  background: linear-gradient(135deg, #10B981, #34D399) !important;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-right: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 2rem;
+/* Close Button */
+.wallet-adapter-modal-button-close {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: all 0.2s ease !important;
 }
 
-.card::before {
+.wallet-adapter-modal-button-close:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #EF4444 !important;
+  transform: scale(1.1) !important;
+}
+
+/* Scrollbar Styling for Modal */
+.wallet-adapter-modal-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wallet-adapter-modal-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.wallet-adapter-modal-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+  border-radius: 3px;
+}
+
+/* Animation for modal appearance */
+.wallet-adapter-modal {
+  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .wallet-adapter-modal {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+  }
+  
+  .wallet-adapter-modal-list {
+    padding: 0 1rem !important;
+  }
+}
+
+/* Add glassmorphism effect */
+.wallet-adapter-modal::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary-purple), var(--light-purple));
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
 }
 
-.card:hover {
-  background: var(--bg-accent);
-  border-color: var(--accent-color);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+/* More Options Button Styling */
+.wallet-adapter-modal .wallet-adapter-modal-list button[data-testid="wallet-adapter-modal-collapse"] {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05)) !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  color: #8B5CF6 !important;
+  justify-content: center !important;
+  padding: 12px !important;
+  margin-top: 8px !important;
 }
 
-.card:hover::before {
-  opacity: 1;
+.wallet-adapter-modal .wallet-adapter-modal-list button[data-testid="wallet-adapter-modal-collapse"]:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.1)) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+
+/* Purple gradient backgrounds */
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #7C3AED 100%);
 }
 
-.card-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--purple-bg), rgba(153, 69, 255, 0.05));
-  border: 1px solid rgba(153, 69, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  color: var(--accent-color);
-  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.1);
+.bg-gradient-purple-light {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%);
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
+/* Wallet adapter custom styles */
+.wallet-adapter-button {
+  background: linear-gradient(135deg, #8B5CF6, #A855F7) !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  transition: all 0.2s ease !important;
 }
 
-.DeadlineContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+.wallet-adapter-button:hover {
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3) !important;
 }
 
-.DeadlineContainer > * {
-  width: 48%;
+.wallet-adapter-modal-wrapper {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px);
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.95rem;
+.wallet-adapter-modal {
+  background: white !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background-color: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-family: inherit;
-  transition: border-color 0.3s ease;
-  resize: vertical;
+.wallet-adapter-modal-title {
+  color: #1f2937 !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  background-color: var(--bg-card);
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.7;
+.wallet-adapter-modal-list li {
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  margin: 8px 0 !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid transparent !important;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+.wallet-adapter-modal-list li:hover {
+  background: linear-gradient(135deg, #f3e8ff, #e9d5ff) !important;
+  border: 1px solid #8B5CF6 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15) !important;
 }
 
-.file-input-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 100%;
+.wallet-adapter-modal-list li button {
+  width: 100% !important;
+  text-align: left !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  font-weight: 500 !important;
 }
 
-.file-input {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
+.wallet-adapter-modal-list li button img {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
 }
 
-.file-input-label {
-  display: block;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--bg-card);
+/* Custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 
-.file-input-label:hover {
-  border-color: var(--accent-color);
-  background: var(--bg-secondary);
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
-.file-input-label.has-file {
-  border-color: var(--accent-color);
-  background: var(--bg-secondary);
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8), 0 0 60px rgba(168, 85, 247, 0.4); }
 }
 
-.error {
-  color: var(--error-color);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
 }
 
-.success {
-  color: var(--success-color);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.warning {
-  color: var(--warning-color);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-.info {
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  font-weight: 500;
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8B5CF6, #A855F7);
+  border-radius: 4px;
 }
 
-.result-container {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-top: 1rem;
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
 }
 
-.result-container pre {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  padding: 1rem;
-  border-radius: 8px;
-  overflow-x: auto;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  margin: 0;
-  border: 1px solid var(--border-color);
+/* Loading animations */
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
 }
 
-.loading {
-  position: relative;
-  overflow: hidden;
+.loading-dots div {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: loading-bounce 1.4s infinite ease-in-out both;
 }
 
-.loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(99, 102, 241, 0.1),
-    transparent
-  );
-  animation: loading 1.5s infinite;
-}
+.loading-dots div:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots div:nth-child(2) { animation-delay: -0.16s; }
 
-@keyframes loading {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
+@keyframes loading-bounce {
+  0%, 80%, 100% { 
+    transform: scale(0);
+  } 40% { 
+    transform: scale(1);
   }
 }
 
-.text-center {
-  text-align: center;
+/* File upload drag states */
+.drag-over {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+  border-color: #8B5CF6;
+  transform: scale(1.02);
 }
 
-.text-accent {
-  color: var(--accent-color);
-}
-
-.text-success {
-  color: var(--success-color);
-}
-
-.text-error {
-  color: var(--error-color);
-}
-
-.text-secondary {
-  color: var(--text-secondary);
-}
-
-.mb-0 {
-  margin-bottom: 0;
-}
-.mb-1 {
-  margin-bottom: 0.5rem;
-}
-.mb-2 {
-  margin-bottom: 1rem;
-}
-.mb-3 {
-  margin-bottom: 1.5rem;
-}
-.mb-4 {
-  margin-bottom: 2rem;
-}
-
-.mt-0 {
-  margin-top: 0;
-}
-.mt-1 {
-  margin-top: 0.5rem;
-}
-.mt-2 {
-  margin-top: 1rem;
-}
-.mt-3 {
-  margin-top: 1.5rem;
-}
-.mt-4 {
-  margin-top: 2rem;
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    padding: 1rem;
-  }
-
-  .navbar ul {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  h1 {
-    font-size: 2rem;
-  }
-
-  .card {
-    padding: 1.5rem;
-  }
-
-  .DeadlineContainer {
-    flex-direction: column;
-  }
-
-  .DeadlineContainer > * {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.75rem;
-  }
-
-  .card {
-    padding: 1rem;
-  }
-
-  button {
-    width: 100%;
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .wallet-adapter-modal {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
   }
 }

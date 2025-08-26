@@ -5,6 +5,7 @@ import {
   createInitializeConfigInstruction,
   ensureConfigInitialized,
 } from "../utils/solana/index.js";
+import { getAdminDataForSolana } from "../utils/Storacha.js";
 
 type DepositItem = {
   depositAmount: number;
@@ -44,7 +45,7 @@ export const createDepositTransaction = async (payload: DepositItem) => {
     contentCID,
     sizeNum,
     durationNum,
-    Number(depositAmount),
+    Number(depositAmount)
   );
 
   return [
@@ -68,12 +69,13 @@ export const initializeConfig = async (req: Request, res: Response) => {
     }
 
     const adminKey = new PublicKey(adminPubkey);
+    const solanaData = await getAdminDataForSolana();
     // For testing, adminPubkey is the wallet address (you sign from frontend)
     const initIx = await createInitializeConfigInstruction(
       adminKey,
-      1000,
-      1,
-      adminKey,
+      solanaData?.RATE_PER_BYTE_PER_UNIT || 1000,
+      solanaData?.MINIMUM_DURATION_UNIT || 30,
+      adminKey
     );
 
     // Serialize instruction to send to frontend
