@@ -73,7 +73,7 @@ export const initializeConfig = async (req: Request, res: Response) => {
     // For testing, adminPubkey is the wallet address (you sign from frontend)
     const initIx = await createInitializeConfigInstruction(
       adminKey,
-      solanaData?.RATE_PER_BYTE_PER_UNIT || 1,
+      solanaData?.RATE_PER_BYTE_PER_UNIT || 1000,
       solanaData?.MINIMUM_DURATION_UNIT || 30,
       adminKey
     );
