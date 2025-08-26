@@ -238,7 +238,7 @@ const Home: React.FC = () => {
             <span className="text-xl font-semibold">Storacha</span>
           </div>
           <p className="text-white/60 text-sm">
-            © 2025 Storacha. Decentralized file storage for the next generation.
+            © 2025 PLDG | Storacha
           </p>
         </div>
       </footer>

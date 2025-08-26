@@ -86,6 +86,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
           </div>
         )}
       </div>
+
     );
   }
 
@@ -104,6 +105,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
         onClose={() => setShowModal(false)}
       />
     </>
+
   );
 };
 

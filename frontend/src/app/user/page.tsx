@@ -32,6 +32,7 @@ import { uploadService, UploadResult } from '@/services/api';
 
 const UploadPage: React.FC = () => {
   const router = useRouter();
+      
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
   const { publicKey, signTransaction } = useSolanaWallet();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -570,3 +571,4 @@ const UploadPage: React.FC = () => {
 };
 
 export default UploadPage;
+

@@ -24,6 +24,9 @@
         "react-dom": "19.1.0",
         "react-dropzone": "^14.3.8",
         "react-hot-toast": "^2.6.0",
+        "@solana/web3.js": "^1.98.2",
+        "axios": "^1.6.2",
+        "next": "15.4.6",
         "react-icons": "^5.5.0"
     },
     "devDependencies": {
