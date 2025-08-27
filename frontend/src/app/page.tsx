@@ -13,37 +13,37 @@ const Home: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { icon: Shield, title: "Connect Wallet", description: "Secure connection to your Solana wallet" },
-    { icon: FileText, title: "Select Files", description: "Choose files to store on blockchain" },
-    { icon: Zap, title: "Pay & Upload", description: "Fast, secure transactions on Solana" },
-    { icon: Globe, title: "Access Anywhere", description: "Decentralized storage, global access" }
+    { icon: Shield, title: "Connect Wallet", description: "Securely connect your Solana wallet" },
+    { icon: FileText, title: "Upload Files", description: "Upload files for decentralized storage" },
+    { icon: Zap, title: "Pay Per Upload", description: "Pay per file upload with native SOL" },
+    { icon: Globe, title: "Access Anywhere", description: "Access your files globally on-chain" },
   ];
 
   const features = [
-    { 
-      icon: Shield, 
-      title: "Blockchain Security", 
-      description: "IPFS storage with Solana verification",
-      color: "from-blue-500 to-purple-600"
+    {
+      icon: Shield,
+      title: "Blockchain Security",
+      description: "Files are stored with IPFS and verified on Solana",
+      color: "from-blue-500 to-purple-600",
     },
-    { 
-      icon: Zap, 
-      title: "Lightning Fast", 
-      description: "High-speed Solana network transactions",
-      color: "from-yellow-400 to-orange-500"
+    {
+      icon: Zap,
+      title: "Fast & Efficient",
+      description: "Lightning-fast transactions on Solana blockchain",
+      color: "from-yellow-400 to-orange-500",
     },
-    { 
-      icon: TrendingUp, 
-      title: "Cost Effective", 
-      description: "Pay only for what you use in SOL",
-      color: "from-green-400 to-blue-500"
+    {
+      icon: TrendingUp,
+      title: "Flexible Payments",
+      description: "Pay-as-you-go pricing enables cost control",
+      color: "from-green-400 to-blue-500",
     },
-    { 
-      icon: Users, 
-      title: "Investor Focused", 
-      description: "Purpose-built for professionals",
-      color: "from-purple-500 to-pink-500"
-    }
+    {
+      icon: Users,
+      title: "Developer-Ready",
+      description: "Built specifically for developers",
+      color: "from-purple-500 to-pink-500",
+    },
   ];
 
   useEffect(() => {
@@ -74,15 +74,14 @@ const Home: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-white"
           >
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              Storacha
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">              
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-pink-200">
-                Solana SDK
+              On-Chain Payment dApp
               </span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90">
-              Decentralized file storage for the next generation of investors.
-              Secure, fast, and built on Solana blockchain.
+            <p className="text-xl mb-8 text-white/90">
+            A proof-of-concept enabling pay-per-upload decentralized storage on Solana. 
+              Users pay with native SOL while a reseller account subsidizes the service.
             </p>
 
             {/* Interactive Step Visualization */}
@@ -146,7 +145,7 @@ const Home: React.FC = () => {
                 </motion.div>
 
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Storacha Solana SDK
+                  Storacha Payment dApp
                 </h2>
                 <p className="text-gray-600 mb-6">
                   {walletConnected
