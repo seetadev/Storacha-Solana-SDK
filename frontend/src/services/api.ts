@@ -7,7 +7,6 @@ import {
 } from "@solana/web3.js";
 import axios from "axios";
 
-
 export interface UploadResult {
   success: boolean;
   signature?: string;
@@ -21,7 +20,6 @@ export interface UploadResult {
     uploadedAt: string;
   };
 }
-
 
 export interface ApiResponse {
   message: string;
@@ -45,18 +43,14 @@ export interface ApiResponse {
   };
 }
 
-
 export class UploadService {
   private connection: Connection;
   private apiBaseUrl: string;
-
-
   constructor() {
     this.connection = new Connection(clusterApiUrl("testnet"), "confirmed");
     this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5040/api";
   }
-
-
+  
   async uploadFileWithDeposit(
     file: File,
     durationDays: number,
@@ -75,8 +69,6 @@ export class UploadService {
         method: "POST",
         body: formData,
       });
-
-      console.log({ uploadResponse });
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
@@ -171,6 +163,7 @@ export class UploadService {
 
       console.log('✅ Transaction confirmed:', signature);
 
+
       return {
         success: true,
         signature,
@@ -226,6 +219,7 @@ export class UploadService {
       return res.data;
     } catch (error) {
       console.error('Failed to get transactions', error);
+
       return [];
     }
   }
@@ -243,6 +237,8 @@ export class UploadService {
 
 
 export const uploadService = new UploadService();
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5040/api";
 
 export const adminApi = {
   updateRate: async (rate: number, apiKey: string) => {

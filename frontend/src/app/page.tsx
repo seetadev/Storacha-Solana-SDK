@@ -74,8 +74,7 @@ const Home: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-white"
           >
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">              
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-pink-200">
               On-Chain Payment dApp
               </span>
