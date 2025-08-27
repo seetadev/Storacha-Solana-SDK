@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Clock, Star } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface StorageOption {
   duration: number;
@@ -61,6 +62,13 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
     return totalCost.toFixed(4);
   };
 
+  const handleChange = (duration: number) => {
+    if(duration < 1 || !duration){
+      toast.error("Duration must be at least 1 day or more.")
+    }
+    onDurationChange(duration)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-gray-700">
@@ -95,7 +103,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
                   <input
                     type="radio"
                     checked={selectedDuration === option.duration}
-                    onChange={() => onDurationChange(option.duration)}
+                    onChange={() => handleChange(option.duration)}
                     className="w-4 h-4 text-purple-600"
                   />
                 </div>
@@ -129,7 +137,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
             min="1"
             max="3650"
             value={selectedDuration}
-            onChange={(e) => onDurationChange(parseInt(e.target.value) || 7)}
+            onChange={(e) => onDurationChange(parseInt(e.target.value))}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Enter days"
           />

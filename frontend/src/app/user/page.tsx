@@ -74,12 +74,18 @@ const UploadPage: React.FC = () => {
 
   const calculateRealCost = () => {
     if (selectedFiles.length === 0) return 0;
+    if(storageDuration < 1){
+      toast.error("Duration must be at least 1 day or more.")
+    }
     const totalFile = selectedFiles[0]; // For now, handle single file
     const cost = uploadService.calculateEstimatedCost(totalFile, storageDuration);
     return cost.sol;
   };
 
   useEffect(() => {
+    if(storageDuration < 1 || !storageDuration){
+      toast.error("Duration must be at least 1 day or more.")
+    }
     setTotalCost(calculateRealCost());
   }, [selectedFiles, storageDuration]);
 
@@ -98,9 +104,18 @@ const UploadPage: React.FC = () => {
   };
 
   const handleRealUpload = async () => {
+
+    if(storageDuration < 1 || !storageDuration){
+      toast.error("Duration must be at least 1 day or more.")
+      return
+    }
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
       toast.error('Wallet not properly connected or no files selected');
       return;
+    }
+
+    if(storageDuration < 1){
+      toast.error("Duration must be at least 1 day or more.")
     }
   
     setUploadStep('uploading');
@@ -398,8 +413,8 @@ const UploadPage: React.FC = () => {
                   </Button>
                   <Button
                     onClick={handleRealUpload}
-                    disabled={isUploading}
-                    className="flex w-full text-center justify-center cursor-pointer bg-gradient-to-r items-center from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    disabled={isUploading || storageDuration < 1}
+                    className="flex w-full text-center disabled:cursor-not-allowed justify-center cursor-pointer bg-gradient-to-r items-center from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
                     <Zap className="w-4 h-4 mr-2" />
                     Upload & Deposit
@@ -507,7 +522,7 @@ const UploadPage: React.FC = () => {
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-blue-800">IPFS CID:</p>
                         <button
-                          onClick={() => window.open(`https://ipfs.io/ipfs/${uploadResult.cid}`, '_blank')}
+                          onClick={() => window.open(`https://${uploadResult.cid}.ipfs.w3s.link`, '_blank')}
                           className="text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -552,7 +567,7 @@ const UploadPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-800">Connected Wallet</p>
                   <p className="text-xs text-purple-600 font-mono">
-                    {solanaPublicKey?.substring(0, 12)}...{solanaPublicKey?.substring(-8)}
+                    {solanaPublicKey}
                   </p>
                 </div>
                 <div className="text-right">
