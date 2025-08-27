@@ -103,7 +103,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
                   <input
                     type="radio"
                     checked={selectedDuration === option.duration}
-                    onChange={handleChange(option.duration)}
+                    onChange={() => handleChange(option.duration)}
                     className="w-4 h-4 text-purple-600"
                   />
                 </div>
