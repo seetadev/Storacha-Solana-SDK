@@ -104,7 +104,7 @@ const UploadPage: React.FC = () => {
   };
 
   const handleRealUpload = async () => {
-    const depositAmount = totalCost * storageDuration
+    const depositAmount = totalCost
     if (solanaBalance && (depositAmount > solanaBalance)) {
       toast.error("You do not have sufficient SOL in your wallet")
       return
