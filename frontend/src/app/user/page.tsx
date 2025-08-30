@@ -32,7 +32,7 @@ import { uploadService, UploadResult } from '@/services/api';
 
 const UploadPage: React.FC = () => {
   const router = useRouter();
-      
+
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
   const { publicKey, signTransaction } = useSolanaWallet();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -104,7 +104,11 @@ const UploadPage: React.FC = () => {
   };
 
   const handleRealUpload = async () => {
-
+    const depositAmount = totalCost
+    if (solanaBalance && (depositAmount > solanaBalance)) {
+      toast.error("You do not have sufficient SOL in your wallet")
+      return
+    }
     if(storageDuration < 1 || !storageDuration){
       toast.error("Duration must be at least 1 day or more.")
       return
@@ -117,18 +121,18 @@ const UploadPage: React.FC = () => {
     if(storageDuration < 1){
       toast.error("Duration must be at least 1 day or more.")
     }
-  
+
     setUploadStep('uploading');
     setIsUploading(true);
     setUploadProgress(0);
-  
+
     try {
       const file = selectedFiles[0];
-      
+
       // Stage 1: Upload to API (0-30%)
       setUploadProgress(10);
       toast.loading('Uploading file to IPFS...', { id: 'upload-progress' });
-      
+
       console.log('🚀 Starting upload process for file:', {
         name: file.name,
         size: file.size,
@@ -136,7 +140,7 @@ const UploadPage: React.FC = () => {
         duration: storageDuration,
         publicKey: publicKey.toString()
       });
-      
+
       const result = await uploadService.uploadFileWithDeposit(
         file,
         storageDuration,
@@ -145,17 +149,17 @@ const UploadPage: React.FC = () => {
           // Stage 2: Sign transaction (30-50%)
           setUploadProgress(40);
           toast.loading('Please sign the transaction in your wallet...', { id: 'upload-progress' });
-          
+
           console.log('📝 Transaction ready for signing:', tx);
-          
+
           try {
             const signed = await signTransaction(tx);
             console.log('✅ Transaction signed successfully');
-            
+
             // Stage 3: Transaction sent (50-80%)
             setUploadProgress(60);
             toast.loading('Transaction sent to network...', { id: 'upload-progress' });
-            
+
             return signed;
           } catch (signError) {
             console.error('❌ Transaction signing failed:', signError);
@@ -163,19 +167,19 @@ const UploadPage: React.FC = () => {
           }
         }
       );
-  
+
       // Stage 4: Confirming (80-100%)
       setUploadProgress(90);
       toast.loading('Confirming transaction...', { id: 'upload-progress' });
-  
+
       if (result.success) {
         setUploadProgress(100);
         setTransactionHash(result.signature || null);
         setUploadResult(result);
         setUploadStep('complete');
-        
+
         toast.success('Upload and deposit successful!', { id: 'upload-progress' });
-        
+
         // Log success details
         console.log('🎉 Upload completed successfully:', {
           signature: result.signature,
@@ -196,8 +200,6 @@ const UploadPage: React.FC = () => {
       setIsUploading(false);
     }
   };
-  
-
 
   const stepVariants = {
     hidden: { opacity: 0, x: 50 },
@@ -394,6 +396,7 @@ const UploadPage: React.FC = () => {
                         {totalCost.toFixed(6)} SOL
                       </div>
                       <div className="text-sm text-gray-600">
+                        {/*where is 25 coming from? is this the correct SOL/USD rate? we need to get this from a realtime API or somn'*/}
                         ≈ ${(totalCost * 25).toFixed(4)} USD
                       </div>
                       <div className="text-xs text-orange-600 mt-1">
@@ -586,4 +589,3 @@ const UploadPage: React.FC = () => {
 };
 
 export default UploadPage;
-

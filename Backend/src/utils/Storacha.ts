@@ -39,7 +39,7 @@ export const getQuoteForFileUpload = async ({
       RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
     })
     .from(configTable); // e.g. in SOL; or use lamports: 1000 lamports/byte/day
-  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0];
+  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT);
   const totalCost = sizeInBytes * effectiveDuration * RATE_PER_BYTE_PER_UNIT;
 
@@ -62,7 +62,7 @@ export const getAdminDataForSolana = async () => {
         RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
       })
       .from(configTable);
-    const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0];
+    const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
     return { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT };
   } catch (error) {
     console.log("Error fetching admin info from the databse", error);
