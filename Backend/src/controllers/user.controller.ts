@@ -82,27 +82,23 @@ export const uploadFile = async (req: Request, res: Response) => {
     const fileMap: Record<string, Uint8Array> = {
       [file.originalname]: new Uint8Array(file.buffer),
     };
-    const computedCID = await computeCID(fileMap);
 
-    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
-      durationInUnits: durationInSeconds,
-      sizeInBytes: file.size,
-    });
+    const sizeBytes = file.size;
+    // rate in lamports. we'll switch it later (make it dynamic)
+    // same thing we set in the config initialization
+    const ratePerBytePerDay = 1000;
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
+    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
+
+    const computedCID = await computeCID(fileMap);
     const depositItem: typeof depositAccount.$inferInsert = {
-      deposit_amount: QuoteObject.totalCost,
+      deposit_amount: amountInLamports,
       duration_days,
       content_cid: computedCID,
       deposit_key: publicKey.toLowerCase(),
       deposit_slot: 1,
       last_claimed_slot: 1,
     };
-
-    const sizeBytes = file.size;
-    // rate in lamports. we'll switch it later (make it dynamic)
-    // same thing we set in the config initialization
-    const ratePerBytePerDay = 1000;
-    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
 
     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
@@ -124,7 +120,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     if (cid.toString() !== computedCID) {
       throw new Error(
-        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`
+        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
       );
     }
 

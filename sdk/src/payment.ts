@@ -131,7 +131,7 @@ export async function createDepositTxn({
     return {
       signature: '' as Signature,
       success: false,
-      cid: "",
+      cid: '',
       url: '',
       message: '',
       fileInfo: undefined,
