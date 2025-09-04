@@ -38,7 +38,7 @@ export const getQuoteForFileUpload = async ({
       RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
     })
     .from(configTable); // e.g. in SOL; or use lamports: 1000 lamports/byte/day
-  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0];
+  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT);
   const totalCost = sizeInBytes * effectiveDuration * RATE_PER_BYTE_PER_UNIT;
 
@@ -50,7 +50,20 @@ export const getQuoteForFileUpload = async ({
 };
 
 /**
- * This function is used to decode a delegation which is provided as a proof by a certain agent to access a space
+ * Returns Admin Data for Solana
+ * @returns
  */
-
-export const DecodeDelegations = () => {};
+export const getAdminDataForSolana = async () => {
+  try {
+    const data = await db
+      .select({
+        MINIMUM_DURATION_UNIT: configTable.min_duration_days,
+        RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
+      })
+      .from(configTable);
+    const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
+    return { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT };
+  } catch (error) {
+    console.log("Error fetching admin info from the databse", error);
+  }
+};

@@ -3,9 +3,8 @@ import {
   getQuoteForFileUpload,
   initStorachaClient,
 } from "../utils/Storacha.js";
-import { QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
-import * as DID from "@ipld/dag-ucan/did";
+import { DID } from "@ucanto/core";
 import { Link } from "@ucanto/core/schema";
 import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
@@ -145,7 +144,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
-    const QuoteObject = getQuoteForFileUpload({
+    const QuoteObject = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
     });

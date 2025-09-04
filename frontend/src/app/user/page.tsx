@@ -1,601 +1,591 @@
 "use client";
 
-import React, { useState } from "react";
-import { userApi } from "../../services/api";
-import { useWallet } from "../../contexts/WalletContext";
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
+import toast from 'react-hot-toast';
 import {
-  ConvertTimeToSeconds,
-  DAY_TIME_IN_SECONDS,
-} from "../../utils/helperFunctions";
+  Upload,
+  FileText,
+  Image,
+  Video,
+  Music,
+  File,
+  X,
+  DollarSign,
+  Zap,
+  CheckCircle,
+  AlertCircle,
+  ArrowLeft,
+  ExternalLink,
+  History
+} from 'lucide-react';
+import { useWallet } from '@/contexts/WalletContext';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import FileUpload from '@/components/FileUpload';
+import StorageDurationSelector from '@/components/StorageDurationSelector';
+import ProgressBar from '@/components/ProgressBar';
+import WalletConnection from '@/components/WalletConnection';
+import { uploadService, UploadResult } from '@/services/api';
 
-const UserDashboard: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [key, setKey] = useState("");
-  const [proof, setProof] = useState("");
-  const [cid, setCid] = useState("");
-  const [recipientDid, setRecipientDid] = useState("");
-  const [sizeInBytes, setSizeInBytes] = useState("");
-  const [durationInUnits, setDurationInUnits] = useState("");
-  const [uploadResult, setUploadResult] = useState<any>(null);
-  const [delegationResult, setDelegationResult] = useState<any>(null);
-  const [quoteResult, setQuoteResult] = useState<any>(null);
-  const [loading, setLoading] = useState<string>("");
-  const [startTime, setStartTime] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
-  const [error, setError] = useState<string>("");
+const UploadPage: React.FC = () => {
+  const router = useRouter();
 
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
+  const { publicKey, signTransaction } = useSolanaWallet();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [storageDuration, setStorageDuration] = useState(30);
+  const [totalCost, setTotalCost] = useState(0);
+  const [uploadStep, setUploadStep] = useState<'select' | 'configure' | 'pay' | 'uploading' | 'complete'>('select');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const clearError = () => setError("");
+  // Redirect if not connected
+  useEffect(() => {
+    if (!walletConnected) {
+      toast.error('Please connect your wallet first');
+      router.push('/');
+    }
+  }, [walletConnected, router]);
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return Image;
+    if (fileType.startsWith('video/')) return Video;
+    if (fileType.startsWith('audio/')) return Music;
+    if (fileType.includes('pdf') || fileType.includes('document')) return FileText;
+    return File;
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleFileUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
-      setError("Please select a file");
-      return;
+  const calculateTotalSize = () => {
+    return selectedFiles.reduce((total, file) => total + file.size, 0);
+  };
+
+  const calculateRealCost = () => {
+    if (selectedFiles.length === 0) return 0;
+    if(storageDuration < 1){
+      toast.error("Duration must be at least 1 day or more.")
     }
+    const totalFile = selectedFiles[0]; // For now, handle single file
+    const cost = uploadService.calculateEstimatedCost(totalFile, storageDuration);
+    return cost.sol;
+  };
 
-    if (!walletConnected || !solanaPublicKey) {
-      setError("Please connect your Solana wallet first");
-      return;
+  useEffect(() => {
+    if(storageDuration < 1 || !storageDuration){
+      toast.error("Duration must be at least 1 day or more.")
     }
+    setTotalCost(calculateRealCost());
+  }, [selectedFiles, storageDuration]);
 
-    setLoading("upload");
-    setError("");
-    setUploadResult(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("proof", proof);
-      formData.append("storachaKey", key);
-      formData.append("publicKey", solanaPublicKey);
-      formData.append("duration", (30 * DAY_TIME_IN_SECONDS).toString());
-      const result = await userApi.uploadFile(
-        formData,
-        solanaPublicKey,
-        solanaBalance || undefined
-      );
-      setUploadResult(result);
-    } catch (err: any) {
-      setError(
-        "File upload failed: " + (err.response?.data?.message || err.message)
-      );
-    } finally {
-      setLoading("");
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles(files);
+    if (files.length > 0) {
+      setUploadStep('configure');
     }
   };
 
-  const handleCreateDelegation = async () => {
-    if (!key || !proof || !cid || !recipientDid) {
-      setError("Please provide key, proof, CID, and recipient DID");
+  const removeFile = (index: number) => {
+    setSelectedFiles(files => files.filter((_, i) => i !== index));
+    if (selectedFiles.length === 1) {
+      setUploadStep('select');
+    }
+  };
+
+  const handleRealUpload = async () => {
+    const depositAmount = totalCost
+    if (solanaBalance && (depositAmount > solanaBalance)) {
+      toast.error("You do not have sufficient SOL in your wallet")
+      return
+    }
+    if(storageDuration < 1 || !storageDuration){
+      toast.error("Duration must be at least 1 day or more.")
+      return
+    }
+    if (!publicKey || !signTransaction || selectedFiles.length === 0) {
+      toast.error('Wallet not properly connected or no files selected');
       return;
     }
 
-    setLoading("delegation");
-    setError("");
-    setDelegationResult(null);
+    if(storageDuration < 1){
+      toast.error("Duration must be at least 1 day or more.")
+    }
+
+    setUploadStep('uploading');
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
-      const startTimeSeconds = ConvertTimeToSeconds(startTime);
-      const endTimeSeconds = ConvertTimeToSeconds(endTime);
-      const baseCapabilities = ["file/upload"];
-      const result = await userApi.createDelegation({
-        storachaKey: key,
-        proof,
-        fileCID: cid,
-        recipientDID: recipientDid,
-        notBefore: startTimeSeconds.toString(),
-        baseCapabilities,
-        deadline: endTimeSeconds.toString(),
+      const file = selectedFiles[0];
+
+      // Stage 1: Upload to API (0-30%)
+      setUploadProgress(10);
+      toast.loading('Uploading file to IPFS...', { id: 'upload-progress' });
+
+      console.log('🚀 Starting upload process for file:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        duration: storageDuration,
+        publicKey: publicKey.toString()
       });
-      setDelegationResult(result);
-    } catch (err: any) {
-      setError(
-        "Delegation creation failed: " +
-          (err.response?.data?.message || err.message)
+
+      const result = await uploadService.uploadFileWithDeposit(
+        file,
+        storageDuration,
+        publicKey,
+        async (tx) => {
+          // Stage 2: Sign transaction (30-50%)
+          setUploadProgress(40);
+          toast.loading('Please sign the transaction in your wallet...', { id: 'upload-progress' });
+
+          console.log('📝 Transaction ready for signing:', tx);
+
+          try {
+            const signed = await signTransaction(tx);
+            console.log('✅ Transaction signed successfully');
+
+            // Stage 3: Transaction sent (50-80%)
+            setUploadProgress(60);
+            toast.loading('Transaction sent to network...', { id: 'upload-progress' });
+
+            return signed;
+          } catch (signError) {
+            console.error('❌ Transaction signing failed:', signError);
+            throw new Error(`Transaction signing failed: ${signError instanceof Error ? signError.message : 'Unknown error'}`);
+          }
+        }
       );
+
+      // Stage 4: Confirming (80-100%)
+      setUploadProgress(90);
+      toast.loading('Confirming transaction...', { id: 'upload-progress' });
+
+      if (result.success) {
+        setUploadProgress(100);
+        setTransactionHash(result.signature || null);
+        setUploadResult(result);
+        setUploadStep('complete');
+
+        toast.success('Upload and deposit successful!', { id: 'upload-progress' });
+
+        // Log success details
+        console.log('🎉 Upload completed successfully:', {
+          signature: result.signature,
+          cid: result.cid,
+          fileUrl: result.fileUrl,
+          fileInfo: result.fileInfo
+        });
+      } else {
+        console.error('❌ Upload failed:', result.error);
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('❌ Upload error in component:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      toast.error(errorMessage, { id: 'upload-progress' });
+      setUploadStep('configure');
     } finally {
-      setLoading("");
+      setIsUploading(false);
     }
   };
 
-  const handleGetQuote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sizeInBytes || !durationInUnits) {
-      setError("Please provide both size and duration");
-      return;
-    }
-
-    setLoading("quote");
-    setError("");
-    setQuoteResult(null);
-
-    try {
-      const result = await userApi.getQuote(
-        parseInt(sizeInBytes),
-        parseInt(durationInUnits)
-      );
-      setQuoteResult(result);
-    } catch (err: any) {
-      setError(
-        "Quote request failed: " + (err.response?.data?.message || err.message)
-      );
-    } finally {
-      setLoading("");
-    }
+  const stepVariants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -50 }
   };
 
-  const fillQuoteFromFile = () => {
-    if (file) {
-      setSizeInBytes(file.size.toString());
-      setDurationInUnits("30");
-    }
-  };
-
-  const fillCidFromUpload = () => {
-    if (uploadResult && uploadResult.cid) {
-      setCid(uploadResult.cid);
-    }
-  };
+  if (!walletConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-purple flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Wallet Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please connect your Solana wallet to upload files and make deposits.
+            </p>
+            <div className="space-y-4">
+              <WalletConnection className="w-full" />
+              <Button variant="secondary" onClick={() => router.push('/')}>
+                Go Back Home
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <div className="card">
-        <div className="card-header">
-          <div className="card-icon">👤</div>
-          <div>
-            <h1 className="mb-1">User Dashboard</h1>
-            <p className="mb-0 text-secondary">
-              Manage your decentralized storage operations
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-purple">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/3 rounded-full blur-3xl"></div>
       </div>
 
-      {error && (
-        <div className="error">
-          <strong>Error:</strong> {error}
-          <button
-            onClick={clearError}
-            style={{
-              float: "right",
-              background: "none",
-              border: "none",
-              color: "inherit",
-              cursor: "pointer",
-              padding: "0",
-              fontSize: "1.2rem",
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto">
 
-      <div className="card">
-        <div className="card-header">
-          <div className="card-icon">📁</div>
-          <div>
-            <h2 className="mb-1">Upload File to Storacha</h2>
-            <p className="mb-0 text-secondary">
-              Store your files securely on the decentralized network
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleFileUpload}>
-          <div className="form-group">
-            <label htmlFor="file">Select File to Upload:</label>
-            <div className="file-input-wrapper">
-              <input
-                type="file"
-                id="file"
-                className="file-input"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                required
-              />
-              <label
-                htmlFor="file"
-                className={`file-input-label ${file ? "has-file" : ""}`}
-              >
-                {file ? (
-                  <div>
-                    <strong>📄 {file.name}</strong>
-                    <br />
-                    <span className="text-secondary">
-                      {formatFileSize(file.size)} •{" "}
-                      {file.type || "Unknown type"}
-                    </span>
-                  </div>
-                ) : (
-                  <div>
-                    <strong>📤 Click to select a file</strong>
-                    <br />
-                    <span className="text-secondary">
-                      or drag and drop here
-                    </span>
-                  </div>
-                )}
-              </label>
-            </div>
-          </div>
-
-          {!walletConnected && (
-            <div className="warning mb-3">
-              <strong>🔒 Wallet Required:</strong> Connect your Solana wallet
-              above to upload files. Your public key will be included with the
-              upload request.
-            </div>
-          )}
-          <div className="form-group">
-            <label htmlFor="key">Private Key (Base64 Encoded):</label>
-            <textarea
-              id="key"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="Enter your base64 encoded private key (e.g., MgCZT5vrdXIm...)"
-              rows={3}
-              required
-            />
-            <small className="text-secondary">
-              This should be a base64 encoded Ed25519 private key
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="proof">UCAN Proof String:</label>
-            <textarea
-              id="proof"
-              value={proof}
-              onChange={(e) => setProof(e.target.value)}
-              placeholder="Enter your UCAN proof string"
-              rows={3}
-              required
-            />
-            <small className="text-secondary">
-              The UCAN proof that grants access to your space
-            </small>
-          </div>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <button
-              type="submit"
-              disabled={loading === "upload" || !walletConnected}
-              className={loading === "upload" ? "loading" : ""}
-              title={!walletConnected ? "Connect your Solana wallet first" : ""}
-            >
-              {loading === "upload"
-                ? "Uploading..."
-                : !walletConnected
-                ? "Connect Wallet to Upload"
-                : "Upload File"}
-            </button>
-
-            {file && walletConnected && (
+          {/* Header with Navigation */}
+          <div className="mb-8 text-center text-white">
+            <div className="flex items-center justify-between mb-6">
               <button
-                type="button"
-                className="button-secondary"
-                onClick={fillQuoteFromFile}
+                onClick={() => router.push('/')}
+                className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
               >
-                Get Quote for This File
+                <ArrowLeft className="w-5 h-5" />
+                Back to Home
               </button>
-            )}
 
-            {walletConnected && solanaPublicKey && (
-              <div className="text-secondary" style={{ fontSize: "0.9rem" }}>
-                Uploading as:{" "}
-                <code>
-                  {solanaPublicKey.slice(0, 8)}...{solanaPublicKey.slice(-8)}
-                </code>
-              </div>
-            )}
-          </div>
-        </form>
-
-        {uploadResult && (
-          <div className="result-container">
-            <h3 className="text-success">Upload Successful!</h3>
-            {solanaPublicKey && (
-              <div className="info mb-2" style={{ fontSize: "0.95rem" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "1rem",
-                  }}
+              <div className="flex gap-10 items-center">
+                <Button
+                  onClick={() => router.push('/dashboard')}
+                  className="inline-flex cursor-pointer h-max items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                 >
-                  <div>
-                    <strong>Solana Public Key:</strong>
-                    <br />
-                    <code style={{ fontSize: "0.8rem" }}>
-                      {solanaPublicKey}
-                    </code>
+                  <History className="w-4 h-4" />
+                  Dashboard
+                </Button>
+                <WalletConnection showDisconnect={true} />
+              </div>
+            </div>
+
+            <h1 className="text-4xl font-bold mb-4">Upload Files to Storacha</h1>
+            <p className="text-white/80 text-lg">
+              Securely store your files on the decentralized network with real Solana deposits
+            </p>
+          </div>
+
+          {/* Progress Indicator */}
+          <div className="mb-8">
+            <div className="flex justify-center items-center space-x-4">
+              {['select', 'configure', 'uploading', 'complete'].map((step, index) => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${uploadStep === step
+                      ? 'bg-yellow-400 text-gray-900'
+                      : index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep)
+                        ? 'bg-green-400 text-gray-900'
+                        : 'bg-white/20 text-white'
+                    }`}>
+                    {index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep) ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      index + 1
+                    )}
                   </div>
-                  <div>
-                    <strong>Wallet Balance:</strong>
-                    <br />
-                    <span className="text-accent">
-                      {solanaBalance !== null
-                        ? `${solanaBalance.toFixed(4)} SOL`
-                        : "N/A"}
-                    </span>
-                  </div>
+                  {index < 3 && (
+                    <div className={`w-12 h-0.5 mx-2 ${index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep)
+                        ? 'bg-green-400'
+                        : 'bg-white/20'
+                      }`}></div>
+                  )}
                 </div>
-              </div>
-            )}
-            <pre>{JSON.stringify(uploadResult, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h2 className="mb-1">Storage Cost Calculator</h2>
-            <p className="mb-0 text-secondary">
-              Calculate storage costs based on file size and duration
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleGetQuote}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="size">File Size (bytes):</label>
-              <input
-                type="number"
-                id="size"
-                value={sizeInBytes}
-                onChange={(e) => setSizeInBytes(e.target.value)}
-                placeholder="e.g., 1048576 (1MB)"
-                required
-              />
-              <small className="text-secondary">
-                {sizeInBytes && `≈ ${formatFileSize(parseInt(sizeInBytes))}`}
-              </small>
-            </div>
-            <div className="form-group">
-              <label htmlFor="duration">Storage Duration (days):</label>
-              <input
-                type="number"
-                id="duration"
-                value={durationInUnits}
-                onChange={(e) => setDurationInUnits(e.target.value)}
-                placeholder="e.g., 30"
-                min="1"
-                required
-              />
-              <small className="text-secondary">
-                Minimum duration applies as per system settings
-              </small>
+              ))}
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading === "quote"}
-            className={`button-success ${loading === "quote" ? "loading" : ""}`}
-          >
-            {loading === "quote" ? "Calculating..." : "Get Quote"}
-          </button>
-        </form>
-
-        {quoteResult && (
-          <div className="result-container">
-            <h3 className="text-success">Storage Quote</h3>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "1rem",
-                marginBottom: "1rem",
-                fontSize: "1.1rem",
-              }}
-            >
-              <div>
-                <strong className="text-accent">Effective Duration:</strong>
-                <br />
-                {quoteResult.effectiveDuration} days
-              </div>
-              <div>
-                <strong className="text-accent">Rate per Byte/Day:</strong>
-                <br />
-                {quoteResult.ratePerBytePerDay} SOL
-              </div>
-              <div>
-                <strong className="text-success">Total Cost:</strong>
-                <br />
-                <span style={{ fontSize: "1.3rem" }}>
-                  {quoteResult.totalCost} SOL
-                </span>
-              </div>
-            </div>
-            <pre>{JSON.stringify(quoteResult, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h2 className="mb-1">Create UCAN Delegation</h2>
-            <p className="mb-0 text-secondary">
-              Generate secure access delegations for specific files and
-              recipients
-            </p>
-          </div>
-        </div>
-
-        <div className="warning mb-3">
-          <strong>Security Notice:</strong> Never share your private keys. This
-          is for testing purposes only.
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleCreateDelegation();
-          }}
-        >
-          <div className="form-group">
-            <label htmlFor="recipientDid">Recipient DID:</label>
-            <textarea
-              id="recipientDid"
-              value={recipientDid}
-              onChange={(e) => setRecipientDid(e.target.value)}
-              placeholder="Enter DID of the recipient"
-              rows={3}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="delegationKey">Private Key (Base64 Encoded):</label>
-            <textarea
-              id="delegationKey"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="Enter your base64 encoded private key (e.g., MgCZT5vrdXIm...)"
-              rows={3}
-              required
-            />
-            <small className="text-secondary">
-              This should be a base64 encoded Ed25519 private key
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="delegationProof">UCAN Proof String:</label>
-            <textarea
-              id="delegationProof"
-              value={proof}
-              onChange={(e) => setProof(e.target.value)}
-              placeholder="Enter your UCAN proof string"
-              rows={3}
-              required
-            />
-            <small className="text-secondary">
-              The UCAN proof that grants access to your space
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="cid">File CID (Content Identifier):</label>
-            <div
-              style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}
-            >
-              <div style={{ flex: 1 }}>
-                <input
-                  type="text"
-                  id="cid"
-                  value={cid}
-                  onChange={(e) => setCid(e.target.value)}
-                  placeholder="bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
-                  required
-                />
-                <small className="text-secondary">
-                  The Content ID of the file for which delegation is being
-                  created
-                </small>
-              </div>
-              {uploadResult && uploadResult.cid && (
-                <button
-                  type="button"
-                  className="button-secondary"
-                  onClick={fillCidFromUpload}
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Use Uploaded File CID
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="DeadlineContainer">
-            <div className="form-group">
-              <label htmlFor="startTime">Start Time:</label>
-              <input
-                type="datetime-local"
-                id="startTime"
-                value={startTime}
-                onChange={(e) => {
-                  setStartTime(e.target.value);
-                }}
-                required
-              />
-              <small className="text-secondary">
-                When the delegation should begin
-              </small>
-            </div>
-            <div className="form-group">
-              <label htmlFor="endTime">End Time:</label>
-              <input
-                type="datetime-local"
-                id="endTime"
-                value={endTime}
-                onChange={(e) => {
-                  setEndTime(e.target.value);
-                }}
-                required
-              />
-              <small className="text-secondary">
-                When the delegation should expire
-              </small>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading === "delegation"}
-            className={loading === "delegation" ? "loading" : ""}
-            onClick={() => {
-              handleCreateDelegation();
-            }}
-          >
-            {loading === "delegation" ? "Creating..." : "Create Delegation"}
-          </button>
-        </form>
-
-        {delegationResult && (
-          <div className="result-container">
-            <h3 className="text-success">Delegation Created!</h3>
-            <div className="info mb-2" style={{ fontSize: "0.95rem" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
-                }}
+          <AnimatePresence mode="wait">
+            {/* Step 1: File Selection */}
+            {uploadStep === 'select' && (
+              <motion.div
+                key="select"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
               >
-                <div>
-                  <strong>File CID:</strong>
-                  <br />
-                  <code style={{ fontSize: "0.8rem", wordBreak: "break-all" }}>
-                    {cid}
-                  </code>
+                <Card className="mb-8">
+                  <FileUpload
+                    onFilesSelected={handleFilesSelected}
+                    maxFiles={1} // For now, limit to 1 file
+                  />
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 2: Configuration */}
+            {uploadStep === 'configure' && (
+              <motion.div
+                key="configure"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                {/* Selected Files */}
+                <Card>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Selected File
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedFiles.map((file, index) => {
+                      const FileIcon = getFileIcon(file.type);
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                              <FileIcon className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{file.name}</p>
+                              <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                {/* Storage Duration */}
+                <Card>
+                  <StorageDurationSelector
+                    selectedDuration={storageDuration}
+                    onDurationChange={setStorageDuration}
+                    fileSize={calculateTotalSize() / (1024 * 1024)}
+                  />
+                </Card>
+
+                {/* Real Cost Summary */}
+                <Card>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                        <DollarSign className="w-5 h-5" />
+                        Deposit Required
+                      </h3>
+                      <p className="text-gray-600">
+                        {formatFileSize(calculateTotalSize())} × {storageDuration} days
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Real-time calculation based on network rates
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {totalCost.toFixed(6)} SOL
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {/*where is 25 coming from? is this the correct SOL/USD rate? we need to get this from a realtime API or somn'*/}
+                        ≈ ${(totalCost * 25).toFixed(4)} USD
+                      </div>
+                      <div className="text-xs text-orange-600 mt-1">
+                        + network fees
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="flex gap-4 items-center">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setUploadStep('select')}
+                    className="flex w-full text-center justify-center cursor-pointer"
+                  >
+                    Back to Selection
+                  </Button>
+                  <Button
+                    onClick={handleRealUpload}
+                    disabled={isUploading || storageDuration < 1}
+                    className="flex w-full text-center disabled:cursor-not-allowed justify-center cursor-pointer bg-gradient-to-r items-center from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Upload & Deposit
+                  </Button>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Uploading with Real Progress */}
+            {uploadStep === 'uploading' && (
+              <motion.div
+                key="uploading"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="text-center">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+                      <Upload className="w-8 h-8 text-white animate-bounce" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                      Processing Upload & Deposit...
+                    </h3>
+                    <p className="text-gray-600">
+                      Uploading to IPFS and confirming Solana transaction
+                    </p>
+                  </div>
+
+                  <ProgressBar progress={uploadProgress} />
+
+                  <div className="mt-4 text-sm text-gray-600">
+                    Progress: {Math.round(uploadProgress)}%
+                    {isUploading && <span className="ml-2 animate-pulse">Processing...</span>}
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 4: Complete with Transaction Details */}
+            {uploadStep === 'complete' && (
+              <motion.div
+                key="complete"
+                variants={stepVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                    className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center"
+                  >
+                    <CheckCircle className="w-10 h-10 text-white" />
+                  </motion.div>
+
+                  <h3 className="text-3xl font-semibold text-gray-900 mb-4">
+                    Upload Successful! 🎉
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Your file has been uploaded to IPFS and deposit confirmed on Solana
+                  </p>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Files Uploaded:</span>
+                        <div className="text-purple-600 font-semibold">{selectedFiles.length}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Total Size:</span>
+                        <div className="text-purple-600 font-semibold">{formatFileSize(calculateTotalSize())}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Storage Duration:</span>
+                        <div className="text-purple-600 font-semibold">{storageDuration} days</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {transactionHash && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-green-800">Transaction Hash:</p>
+                        <button
+                          onClick={() => window.open(`https://explorer.solana.com/tx/${transactionHash}?cluster=testnet`, '_blank')}
+                          className="text-green-600 hover:text-green-800 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <code className="text-xs bg-green-100 px-2 py-1 rounded font-mono block break-all">
+                        {transactionHash}
+                      </code>
+                    </div>
+                  )}
+
+                  {uploadResult?.cid && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-blue-800">IPFS CID:</p>
+                        <button
+                          onClick={() => window.open(`https://${uploadResult.cid}.ipfs.w3s.link`, '_blank')}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <code className="text-xs bg-blue-100 px-2 py-1 rounded font-mono block break-all">
+                        {uploadResult.cid}
+                      </code>
+                    </div>
+                  )}
+
+                  <div className="flex gap-4">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setSelectedFiles([]);
+                        setUploadStep('select');
+                        setUploadProgress(0);
+                        setTransactionHash(null);
+                        setUploadResult(null);
+                      }}
+                      className="flex-1"
+                    >
+                      Upload More Files
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      className="flex-1"
+                    >
+                      View Dashboard
+                    </Button>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Wallet Info */}
+          {walletConnected && (
+            <Card className="mt-8 bg-purple-50 border border-purple-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <strong>Recipient DID:</strong>
-                  <br />
-                  <code style={{ fontSize: "0.8rem", wordBreak: "break-all" }}>
-                    {recipientDid}
-                  </code>
+                  <p className="text-sm font-medium text-purple-800">Connected Wallet</p>
+                  <p className="text-xs text-purple-600 font-mono">
+                    {solanaPublicKey}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-purple-800">Balance</p>
+                  <p className="text-lg font-bold text-purple-600">
+                    {solanaBalance?.toFixed(4)} SOL
+                  </p>
                 </div>
               </div>
-            </div>
-            <pre>{JSON.stringify(delegationResult, null, 2)}</pre>
-          </div>
-        )}
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default UserDashboard;
+export default UploadPage;

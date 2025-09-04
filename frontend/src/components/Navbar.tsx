@@ -11,42 +11,34 @@ const Navbar: React.FC = () => {
   const { handleWalletConnected, handleWalletDisconnected } = useWallet();
 
   return (
-    <nav className="navbar">
-      <ul>
-        <li>
-          <div className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>🚀</span>
-            <span>Storacha × Solana</span>
-          </div>
-        </li>
-        <li>
-          <Link href="/" className={pathname === "/" ? "active" : ""}>
-            Home
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/user"
-            className={pathname === "/user" ? "active" : ""}
-          >
-            User Dashboard
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/admin"
-            className={pathname === "/admin" ? "active" : ""}
-          >
-            Admin Dashboard
-          </Link>
-        </li>
-        <li>
-          <WalletConnection
-            onWalletConnected={handleWalletConnected}
-            onWalletDisconnected={handleWalletDisconnected}
+    <nav className="w-full flex flex-row gap-8 py-8 px-8 items-center justify-between p-4 text-purple-600">
+      <div className="flex items-center gap-2">
+        <Link href="/">
+          <img
+            src="/Storacha.png"
+            alt="Storacha Logo"
+            style={{ width: "164px" }}
           />
-        </li>
-      </ul>
+        </Link>
+      </div>
+
+      <div>
+        <Link href="/user" className={pathname === "/user" ? "active" : ""}>
+          User Dashboard
+        </Link>
+      </div>
+      <div>
+        <Link href="/admin" className={pathname === "/admin" ? "active" : ""}>
+          Admin Dashboard
+        </Link>
+      </div>
+      <div>
+        <WalletConnection
+          onWalletConnected={handleWalletConnected}
+          onWalletDisconnected={handleWalletDisconnected}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+        />
+      </div>
     </nav>
   );
 };
