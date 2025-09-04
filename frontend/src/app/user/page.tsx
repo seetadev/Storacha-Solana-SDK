@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
+import toast from "react-hot-toast";
 import {
   Upload,
   FileText,
@@ -19,53 +19,58 @@ import {
   AlertCircle,
   ArrowLeft,
   ExternalLink,
-  History
-} from 'lucide-react';
-import { useWallet } from '@/contexts/WalletContext';
-import Card from '@/components/Card';
-import Button from '@/components/Button';
-import FileUpload from '@/components/FileUpload';
-import StorageDurationSelector from '@/components/StorageDurationSelector';
-import ProgressBar from '@/components/ProgressBar';
-import WalletConnection from '@/components/WalletConnection';
-import { uploadService, UploadResult } from '@/services/api';
+  History,
+} from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import FileUpload from "@/components/FileUpload";
+import StorageDurationSelector from "@/components/StorageDurationSelector";
+import ProgressBar from "@/components/ProgressBar";
+import WalletConnection from "@/components/WalletConnection";
+import { uploadService } from "@/services/api";
+import { Environment, useDeposit, UploadResult } from "storacha-sol-sdk";
 
 const UploadPage: React.FC = () => {
   const router = useRouter();
-      
+
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
   const { publicKey, signTransaction } = useSolanaWallet();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [storageDuration, setStorageDuration] = useState(30);
   const [totalCost, setTotalCost] = useState(0);
-  const [uploadStep, setUploadStep] = useState<'select' | 'configure' | 'pay' | 'uploading' | 'complete'>('select');
+  const [uploadStep, setUploadStep] = useState<
+    "select" | "configure" | "pay" | "uploading" | "complete"
+  >("select");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const client = useDeposit("testnet" as Environment);
   // Redirect if not connected
   useEffect(() => {
     if (!walletConnected) {
-      toast.error('Please connect your wallet first');
-      router.push('/');
+      toast.error("Please connect your wallet first");
+      router.push("/");
     }
   }, [walletConnected, router]);
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) return Image;
-    if (fileType.startsWith('video/')) return Video;
-    if (fileType.startsWith('audio/')) return Music;
-    if (fileType.includes('pdf') || fileType.includes('document')) return FileText;
+    if (fileType.startsWith("image/")) return Image;
+    if (fileType.startsWith("video/")) return Video;
+    if (fileType.startsWith("audio/")) return Music;
+    if (fileType.includes("pdf") || fileType.includes("document"))
+      return FileText;
     return File;
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const calculateTotalSize = () => {
@@ -75,7 +80,8 @@ const UploadPage: React.FC = () => {
   const calculateRealCost = () => {
     if (selectedFiles.length === 0) return 0;
     const totalFile = selectedFiles[0]; // For now, handle single file
-    const cost = uploadService.calculateEstimatedCost(totalFile, storageDuration);
+
+    const cost = client.estimateStorageCost(totalFile, storageDuration);
     return cost.sol;
   };
 
@@ -86,108 +92,115 @@ const UploadPage: React.FC = () => {
   const handleFilesSelected = (files: File[]) => {
     setSelectedFiles(files);
     if (files.length > 0) {
-      setUploadStep('configure');
+      setUploadStep("configure");
     }
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(files => files.filter((_, i) => i !== index));
+    setSelectedFiles((files) => files.filter((_, i) => i !== index));
     if (selectedFiles.length === 1) {
-      setUploadStep('select');
+      setUploadStep("select");
     }
   };
 
   const handleRealUpload = async () => {
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
-      toast.error('Wallet not properly connected or no files selected');
+      toast.error("Wallet not properly connected or no files selected");
       return;
     }
-  
-    setUploadStep('uploading');
+
+    setUploadStep("uploading");
     setIsUploading(true);
     setUploadProgress(0);
-  
+
     try {
       const file = selectedFiles[0];
-      
+
       // Stage 1: Upload to API (0-30%)
       setUploadProgress(10);
-      toast.loading('Uploading file to IPFS...', { id: 'upload-progress' });
-      
-      console.log('🚀 Starting upload process for file:', {
+      toast.loading("Uploading file to IPFS...", { id: "upload-progress" });
+
+      console.log("🚀 Starting upload process for file:", {
         name: file.name,
         size: file.size,
         type: file.type,
         duration: storageDuration,
-        publicKey: publicKey.toString()
+        publicKey: publicKey.toString(),
       });
-      
-      const result = await uploadService.uploadFileWithDeposit(
+
+      const result = await client.createDeposit({
         file,
-        storageDuration,
-        publicKey,
-        async (tx) => {
-          // Stage 2: Sign transaction (30-50%)
+        durationDays: storageDuration,
+        payer: publicKey,
+        signTransaction: async (tx) => {
           setUploadProgress(40);
-          toast.loading('Please sign the transaction in your wallet...', { id: 'upload-progress' });
-          
-          console.log('📝 Transaction ready for signing:', tx);
-          
+          toast.loading("Please sign the transaction in your wallet...", {
+            id: "upload-progress",
+          });
+
+          console.log("📝 Transaction ready for signing:", tx);
+
           try {
             const signed = await signTransaction(tx);
-            console.log('✅ Transaction signed successfully');
-            
+            console.log("✅ Transaction signed successfully");
+
             // Stage 3: Transaction sent (50-80%)
             setUploadProgress(60);
-            toast.loading('Transaction sent to network...', { id: 'upload-progress' });
-            
+            toast.loading("Transaction sent to network...", {
+              id: "upload-progress",
+            });
+
             return signed;
           } catch (signError) {
-            console.error('❌ Transaction signing failed:', signError);
-            throw new Error(`Transaction signing failed: ${signError instanceof Error ? signError.message : 'Unknown error'}`);
+            console.error("❌ Transaction signing failed:", signError);
+            throw new Error(
+              `Transaction signing failed: ${signError instanceof Error ? signError.message : "Unknown error"}`,
+            );
           }
-        }
-      );
-  
+        },
+      });
+
       // Stage 4: Confirming (80-100%)
       setUploadProgress(90);
-      toast.loading('Confirming transaction...', { id: 'upload-progress' });
-  
+
+      toast.loading("Confirming transaction...", { id: "upload-progress" });
+
       if (result.success) {
         setUploadProgress(100);
         setTransactionHash(result.signature || null);
-        setUploadResult(result);
-        setUploadStep('complete');
-        
-        toast.success('Upload and deposit successful!', { id: 'upload-progress' });
-        
+        setUploadResult(result as UploadResult);
+        setUploadStep("complete");
+
+        toast.success("Upload and deposit successful!", {
+          id: "upload-progress",
+        });
+
         // Log success details
-        console.log('🎉 Upload completed successfully:', {
+        console.log("🎉 Upload completed successfully:", {
           signature: result.signature,
           cid: result.cid,
-          fileUrl: result.fileUrl,
-          fileInfo: result.fileInfo
+          fileUrl: result.url,
+          fileInfo: result.fileInfo,
         });
       } else {
-        console.error('❌ Upload failed:', result.error);
-        throw new Error(result.error || 'Upload failed');
+        console.error("❌ Upload failed:", result.error);
+        throw new Error(result.error || "Upload failed");
       }
     } catch (error) {
-      console.error('❌ Upload error in component:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      toast.error(errorMessage, { id: 'upload-progress' });
-      setUploadStep('configure');
+      console.error("❌ Upload error in component:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Upload failed";
+      toast.error(errorMessage, { id: "upload-progress" });
+      setUploadStep("configure");
     } finally {
       setIsUploading(false);
     }
   };
-  
-
 
   const stepVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -50 }
+    exit: { opacity: 0, x: -50 },
   };
 
   if (!walletConnected) {
@@ -200,11 +213,12 @@ const UploadPage: React.FC = () => {
               Wallet Required
             </h2>
             <p className="text-gray-600 mb-6">
-              Please connect your Solana wallet to upload files and make deposits.
+              Please connect your Solana wallet to upload files and make
+              deposits.
             </p>
             <div className="space-y-4">
               <WalletConnection className="w-full" />
-              <Button variant="secondary" onClick={() => router.push('/')}>
+              <Button variant="secondary" onClick={() => router.push("/")}>
                 Go Back Home
               </Button>
             </div>
@@ -224,12 +238,11 @@ const UploadPage: React.FC = () => {
 
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
-
           {/* Header with Navigation */}
           <div className="mb-8 text-center text-white">
             <div className="flex items-center justify-between mb-6">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push("/")}
                 className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -238,7 +251,7 @@ const UploadPage: React.FC = () => {
 
               <div className="flex gap-10 items-center">
                 <Button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push("/dashboard")}
                   className="inline-flex cursor-pointer h-max items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
                 >
                   <History className="w-4 h-4" />
@@ -248,43 +261,69 @@ const UploadPage: React.FC = () => {
               </div>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4">Upload Files to Storacha</h1>
+            <h1 className="text-4xl font-bold mb-4">
+              Upload Files to Storacha
+            </h1>
             <p className="text-white/80 text-lg">
-              Securely store your files on the decentralized network with real Solana deposits
+              Securely store your files on the decentralized network with real
+              Solana deposits
             </p>
           </div>
 
           {/* Progress Indicator */}
           <div className="mb-8">
             <div className="flex justify-center items-center space-x-4">
-              {['select', 'configure', 'uploading', 'complete'].map((step, index) => (
-                <div key={step} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${uploadStep === step
-                      ? 'bg-yellow-400 text-gray-900'
-                      : index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep)
-                        ? 'bg-green-400 text-gray-900'
-                        : 'bg-white/20 text-white'
-                    }`}>
-                    {index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep) ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      index + 1
+              {["select", "configure", "uploading", "complete"].map(
+                (step, index) => (
+                  <div key={step} className="flex items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        uploadStep === step
+                          ? "bg-yellow-400 text-gray-900"
+                          : index <
+                              [
+                                "select",
+                                "configure",
+                                "uploading",
+                                "complete",
+                              ].indexOf(uploadStep)
+                            ? "bg-green-400 text-gray-900"
+                            : "bg-white/20 text-white"
+                      }`}
+                    >
+                      {index <
+                      ["select", "configure", "uploading", "complete"].indexOf(
+                        uploadStep,
+                      ) ? (
+                        <CheckCircle className="w-5 h-5" />
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+                    {index < 3 && (
+                      <div
+                        className={`w-12 h-0.5 mx-2 ${
+                          index <
+                          [
+                            "select",
+                            "configure",
+                            "uploading",
+                            "complete",
+                          ].indexOf(uploadStep)
+                            ? "bg-green-400"
+                            : "bg-white/20"
+                        }`}
+                      ></div>
                     )}
                   </div>
-                  {index < 3 && (
-                    <div className={`w-12 h-0.5 mx-2 ${index < ['select', 'configure', 'uploading', 'complete'].indexOf(uploadStep)
-                        ? 'bg-green-400'
-                        : 'bg-white/20'
-                      }`}></div>
-                  )}
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
 
           <AnimatePresence mode="wait">
             {/* Step 1: File Selection */}
-            {uploadStep === 'select' && (
+            {uploadStep === "select" && (
               <motion.div
                 key="select"
                 variants={stepVariants}
@@ -303,7 +342,7 @@ const UploadPage: React.FC = () => {
             )}
 
             {/* Step 2: Configuration */}
-            {uploadStep === 'configure' && (
+            {uploadStep === "configure" && (
               <motion.div
                 key="configure"
                 variants={stepVariants}
@@ -334,8 +373,12 @@ const UploadPage: React.FC = () => {
                               <FileIcon className="w-5 h-5 text-purple-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{file.name}</p>
-                              <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
+                              <p className="font-medium text-gray-900">
+                                {file.name}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {formatFileSize(file.size)}
+                              </p>
                             </div>
                           </div>
                           <button
@@ -368,7 +411,8 @@ const UploadPage: React.FC = () => {
                         Deposit Required
                       </h3>
                       <p className="text-gray-600">
-                        {formatFileSize(calculateTotalSize())} × {storageDuration} days
+                        {formatFileSize(calculateTotalSize())} ×{" "}
+                        {storageDuration} days
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         Real-time calculation based on network rates
@@ -391,7 +435,7 @@ const UploadPage: React.FC = () => {
                 <div className="flex gap-4 items-center">
                   <Button
                     variant="secondary"
-                    onClick={() => setUploadStep('select')}
+                    onClick={() => setUploadStep("select")}
                     className="flex w-full text-center justify-center cursor-pointer"
                   >
                     Back to Selection
@@ -409,7 +453,7 @@ const UploadPage: React.FC = () => {
             )}
 
             {/* Step 3: Uploading with Real Progress */}
-            {uploadStep === 'uploading' && (
+            {uploadStep === "uploading" && (
               <motion.div
                 key="uploading"
                 variants={stepVariants}
@@ -435,14 +479,16 @@ const UploadPage: React.FC = () => {
 
                   <div className="mt-4 text-sm text-gray-600">
                     Progress: {Math.round(uploadProgress)}%
-                    {isUploading && <span className="ml-2 animate-pulse">Processing...</span>}
+                    {isUploading && (
+                      <span className="ml-2 animate-pulse">Processing...</span>
+                    )}
                   </div>
                 </Card>
               </motion.div>
             )}
 
             {/* Step 4: Complete with Transaction Details */}
-            {uploadStep === 'complete' && (
+            {uploadStep === "complete" && (
               <motion.div
                 key="complete"
                 variants={stepVariants}
@@ -465,22 +511,35 @@ const UploadPage: React.FC = () => {
                     Upload Successful! 🎉
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    Your file has been uploaded to IPFS and deposit confirmed on Solana
+                    Your file has been uploaded to IPFS and deposit confirmed on
+                    Solana
                   </p>
 
                   <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-gray-700">Files Uploaded:</span>
-                        <div className="text-purple-600 font-semibold">{selectedFiles.length}</div>
+                        <span className="font-medium text-gray-700">
+                          Files Uploaded:
+                        </span>
+                        <div className="text-purple-600 font-semibold">
+                          {selectedFiles.length}
+                        </div>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-700">Total Size:</span>
-                        <div className="text-purple-600 font-semibold">{formatFileSize(calculateTotalSize())}</div>
+                        <span className="font-medium text-gray-700">
+                          Total Size:
+                        </span>
+                        <div className="text-purple-600 font-semibold">
+                          {formatFileSize(calculateTotalSize())}
+                        </div>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-700">Storage Duration:</span>
-                        <div className="text-purple-600 font-semibold">{storageDuration} days</div>
+                        <span className="font-medium text-gray-700">
+                          Storage Duration:
+                        </span>
+                        <div className="text-purple-600 font-semibold">
+                          {storageDuration} days
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -488,9 +547,16 @@ const UploadPage: React.FC = () => {
                   {transactionHash && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-green-800">Transaction Hash:</p>
+                        <p className="text-sm font-medium text-green-800">
+                          Transaction Hash:
+                        </p>
                         <button
-                          onClick={() => window.open(`https://explorer.solana.com/tx/${transactionHash}?cluster=testnet`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `https://explorer.solana.com/tx/${transactionHash}?cluster=testnet`,
+                              "_blank",
+                            )
+                          }
                           className="text-green-600 hover:text-green-800 transition-colors"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -505,9 +571,16 @@ const UploadPage: React.FC = () => {
                   {uploadResult?.cid && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-blue-800">IPFS CID:</p>
+                        <p className="text-sm font-medium text-blue-800">
+                          IPFS CID:
+                        </p>
                         <button
-                          onClick={() => window.open(`https://ipfs.io/ipfs/${uploadResult.cid}`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `https://ipfs.io/ipfs/${uploadResult.cid}`,
+                              "_blank",
+                            )
+                          }
                           className="text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -524,7 +597,7 @@ const UploadPage: React.FC = () => {
                       variant="secondary"
                       onClick={() => {
                         setSelectedFiles([]);
-                        setUploadStep('select');
+                        setUploadStep("select");
                         setUploadProgress(0);
                         setTransactionHash(null);
                         setUploadResult(null);
@@ -534,7 +607,7 @@ const UploadPage: React.FC = () => {
                       Upload More Files
                     </Button>
                     <Button
-                      onClick={() => router.push('/dashboard')}
+                      onClick={() => router.push("/dashboard")}
                       className="flex-1"
                     >
                       View Dashboard
@@ -550,9 +623,12 @@ const UploadPage: React.FC = () => {
             <Card className="mt-8 bg-purple-50 border border-purple-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-purple-800">Connected Wallet</p>
+                  <p className="text-sm font-medium text-purple-800">
+                    Connected Wallet
+                  </p>
                   <p className="text-xs text-purple-600 font-mono">
-                    {solanaPublicKey?.substring(0, 12)}...{solanaPublicKey?.substring(-8)}
+                    {solanaPublicKey?.substring(0, 12)}...
+                    {solanaPublicKey?.substring(-8)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -571,4 +647,3 @@ const UploadPage: React.FC = () => {
 };
 
 export default UploadPage;
-

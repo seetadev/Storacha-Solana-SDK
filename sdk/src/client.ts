@@ -1,5 +1,6 @@
-import { PublicKey, Connection, Transaction } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import { createDepositTxn } from './payment';
+import { CreateDepositArgs, UploadResult } from './types';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -20,13 +21,13 @@ export function getRpcUrl(env: Environment): string {
   }
 }
 
-
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
   environment: Environment;
 }
 
-export interface DepositParams {
+export interface DepositParams
+  extends Pick<CreateDepositArgs, 'signTransaction'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
   /** File to be stored */
@@ -52,7 +53,8 @@ export class Client {
     payer,
     file,
     durationDays,
-  }: DepositParams): Promise<Transaction> {
+    signTransaction,
+  }: DepositParams): Promise<UploadResult> {
     console.log('Creating deposit transaction with enviroment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
@@ -61,6 +63,19 @@ export class Client {
       duration: durationDays * 86400,
       payer,
       connection,
+      signTransaction,
     });
   }
+
+  estimateStorageCost = (file: File, duration: number) => {
+    const ratePerBytePerDay = 1000; // this would be obtained from the program config later
+    const fileSizeInBytes = file.size;
+    const totalLamports = fileSizeInBytes * duration * ratePerBytePerDay;
+    const totalSOL = totalLamports / 1_000_000_000;
+
+    return {
+      sol: totalSOL,
+      lamports: totalLamports,
+    };
+  };
 }

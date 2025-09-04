@@ -128,7 +128,7 @@ export class UploadService {
       // Validate and convert keys
       const transactionKeys = instruction.keys.map((key, index) => {
         console.log(`🔑 Processing key ${index}:`, key);
-        
+
         if (!key.pubkey) {
           throw new Error(`Missing pubkey in key ${index}`);
         }
@@ -229,14 +229,14 @@ export class UploadService {
       };
     } catch (error) {
       console.error("💥 Upload error:", error);
-      
+
       // More detailed error reporting
       if (error instanceof Error) {
         console.error("Error name:", error.name);
         console.error("Error message:", error.message);
         console.error("Error stack:", error.stack);
       }
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error occurred",
