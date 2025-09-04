@@ -3,7 +3,6 @@ import {
   getQuoteForFileUpload,
   initStorachaClient,
 } from "../utils/Storacha.js";
-import { QuoteOutput } from "../types/StorachaTypes.js";
 import * as Delegation from "@ucanto/core/delegation";
 import { DID } from "@ucanto/core";
 import { Link } from "@ucanto/core/schema";
@@ -79,10 +78,6 @@ export const uploadFile = async (req: Request, res: Response) => {
       new File([file.buffer], file.originalname, { type: file.mimetype }),
     ];
 
-    const fileMap: Record<string, Uint8Array> = {
-      [file.originalname]: new Uint8Array(file.buffer),
-    };
-
     const sizeBytes = file.size;
     // rate in lamports. we'll switch it later (make it dynamic)
     // same thing we set in the config initialization
@@ -90,6 +85,9 @@ export const uploadFile = async (req: Request, res: Response) => {
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
     const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
 
+    const fileMap: Record<string, Uint8Array> = {
+      [file.originalname]: new Uint8Array(file.buffer),
+    };
     const computedCID = await computeCID(fileMap);
     const depositItem: typeof depositAccount.$inferInsert = {
       deposit_amount: amountInLamports,
@@ -115,30 +113,18 @@ export const uploadFile = async (req: Request, res: Response) => {
       depositAmount: amountInLamports,
     });
 
-    const client = await initStorachaClient();
-    const cid = await client.uploadFile(files[0]);
-
-    if (cid.toString() !== computedCID) {
-      throw new Error(
-        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`
-      );
-    }
-
-    const uploadObject = {
-      cid: cid.toString(),
-      filename: file.originalname,
-      size: file.size,
-      type: file.mimetype,
-      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
-      uploadedAt: new Date().toISOString(),
-    };
+    // we need a way to ensure this on the client. for now, i'll leave it here.
+    // if (cid.toString() !== computedCID) {
+    //   throw new Error(
+    //     `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
+    //   );
+    // }
 
     await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
       message: "Deposit instruction ready — sign to finalize upload",
       cid: computedCID,
       instructions: depositInstructions,
-      object: uploadObject,
     });
   } catch (error: any) {
     console.error("Error uploading file to Storacha:", error);
@@ -158,7 +144,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
-    const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
+    const QuoteObject = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
     });
