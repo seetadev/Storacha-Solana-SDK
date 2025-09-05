@@ -25,7 +25,7 @@
   "types": "./dist/index.d.ts",
   "type": "module",
   "module": "./dist/index.js",
-  "keywords": [],
+  "keywords": ["solana", "storacha", "typescript", "rust", "dapp"],
   "author": "",
   "license": "ISC",
   "description": "",
