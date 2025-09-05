@@ -74,7 +74,7 @@ export const initializeConfig = async (req: Request, res: Response) => {
     const initIx = await createInitializeConfigInstruction(
       adminKey,
       solanaData?.RATE_PER_BYTE_PER_UNIT || 1000,
-      solanaData?.MINIMUM_DURATION_UNIT || 30,
+      solanaData?.MINIMUM_DURATION_UNIT || 1,
       adminKey
     );
 
