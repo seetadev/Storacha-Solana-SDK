@@ -1,5 +1,6 @@
-import { PublicKey, Connection, Transaction } from '@solana/web3.js';
+import { PublicKey, Connection } from '@solana/web3.js';
 import { createDepositTxn } from './payment';
+import { CreateDepositArgs, UploadResult } from './types';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -20,13 +21,13 @@ export function getRpcUrl(env: Environment): string {
   }
 }
 
-
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
   environment: Environment;
 }
 
-export interface DepositParams {
+export interface DepositParams
+  extends Pick<CreateDepositArgs, 'signTransaction'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
   /** File to be stored */
@@ -47,13 +48,32 @@ export class Client {
 
   /**
    * Creates a deposit transaction ready to be signed & sent by user's wallet.
+   *
+   * @param {Object} params
+   * @param {PublicKey} params.payer - The public key (wallet address) of the connected wallet.
+   * @param {File} params.file - The file to be uploaded.
+   * @param {number} params.durationDays - How long (in days) the file should be stored.
+   * @param {(tx: Transaction) => Promise<Transaction>} params.signTransaction -
+   *   A callback function to authorize the transaction via the Solana wallet library.
+   *
+   * @example
+   * const { publicKey, signTransaction } = useSolanaWallet();
+   * const result = await createDeposit({
+   *   payer: publicKey,
+   *   file,
+   *   durationDays: 30,
+   *   signTransaction,
+   * });
+   *
+   * @returns {Promise<UploadResult>} The upload result after transaction is processed.
    */
   async createDeposit({
     payer,
     file,
     durationDays,
-  }: DepositParams): Promise<Transaction> {
-    console.log('Creating deposit transaction with enviroment:', this.rpcUrl);
+    signTransaction,
+  }: DepositParams): Promise<UploadResult> {
+    console.log('Creating deposit transaction with environment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
     return await createDepositTxn({
@@ -61,6 +81,24 @@ export class Client {
       duration: durationDays * 86400,
       payer,
       connection,
+      signTransaction,
     });
   }
+
+  /**
+   * estimates the cost for a file based on the amount of days it should be stored for
+   * @param {File} file - a file to be uploaded
+   * @param {number} duration - how long (in seconds) the file should be stored for
+   */
+  estimateStorageCost = (file: File, duration: number) => {
+    const ratePerBytePerDay = 1000; // this would be obtained from the program config later
+    const fileSizeInBytes = file.size;
+    const totalLamports = fileSizeInBytes * duration * ratePerBytePerDay;
+    const totalSOL = totalLamports / 1_000_000_000;
+
+    return {
+      sol: totalSOL,
+      lamports: totalLamports,
+    };
+  };
 }

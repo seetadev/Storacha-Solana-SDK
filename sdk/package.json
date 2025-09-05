@@ -1,39 +1,42 @@
 {
-  "name": "storacha-sol-sdk",
-  "version": "0.0.0",
-  "main": "./dist/index.node.js",
-  "bin": {
-    "storacha/sol-sdk": "./dist/index.js"
-  },
+  "name": "storacha-sol",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
   "scripts": {
-    "build:node": "esbuild ./src/index.ts --bundle --platform=node --minify --format=esm --outfile=dist/index.node.js",
-    "build:browser": "esbuild ./src/index.ts --bundle --minify --sourcemap --format=esm --outfile=dist/index.browser.js",
-    "build": "pnpm build:node && pnpm build:browser",
+    "build": "tsup src/index.ts --minify",
     "dev": "pnpm build --watch"
   },
   "exports": {
     "import": {
-      "node": "./dist/index.node.js",
-      "browser": "./dist/index.browser.js",
-      "default": "./dist/index.browser.js"
+      "node": "./dist/index.cjs",
+      "browser": "./dist/index.js",
+      "default": "./dist/index.js"
     },
-    "require": "./dist/index.node.js"
+    "require": "./dist/index.cjs"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.js.map"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seetadev/storacha-solana-sdk"
+  },
+  "types": "./dist/index.d.ts",
   "type": "module",
-  "module": "./dist/index.browser.js",
+  "module": "./dist/index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@coral-xyz/borsh": "^0.31.1",
     "@solana/kit": "^2.3.0",
-    "@solana/web3.js": "^1.98.2",
-    "multiformats": "^13.3.7"
+    "@solana/web3.js": "^1.98.2"
   },
   "devDependencies": {
     "esbuild": "^0.21.4",
+    "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   }
 }

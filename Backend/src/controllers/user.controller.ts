@@ -120,7 +120,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     if (cid.toString() !== computedCID) {
       throw new Error(
-        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`
+        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
       );
     }
 

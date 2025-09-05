@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Clock, Star } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 interface StorageOption {
   duration: number;
@@ -62,20 +61,13 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
     return totalCost.toFixed(4);
   };
 
-  const handleChange = (duration: number) => {
-    if(duration < 1 || !duration){
-      toast.error("Duration must be at least 1 day or more.")
-    }
-    onDurationChange(duration)
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-gray-700">
         <Clock className="w-5 h-5" />
         <label className="font-semibold text-lg">Storage Duration</label>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {STORAGE_OPTIONS.map((option) => (
           <div
@@ -95,7 +87,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
                 </span>
               </div>
             )}
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">{option.label}</h3>
@@ -103,14 +95,14 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
                   <input
                     type="radio"
                     checked={selectedDuration === option.duration}
-                    onChange={() => handleChange(option.duration)}
+                    onChange={() => onDurationChange(option.duration)}
                     className="w-4 h-4 text-purple-600"
                   />
                 </div>
               </div>
-              
+
               <p className="text-sm text-gray-600">{option.description}</p>
-              
+
               <div className="space-y-1">
                 <p className="text-xs text-gray-500">
                   {option.costPerMB} SOL per MB
@@ -125,7 +117,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
           </div>
         ))}
       </div>
-      
+
       {/* Custom duration input */}
       <div className="border-t pt-4">
         <div className="flex items-center gap-4">
@@ -136,8 +128,7 @@ const StorageDurationSelector: React.FC<StorageDurationSelectorProps> = ({
             type="number"
             min="1"
             max="3650"
-            value={selectedDuration}
-            onChange={(e) => onDurationChange(parseInt(e.target.value))}
+            onChange={(e) => onDurationChange(parseInt(e.target.value) || 7)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Enter days"
           />

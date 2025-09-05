@@ -46,11 +46,12 @@ export interface ApiResponse {
 export class UploadService {
   private connection: Connection;
   private apiBaseUrl: string;
+
   constructor() {
     this.connection = new Connection(clusterApiUrl("testnet"), "confirmed");
     this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5040/api";
   }
-  
+
   async uploadFileWithDeposit(
     file: File,
     durationDays: number,
@@ -62,7 +63,7 @@ export class UploadService {
       console.log('🚀 Starting file upload...');
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("duration", String(durationDays * 86400));
+      formData.append("duration", String(durationDays * 86400)); // Convert to seconds
       formData.append("publicKey", publicKey.toBase58());
 
       const uploadResponse = await fetch(`${this.apiBaseUrl}/user/uploadFile`, {
@@ -84,85 +85,135 @@ export class UploadService {
         apiData = JSON.parse(responseText);
       } catch (parseError) {
         console.error('❌ JSON parse error:', parseError);
-        throw new Error('Invalid JSON response');
+        throw new Error('Invalid JSON response from API');
       }
 
       console.log('✅ Parsed API response:', apiData);
 
-      // Validate instructions
+      // Validate the response structure
       if (!apiData.instructions || !Array.isArray(apiData.instructions)) {
         console.error('❌ Invalid instructions:', apiData.instructions);
-        throw new Error("Invalid instructions format");
+        throw new Error("Invalid instructions format in API response");
       }
 
       if (apiData.instructions.length === 0) {
-        throw new Error("No instructions received");
+        throw new Error("No transaction instructions received from API");
       }
 
       const instruction = apiData.instructions[0];
-      console.log('Instruction:', instruction);
+      console.log('🔍 First instruction:', instruction);
 
-      if (!instruction.programId || !instruction.keys || !instruction.data) {
-        throw new Error("Malformed instruction data");
+      // Validate instruction structure
+      if (!instruction.programId) {
+        throw new Error("Missing programId in instruction");
       }
 
-      // Build transaction
+      if (!instruction.keys || !Array.isArray(instruction.keys)) {
+        console.error('❌ Invalid keys structure:', instruction.keys);
+        throw new Error("Invalid keys format in instruction");
+      }
+
+      if (!instruction.data) {
+        throw new Error("Missing data in instruction");
+      }
+
+      console.log('🔑 Instruction keys:', instruction.keys);
+      console.log('📋 Program ID:', instruction.programId);
+      console.log('📦 Data length:', instruction.data.length);
+
+      // Step 2: Build Solana transaction from API response
+      console.log('🔨 Building Solana transaction...');
       const latestBlockhash = await this.connection.getLatestBlockhash("confirmed");
-      const transactionKeys = instruction.keys.map((k, i) => {
-        if (!k.pubkey) throw new Error(`Missing pubkey at index ${i}`);
+
+      // Validate and convert keys
+      const transactionKeys = instruction.keys.map((key, index) => {
+        console.log(`🔑 Processing key ${index}:`, key);
+
+        if (!key.pubkey) {
+          throw new Error(`Missing pubkey in key ${index}`);
+        }
+
+        if (typeof key.isSigner !== 'boolean') {
+          throw new Error(`Invalid isSigner value in key ${index}: ${key.isSigner}`);
+        }
+
+        if (typeof key.isWritable !== 'boolean') {
+          throw new Error(`Invalid isWritable value in key ${index}: ${key.isWritable}`);
+        }
+
         try {
           return {
-            pubkey: new PublicKey(k.pubkey),
-            isSigner: k.isSigner,
-            isWritable: k.isWritable,
+            pubkey: new PublicKey(key.pubkey),
+            isSigner: key.isSigner,
+            isWritable: key.isWritable,
           };
-        } catch {
-          throw new Error(`Invalid pubkey at index ${i}: ${k.pubkey}`);
+        } catch (pubkeyError) {
+          console.error(`❌ Invalid pubkey in key ${index}:`, key.pubkey, pubkeyError);
+          throw new Error(`Invalid pubkey in key ${index}: ${key.pubkey}`);
         }
       });
 
+      console.log('✅ Converted transaction keys:', transactionKeys);
+
+      // Convert data from base64
       let instructionData: Buffer;
       try {
         instructionData = Buffer.from(instruction.data, "base64");
-      } catch {
-        throw new Error("Invalid base64 instruction data");
+        console.log('✅ Converted instruction data, length:', instructionData.length);
+      } catch (dataError) {
+        console.error('❌ Invalid base64 data:', instruction.data, dataError);
+        throw new Error('Invalid base64 data in instruction');
       }
 
+      // Create the transaction instruction
       const depositIx = new TransactionInstruction({
         programId: new PublicKey(instruction.programId),
         keys: transactionKeys,
         data: instructionData,
       });
 
-      const transaction = new Transaction({
-        recentBlockhash: latestBlockhash.blockhash,
-        feePayer: publicKey,
-      });
+      console.log('✅ Transaction instruction created');
+
+      const transaction = new Transaction();
+      transaction.recentBlockhash = latestBlockhash.blockhash;
+      transaction.feePayer = publicKey;
       transaction.add(depositIx);
 
-      console.log('Requesting signature...');
+      console.log('📝 Transaction built, requesting signature...');
+
+      // Step 3: Sign transaction
       const signedTransaction = await signTransaction(transaction);
+      console.log('✅ Transaction signed');
 
-      console.log('Sending transaction...');
-      const signature = await this.connection.sendRawTransaction(signedTransaction.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: "confirmed",
-      });
+      // Step 4: Send transaction
+      console.log('📡 Sending transaction to network...');
+      const signature = await this.connection.sendRawTransaction(
+        signedTransaction.serialize(),
+        {
+          skipPreflight: false,
+          preflightCommitment: "confirmed",
+        }
+      );
 
-      console.log('Confirming transaction...');
-      const confirmation = await this.connection.confirmTransaction({
-        signature,
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-      }, "confirmed");
+      console.log('📋 Transaction sent with signature:', signature);
+
+      // Step 5: Confirm transaction
+      console.log('⏳ Confirming transaction...');
+      const confirmation = await this.connection.confirmTransaction(
+        {
+          signature,
+          blockhash: latestBlockhash.blockhash,
+          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+        },
+        "confirmed"
+      );
 
       if (confirmation.value.err) {
-        console.error('Tx confirmation error:', confirmation.value.err);
+        console.error('❌ Transaction confirmation error:', confirmation.value.err);
         throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
       }
 
-      console.log('✅ Transaction confirmed:', signature);
-
+      console.log('🎉 Transaction confirmed successfully!');
 
       return {
         success: true,
@@ -176,77 +227,87 @@ export class UploadService {
           uploadedAt: apiData.object.uploadedAt,
         } : undefined,
       };
-    } catch (error: any) {
-      let userMessage = '';
-      
-      if (error.logs && Array.isArray(error.logs)) {
-        const logs = error.logs.join(' ').toLowerCase();
-        if (logs.includes('allocate') && logs.includes('already in use')) {
-          userMessage = 'This file has already been uploaded. Duplicate uploads are not allowed.';
-        } else if (logs.includes('already used') || logs.includes('duplicate')) {
-          userMessage = 'This file has already been uploaded previously.';
-        }
-      } else if (error.message) {
-        const msg = error.message.toLowerCase();
-        if (msg.includes('already in use') || msg.includes('duplicate')) {
-          userMessage = 'This file has already been uploaded and paid for.';
-        }
-      }
+    } catch (error) {
+      console.error("💥 Upload error:", error);
 
-      console.error('Error:', error);
+      // More detailed error reporting
+      if (error instanceof Error) {
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
 
       return {
         success: false,
-        error: userMessage || error.message,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       };
     }
   }
 
-
   calculateEstimatedCost(file: File, durationDays: number) {
-    const rate = 1000; // lamports per byte per day
-    const lamports = file.size * durationDays * rate;
+    const ratePerBytePerDay = 1000; // lamports per byte per day
+    const sizeBytes = file.size;
+    const totalLamports = sizeBytes * durationDays * ratePerBytePerDay;
+    const totalSOL = totalLamports / 1_000_000_000;
+
     return {
-      lamports,
-      sol: lamports / 1_000_000_000,
+      lamports: totalLamports,
+      sol: totalSOL,
     };
   }
 
-
-  async getTransactionHistory(address: string) {
+  async getTransactionHistory(publicKey: string) {
     try {
-      const res = await axios.get(`${this.apiBaseUrl}/transactions/${address}`);
-      return res.data;
+      const response = await fetch(`${this.apiBaseUrl}/transactions/${publicKey}`);
+      if (!response.ok) return [];
+      return await response.json();
     } catch (error) {
-      console.error('Failed to get transactions', error);
-
+      console.error("Failed to fetch transaction history:", error);
       return [];
     }
   }
 
-  async getUploadedFiles(address: string) {
+  async getUploadedFiles(publicKey: string) {
     try {
-      const res = await axios.get(`${this.apiBaseUrl}/files/${address}`);
-      return res.data;
+      const response = await fetch(`${this.apiBaseUrl}/files/${publicKey}`);
+      if (!response.ok) return [];
+      return await response.json();
     } catch (error) {
-      console.error('Failed to get uploaded files', error);
+      console.error("Failed to fetch uploaded files:", error);
       return [];
     }
   }
 }
 
-
 export const uploadService = new UploadService();
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5040/api";
 
 export const adminApi = {
   updateRate: async (rate: number, apiKey: string) => {
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/updateRate`, { rate }, { headers: { "x-api-key": apiKey }});
-    return res.data;
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/updateRate`,
+      { rate },
+      {
+        headers: {
+          "x-api-key": apiKey,
+        },
+      }
+    );
+    return response.data;
   },
+
   updateMinDuration: async (minDuration: number, apiKey: string) => {
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/updateMinDuration`, { minDuration }, { headers: { "x-api-key": apiKey }});
-    return res.data;
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/updateMinDuration`,
+      { minDuration },
+      {
+        headers: {
+          "x-api-key": apiKey,
+        },
+      }
+    );
+    return response.data;
   },
 };
