@@ -48,6 +48,24 @@ export class Client {
 
   /**
    * Creates a deposit transaction ready to be signed & sent by user's wallet.
+   *
+   * @param {Object} params
+   * @param {PublicKey} params.payer - The public key (wallet address) of the connected wallet.
+   * @param {File} params.file - The file to be uploaded.
+   * @param {number} params.durationDays - How long (in days) the file should be stored.
+   * @param {(tx: Transaction) => Promise<Transaction>} params.signTransaction -
+   *   A callback function to authorize the transaction via the Solana wallet library.
+   *
+   * @example
+   * const { publicKey, signTransaction } = useSolanaWallet();
+   * const result = await createDeposit({
+   *   payer: publicKey,
+   *   file,
+   *   durationDays: 30,
+   *   signTransaction,
+   * });
+   *
+   * @returns {Promise<UploadResult>} The upload result after transaction is processed.
    */
   async createDeposit({
     payer,
@@ -55,7 +73,7 @@ export class Client {
     durationDays,
     signTransaction,
   }: DepositParams): Promise<UploadResult> {
-    console.log('Creating deposit transaction with enviroment:', this.rpcUrl);
+    console.log('Creating deposit transaction with environment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
     return await createDepositTxn({
@@ -67,6 +85,11 @@ export class Client {
     });
   }
 
+  /**
+   * estimates the cost for a file based on the amount of days it should be stored for
+   * @param {File} file - a file to be uploaded
+   * @param {number} duration - how long (in seconds) the file should be stored for
+   */
   estimateStorageCost = (file: File, duration: number) => {
     const ratePerBytePerDay = 1000; // this would be obtained from the program config later
     const fileSizeInBytes = file.size;

@@ -102,7 +102,7 @@ export interface DepositResult extends Pick<UploadResult, 'message' | 'error'> {
   instructions: Array<{
     programId: string;
     keys: Array<{
-      pubKey: string;
+      pubkey: string;
       isSigner: boolean;
       isWritable: boolean;
     }>;

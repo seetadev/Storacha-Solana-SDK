@@ -63,7 +63,7 @@ export async function createDepositTxn({
     const depositInstruction = new TransactionInstruction({
       programId: new PublicKey(instructions.programId),
       keys: instructions.keys.map((k) => ({
-        pubkey: new PublicKey(k.pubKey),
+        pubkey: new PublicKey(k.pubkey),
         isSigner: k.isSigner,
         isWritable: k.isWritable,
       })),
