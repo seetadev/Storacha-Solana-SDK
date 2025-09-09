@@ -12,3 +12,4 @@ userRouter.post(
 );
 userRouter.post("/createDelegation", userController.createUCANDelegation);
 userRouter.get("/getQuote", userController.GetQuoteForFileUpload);
+userRouter.get("/getUserUploadHistory", userController.GetUserUploadHistory);

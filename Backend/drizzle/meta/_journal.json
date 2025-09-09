@@ -15,6 +15,13 @@
       "when": 1753723062193,
       "tag": "0001_gifted_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757426162388,
+      "tag": "0002_hesitant_professor_monster",
+      "breakpoints": true
     }
   ]
 }
