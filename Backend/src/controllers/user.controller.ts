@@ -186,7 +186,8 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
  */
 export const GetUserUploadHistory = async (req: Request, res: Response) => {
   try {
-    const userAddress = req.query.duration as string;
+    const userAddress = req.query.userAddress as string;
+    console.log("The user address is",userAddress);
     if (userAddress === null || userAddress === undefined) {
       return res.status(400).json({
         message: "Error getting the user address from the params",

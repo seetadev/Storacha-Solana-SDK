@@ -1,1 +1,0 @@
-ALTER TABLE "deposit" ADD COLUMN "created_at" date NOT NULL;

@@ -25,5 +25,5 @@ export const depositAccount = pgTable("deposit", {
   }).notNull(),
   deposit_slot: integer().notNull(),
   last_claimed_slot: integer().notNull(),
-  created_at: date().notNull(),
+  created_at: date().notNull().default('2025-01-01'),
 });

@@ -1,5 +1,5 @@
 {
-  "id": "7e1101b1-a27d-4091-94fe-c2ee3537b535",
+  "id": "c3e82ef3-8dc0-4ac5-a026-c685c5a5eb23",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -99,7 +99,7 @@
         },
         "deposit_amount": {
           "name": "deposit_amount",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -114,6 +114,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2025-01-01'"
         }
       },
       "indexes": {},

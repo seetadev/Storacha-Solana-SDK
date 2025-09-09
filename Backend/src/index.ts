@@ -13,10 +13,11 @@ const PORT = process.env.PORT || 3000;
  *  Validate all required env variables upfront
  */
 function validateEnv() {
-  const requiredVars = ["DATABASE_URL", "PORT", "ADMIN_API_KEY"];
+  const requiredVars = ["DATABASE_URL", "ADMIN_API_KEY"];
   const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
+    console.log(missing);
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}`,
     );
@@ -33,8 +34,13 @@ app.use("/api/user", userRouter);
 app.use("/api/solana", solanaRouter);
 
 app.listen(PORT, async () => {
-  await ensureConfigInitialized()
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+    try {
+        const result=await ensureConfigInitialized();
+        console.log("✅ Solana config initialized successfully");
+    } catch (error) {
+        console.error("❌ Failed to initialize Solana config:", error);
+        process.exit(1);
+    }
 });
 
-export default app;

@@ -15,6 +15,7 @@ export const getUserHistory = async (wallet: string) => {
       .where(eq(depositAccount.deposit_key, wallet));
     return userFiles;
   } catch (err) {
+    console.log("Error getting user history",err);
     return null;
   }
 };
