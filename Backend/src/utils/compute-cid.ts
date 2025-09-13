@@ -42,7 +42,7 @@ import { createFileEncoderStream, CAREncoderStream } from 'ipfs-car';
  async function computeDirectoryCID(fileMap: Record<string, Uint8Array>): Promise<string> {
    // For now, if we have multiple files, just handle the first one
    // You might need to investigate how Storacha handles multiple files specifically
-   const [filename, content] = Object.entries(fileMap)[0];
+   const [_, content] = Object.entries(fileMap)[0];
    const file = new Blob([content]);
 
    let rootCID: any;
