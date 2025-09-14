@@ -9,13 +9,14 @@ import { depositAccount } from "./schema.js";
  */
 export const getUserHistory = async (wallet: string) => {
   try {
+    const userAddres = wallet.toLowerCase();
     const userFiles = await db
       .select()
       .from(depositAccount)
-      .where(eq(depositAccount.deposit_key, wallet));
+      .where(eq(depositAccount.deposit_key, userAddres));
     return userFiles;
   } catch (err) {
-    console.log("Error getting user history",err);
+    console.log("Error getting user history", err);
     return null;
   }
 };
