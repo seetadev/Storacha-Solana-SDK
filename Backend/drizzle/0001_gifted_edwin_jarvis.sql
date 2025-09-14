@@ -1,1 +1,0 @@
-ALTER TABLE "deposit" ALTER COLUMN "deposit_amount" SET DATA TYPE bigint;
