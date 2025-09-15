@@ -129,3 +129,35 @@ export interface CreateDepositArgs
    * */
   signTransaction: (tx: Transaction) => Promise<Transaction>;
 }
+
+/**
+ * Individual deposit history entry from the backend
+ */
+export interface DepositHistoryEntry {
+  /** Unique identifier for the deposit */
+  id: number;
+  /** User's wallet address (deposit key) */
+  deposit_key: string;
+  /** Content identifier of the uploaded file */
+  content_cid: string;
+  /** Duration in days the file is stored for */
+  duration_days: number;
+  /** Amount deposited in lamports */
+  deposit_amount: number;
+  /** Slot when the deposit was made */
+  deposit_slot: number;
+  /** Last slot when rewards were claimed */
+  last_claimed_slot: number;
+  /** Timestamp when the deposit was created */
+  created_at: string;
+}
+
+/**
+ * Response from the getUserUploadHistory endpoint
+ */
+export interface DepositHistoryResponse {
+  /** Array of deposit history entries */
+  userHistory: DepositHistoryEntry[] | null;
+  /** The user address that was queried */
+  userAddress: string;
+}

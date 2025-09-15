@@ -1,6 +1,7 @@
 import { PublicKey, Connection } from '@solana/web3.js';
 import { createDepositTxn } from './payment';
 import { CreateDepositArgs, UploadResult } from './types';
+import { fetchUserDepositHistory } from './depositHistory';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -101,4 +102,9 @@ export class Client {
       lamports: totalLamports,
     };
   };
+
+  async getUserUploadHistory(userAddress: string) {
+    const response = await fetchUserDepositHistory(userAddress);
+    return response
+  }
 }
