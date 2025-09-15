@@ -29,7 +29,7 @@ import Button from '@/components/Button';
 import WalletConnection from '@/components/WalletConnection';
 import ReceiptModal from '@/components/ReceiptModel';
 import { uploadService } from '@/services/api';
-
+import { Environment, useDeposit, UploadResult, fetchUserDepositHistory } from "storacha-sol-sdk";
 interface UploadedFile {
   id: string;
   cid: string;
@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [activeTab, setActiveTab] = useState<'files' | 'transactions' | 'stats'>('files');
-
+  const client = useDeposit("testnet" as Environment);
   // Mock data for demonstration - replace with real API calls
   useEffect(() => {
     if (!walletConnected || !solanaPublicKey) {
@@ -83,7 +83,10 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+      if(solanaPublicKey){
+      const data= await client.getUserUploadHistory(solanaPublicKey);
+      console.log(data);
+      }
       // Mock data - replace with real API calls
       const mockFiles: UploadedFile[] = [
         {
