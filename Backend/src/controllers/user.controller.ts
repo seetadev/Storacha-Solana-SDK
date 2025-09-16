@@ -13,6 +13,7 @@ import { db } from "../db/db.js";
 import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
 import { computeCID } from "../utils/compute-cid.js";
 import { createDepositTransaction } from "./solana.controller.js";
+import { getUserHistory } from "../db/depositTable.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -192,6 +193,32 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
     return res.status(400).json({
       quoteObject: null,
       success: false,
+    });
+  }
+};
+
+/**
+ * Function to get user upload history
+ * @param req
+ * @param res
+ * @returns
+ */
+export const GetUserUploadHistory = async (req: Request, res: Response) => {
+  try {
+    const userAddress = req.query.userAddress as string;
+    if (userAddress === null || userAddress === undefined) {
+      return res.status(400).json({
+        message: "Error getting the user address from the params",
+      });
+    }
+    const userHistory = await getUserHistory(userAddress);
+    return res.status(200).json({
+      userHistory: userHistory,
+      userAddress: userAddress,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      message: "Error getting the user history",
     });
   }
 };

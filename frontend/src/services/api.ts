@@ -282,7 +282,7 @@ export class UploadService {
 export const uploadService = new UploadService();
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5040/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5040/api";
 
 export const adminApi = {
   updateRate: async (rate: number, apiKey: string) => {
