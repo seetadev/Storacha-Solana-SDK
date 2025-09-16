@@ -93,9 +93,12 @@ export async function createDepositTxn({
       uploadErr = depositRes.error;
     }
 
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+
     // calls the upload functionality on our server with the file when deposit is succesful
     const fileUploadReq = await fetch(
-      'http://localhost:5040/api/user/uploadFile',
+      `http://localhost:5040/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
       {
         method: 'POST',
         body: formData,

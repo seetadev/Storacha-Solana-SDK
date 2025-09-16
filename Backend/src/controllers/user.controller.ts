@@ -73,44 +73,23 @@ export const uploadFile = async (req: Request, res: Response) => {
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    const { publicKey, duration } = req.body;
-    const durationInSeconds = parseInt(duration as string, 10);
+    const cid = req.query.cid as string;
+    if (!cid) return res.status(400).json({ message: "CID is required" });
     const files = [
       new File([file.buffer], file.originalname, { type: file.mimetype }),
     ];
 
-    const fileMap: Record<string, Uint8Array> = {
-      [file.originalname]: new Uint8Array(file.buffer),
-    };
-
-    const sizeBytes = file.size;
-    // rate in lamports. we'll switch it later (make it dynamic)
-    // same thing we set in the config initialization
-    const ratePerBytePerDay = 1000;
-    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
-    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
-
-    const computedCID = await computeCID(fileMap);
-    const depositItem: typeof depositAccount.$inferInsert = {
-      deposit_amount: amountInLamports,
-      duration_days,
-      content_cid: computedCID,
-      deposit_key: publicKey.toLowerCase(),
-      deposit_slot: 1,
-      last_claimed_slot: 1,
-    };
-
     const client = await initStorachaClient();
-    const cid = await client.uploadFile(files[0]);
+    const uploadedCID = await client.uploadFile(files[0]);
 
-    if (cid.toString() !== computedCID) {
+    if (uploadedCID.toString() !== cid) {
       throw new Error(
-        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`,
+        `CID mismatch! Precomputed: ${cid}, Uploaded: ${uploadedCID}`,
       );
     }
 
     const uploadObject = {
-      cid: cid.toString(),
+      cid: uploadedCID,
       filename: file.originalname,
       size: file.size,
       type: file.mimetype,
@@ -118,10 +97,9 @@ export const uploadFile = async (req: Request, res: Response) => {
       uploadedAt: new Date().toISOString(),
     };
 
-    await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
       message: "Upload successful",
-      cid: computedCID,
+      cid: uploadedCID,
       object: uploadObject,
     });
   } catch (error: any) {
@@ -142,17 +120,17 @@ export const deposit = async (req: Request, res: Response) => {
     ]?.[0];
     if (!file) return res.status(400).json({ message: "No file selected" });
     const fileMap: Record<string, Uint8Array> = {
-      [file.originalname]: new Uint8Array(file.buffer)
-    }
+      [file.originalname]: new Uint8Array(file.buffer),
+    };
 
     const { publicKey, duration } = req.body;
     const durationInSeconds = parseInt(duration as string, 10);
-    const sizeBytes = file.size
+    const sizeBytes = file.size;
     const ratePerBytePerDay = 1000;
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
     const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
 
-    const computedCID = await computeCID(fileMap)
+    const computedCID = await computeCID(fileMap);
 
     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
@@ -165,13 +143,24 @@ export const deposit = async (req: Request, res: Response) => {
       fileSize: sizeBytes,
       contentCID: computedCID,
       durationDays: duration_days,
-      depositAmount: amountInLamports
-    })
+      depositAmount: amountInLamports,
+    });
+
+    const depositItem: typeof depositAccount.$inferInsert = {
+      deposit_amount: amountInLamports,
+      duration_days,
+      content_cid: computedCID,
+      deposit_key: publicKey.toLowerCase(),
+      deposit_slot: 1,
+      last_claimed_slot: 1,
+    };
+
+    await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
       message: "Deposit instruction ready — sign to finalize upload",
       cid: computedCID,
       instructions: depositInstructions,
-    })
+    });
   } catch (error) {
     console.error(error);
     res.status(400).json({
