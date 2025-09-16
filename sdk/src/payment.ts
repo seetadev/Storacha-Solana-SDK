@@ -32,33 +32,20 @@ export async function createDepositTxn({
     formData.append('duration', duration.toString());
     formData.append('publicKey', payer.toBase58());
 
-    // calls the upload functionality on our server with the file to upload and
-    // returns a response with the transaction instruction data
-    const fileUploadReq = await fetch(
-      'http://localhost:5040/api/user/uploadFile',
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
     let uploadErr;
 
-    if (!fileUploadReq.ok) {
-      let err = 'Unknown error';
-      try {
-        const data: DepositResult = await fileUploadReq.json();
-        err = data.message || data.error || err;
-      } catch {}
-      throw new Error('Deposit API error: ' + err);
-    }
+    const depositReq = await fetch('http://localhost:5040/api/solana/deposit', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!depositReq.ok) throw new Error('Failed to get deposit instructions');
 
-    const body: DepositResult = await fileUploadReq.json();
-    if (!body.instructions || !body.instructions.length) {
+    const depositRes: DepositResult = await depositReq.json();
+    if (!depositRes.instructions || !depositRes.instructions.length)
       throw new Error('No instructions from deposit API');
-    }
 
     const latestBlockhash = await connection.getLatestBlockhash('confirmed');
-    const instructions = body.instructions[0];
+    const instructions = depositRes.instructions[0];
 
     const depositInstruction = new TransactionInstruction({
       programId: new PublicKey(instructions.programId),
@@ -69,10 +56,6 @@ export async function createDepositTxn({
       })),
       data: Buffer.from(instructions.data, 'base64'),
     });
-
-    if (body.error) {
-      uploadErr = body.error;
-    }
 
     const tx = new Transaction();
     tx.recentBlockhash = latestBlockhash.blockhash;
@@ -95,6 +78,7 @@ export async function createDepositTxn({
       },
       'confirmed'
     );
+
     if (confirmation.value.err) {
       console.error(
         'Failed to confirm this transaction:',
@@ -105,18 +89,46 @@ export async function createDepositTxn({
       );
     }
 
+    if (depositRes.error) {
+      uploadErr = depositRes.error;
+    }
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+
+    // calls the upload functionality on our server with the file when deposit is succesful
+    const fileUploadReq = await fetch(
+      `http://localhost:5040/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!fileUploadReq.ok) {
+      let err = 'Unknown error';
+      try {
+        const data: DepositResult = await fileUploadReq.json();
+        err = data.message || data.error || err;
+      } catch {}
+      throw new Error('Deposit API error: ' + err);
+    }
+
+    const fileUploadRes: Pick<DepositResult, 'object' | 'cid' | 'message'> =
+      await fileUploadReq.json();
+
     return {
       signature: signature as Signature,
       success: true,
-      cid: body.cid,
-      url: body.object.url,
-      message: body.message,
-      fileInfo: body.object
+      cid: depositRes.cid,
+      url: fileUploadRes.object.url,
+      message: fileUploadRes.object.message,
+      fileInfo: fileUploadRes.object
         ? {
-            filename: body.object.fileInfo?.filename || '',
-            size: body?.object?.fileInfo?.size || 0,
-            uploadedAt: body?.object?.fileInfo?.uploadedAt || '',
-            type: body?.object?.fileInfo?.type || '',
+            filename: fileUploadRes.object.fileInfo?.filename || '',
+            size: fileUploadRes?.object?.fileInfo?.size || 0,
+            uploadedAt: fileUploadRes?.object?.fileInfo?.uploadedAt || '',
+            type: fileUploadRes?.object?.fileInfo?.type || '',
           }
         : undefined,
     };
