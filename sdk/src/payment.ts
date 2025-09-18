@@ -5,6 +5,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
+import { ENDPOINT } from './constants';
 
 /**
  * Calls the deposit API for on-chain storage and returns a Transaction
@@ -34,7 +35,7 @@ export async function createDepositTxn({
 
     let uploadErr;
 
-    const depositReq = await fetch('http://localhost:5040/api/solana/deposit', {
+    const depositReq = await fetch(`${ENDPOINT}/api/solana/deposit`, {
       method: 'POST',
       body: formData,
     });
@@ -94,11 +95,11 @@ export async function createDepositTxn({
     }
 
     const uploadForm = new FormData();
-    uploadForm.append("file", file);
+    uploadForm.append('file', file);
 
     // calls the upload functionality on our server with the file when deposit is succesful
     const fileUploadReq = await fetch(
-      `http://localhost:5040/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
+      `${ENDPOINT}/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
       {
         method: 'POST',
         body: formData,
