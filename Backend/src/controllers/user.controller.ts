@@ -132,6 +132,15 @@ export const deposit = async (req: Request, res: Response) => {
     const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
 
     const computedCID = await computeCID(fileMap);
+    const depositItem: typeof depositAccount.$inferInsert = {
+      deposit_amount: amountInLamports,
+      duration_days,
+      content_cid: computedCID,
+      deposit_key: publicKey.toLowerCase(),
+      deposit_slot: 1,
+      last_claimed_slot: 1,
+      created_at: new Date().toISOString(),
+    };
 
     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
@@ -147,14 +156,23 @@ export const deposit = async (req: Request, res: Response) => {
       depositAmount: amountInLamports,
     });
 
-    const depositItem: typeof depositAccount.$inferInsert = {
-      deposit_amount: amountInLamports,
-      duration_days,
-      content_cid: computedCID,
-      deposit_key: publicKey.toLowerCase(),
-      deposit_slot: 1,
-      last_claimed_slot: 1,
-    };
+    const client = await initStorachaClient();
+    const cid = await client.uploadFile(files[0]);
+
+    if (cid.toString() !== computedCID) {
+      throw new Error(
+        `CID mismatch! Precomputed: ${computedCID}, Uploaded: ${cid}`
+      );
+    }
+
+    const uploadObject = {
+      cid: cid.toString(),
+      filename: file.originalname,
+      size: file.size,
+      type: file.mimetype,
+      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
+      uploadedAt: new Date().toISOString(),
+    }
 
     await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
