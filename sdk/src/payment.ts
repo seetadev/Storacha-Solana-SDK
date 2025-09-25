@@ -24,12 +24,13 @@ export async function createDepositTxn({
   file,
   duration,
   payer,
+  multiple,
   connection,
   signTransaction,
 }: CreateDepositArgs): Promise<UploadResult> {
   try {
     const formData = new FormData();
-    formData.append('file', file);
+    file.forEach((f) => formData.append("file", f))
     formData.append('duration', duration.toString());
     formData.append('publicKey', payer.toBase58());
 
@@ -95,16 +96,27 @@ export async function createDepositTxn({
     }
 
     const uploadForm = new FormData();
-    uploadForm.append('file', file);
+    file.forEach((f) => uploadForm.append("file", f))
 
+    let fileUploadReq;
     // calls the upload functionality on our server with the file when deposit is succesful
-    const fileUploadReq = await fetch(
-      `${ENDPOINT}/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
+    if (multiple) {
+      fileUploadReq = await fetch(
+        `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadForm,
+        }
+      );
+    } else {
+      fileUploadReq = await fetch(
+        `${ENDPOINT}/api/user/upload-file?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadForm,
+        }
+      );
+    }
 
     if (!fileUploadReq.ok) {
       let err = 'Unknown error';
@@ -116,7 +128,7 @@ export async function createDepositTxn({
     }
 
     const fileUploadRes: Pick<DepositResult, 'object' | 'cid' | 'message'> =
-      await fileUploadReq.json();
+      await fileUploadReq?.json();
 
     return {
       signature: signature as Signature,

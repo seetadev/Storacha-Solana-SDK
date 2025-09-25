@@ -66,7 +66,7 @@ export class UploadService {
       formData.append("duration", String(durationDays * 86400)); // Convert to seconds
       formData.append("publicKey", publicKey.toBase58());
 
-      const uploadResponse = await fetch(`${this.apiBaseUrl}/user/uploadFile`, {
+      const uploadResponse = await fetch(`${this.apiBaseUrl}/user/upload-file`, {
         method: "POST",
         body: formData,
       });

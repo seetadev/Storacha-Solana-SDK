@@ -28,11 +28,11 @@ export interface ClientOptions {
 }
 
 export interface DepositParams
-  extends Pick<CreateDepositArgs, 'signTransaction'> {
+  extends Pick<CreateDepositArgs, 'signTransaction' | 'multiple'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
   /** File to be stored */
-  file: File;
+  file: File[];
   /** Duration in days to store the data */
   durationDays: number;
 }
@@ -71,6 +71,7 @@ export class Client {
   async createDeposit({
     payer,
     file,
+    multiple,
     durationDays,
     signTransaction,
   }: DepositParams): Promise<UploadResult> {
@@ -82,6 +83,7 @@ export class Client {
       duration: durationDays * 86400,
       payer,
       connection,
+      multiple,
       signTransaction,
     });
   }
@@ -91,9 +93,9 @@ export class Client {
    * @param {File} file - a file to be uploaded
    * @param {number} duration - how long (in seconds) the file should be stored for
    */
-  estimateStorageCost = (file: File, duration: number) => {
+  estimateStorageCost = (file: File[], duration: number) => {
     const ratePerBytePerDay = 1000; // this would be obtained from the program config later
-    const fileSizeInBytes = file.size;
+    const fileSizeInBytes = file.reduce((acc, f) => acc + f.size, 0);
     const totalLamports = fileSizeInBytes * duration * ratePerBytePerDay;
     const totalSOL = totalLamports / 1_000_000_000;
 
@@ -105,6 +107,6 @@ export class Client {
 
   async getUserUploadHistory(userAddress: string) {
     const response = await fetchUserDepositHistory(userAddress);
-    return response
+    return response;
   }
 }

@@ -61,7 +61,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
 };
 
 /**
- * Function to upload file to storacha
+ * Function to upload a file to storacha
  * @param req
  * @param res
  * @returns
@@ -108,6 +108,60 @@ export const uploadFile = async (req: Request, res: Response) => {
     res.status(400).json({
       message: "Error uploading file to directory",
     });
+  }
+};
+
+/**
+ * allows upload of multiple files or a directory to storacha
+ * @param req
+ * @param res
+ * @returns
+ */
+export const uploadFiles = async (req: Request, res: Response) => {
+  try {
+    const files = (req.files as { [fieldname: string]: Express.Multer.File[] })[
+      "file"
+    ];
+
+    if (!files || files.length === 0)
+      return res.status(400).json({ message: "No files uploaded" });
+
+    const cid = req.query.cid as string;
+    if (!cid) return res.status(400).json({ message: "CID is required" });
+
+    const fileObjects = files.map(
+      (f) => new File([f.buffer], f.originalname, { type: f.mimetype }),
+    );
+
+    const client = await initStorachaClient();
+    const uploadedCID = await client.uploadDirectory(fileObjects);
+
+    if (uploadedCID.toString() !== cid)
+      throw new Error(
+        `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`,
+      );
+
+    const uploadObject = {
+      cid: uploadedCID,
+      directoryName: `Upload-${crypto.randomUUID()}`,
+      url: `https://w3s.link/ipfs/${cid}`,
+      size: files.reduce((sum, f) => sum + f.size, 0),
+      files: files.map((f) => ({
+        filename: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+        url: `https://w3s.link/ipfs/${cid}/${f.originalname}`,
+      })),
+    };
+
+    res.status(200).json({
+      message: "Upload successful",
+      cid: uploadedCID,
+      object: uploadObject,
+    });
+  } catch (error) {
+    console.error("Error uploading files:", error);
+    res.status(400).json({ message: "Error uploading files" });
   }
 };
 

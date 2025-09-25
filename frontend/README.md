@@ -43,9 +43,9 @@ The frontend will be available at `http://localhost:5173` and will proxy API req
 ## API Endpoints Tested
 
 ### User Endpoints
-- `POST /api/user/uploadFile` - Upload files to Storacha
-- `POST /api/user/createDelegation` - Create UCAN delegations
-- `GET /api/user/getQuote` - Get storage quotes
+- `POST /api/user/upload-file` - Upload files to Storacha
+- `POST /api/user/create-delegation` - Create UCAN delegations
+- `GET /api/user/get-quote` - Get storage quotes
 
 ### Admin Endpoints
 - `POST /api/admin/updateRate` - Update storage rates (requires API key)
