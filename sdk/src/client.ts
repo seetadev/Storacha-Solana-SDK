@@ -28,10 +28,10 @@ export interface ClientOptions {
 }
 
 export interface DepositParams
-  extends Pick<CreateDepositArgs, 'signTransaction' | 'multiple'> {
+  extends Pick<CreateDepositArgs, 'signTransaction'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
-  /** File to be stored */
+  /** File(s) to be stored */
   file: File[];
   /** Duration in days to store the data */
   durationDays: number;
@@ -71,7 +71,6 @@ export class Client {
   async createDeposit({
     payer,
     file,
-    multiple,
     durationDays,
     signTransaction,
   }: DepositParams): Promise<UploadResult> {
@@ -83,7 +82,6 @@ export class Client {
       duration: durationDays * 86400,
       payer,
       connection,
-      multiple,
       signTransaction,
     });
   }

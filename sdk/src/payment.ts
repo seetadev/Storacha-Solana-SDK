@@ -24,7 +24,6 @@ export async function createDepositTxn({
   file,
   duration,
   payer,
-  multiple,
   connection,
   signTransaction,
 }: CreateDepositArgs): Promise<UploadResult> {
@@ -33,6 +32,8 @@ export async function createDepositTxn({
     file.forEach((f) => formData.append("file", f))
     formData.append('duration', duration.toString());
     formData.append('publicKey', payer.toBase58());
+
+    const isMultipleFiles = file.length > 1
 
     let uploadErr;
 
@@ -100,7 +101,7 @@ export async function createDepositTxn({
 
     let fileUploadReq;
     // calls the upload functionality on our server with the file when deposit is succesful
-    if (multiple) {
+    if (isMultipleFiles) {
       fileUploadReq = await fetch(
         `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(depositRes.cid)}`,
         {

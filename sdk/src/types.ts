@@ -128,8 +128,6 @@ export interface CreateDepositArgs
    * const signTransaction = await signTransaction(tx)
    * */
   signTransaction: (tx: Transaction) => Promise<Transaction>;
-  /** indicate whether you to upload a single file or multiple files in a directory */
-  multiple: boolean
 }
 
 /**

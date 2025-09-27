@@ -123,7 +123,6 @@ const UploadPage: React.FC = () => {
         file,
         durationDays: storageDuration,
         payer: publicKey,
-        multiple: file.length > 1 ? true : false,
         signTransaction: async (tx) => {
           setUploadProgress(40);
           toast.loading("Please sign the transaction in your wallet...", {
