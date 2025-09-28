@@ -61,16 +61,14 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
 };
 
 /**
- * Function to upload file to storacha
+ * Function to upload a file to storacha
  * @param req
  * @param res
  * @returns
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
-    const file = (req.files as { [fieldname: string]: Express.Multer.File[] })[
-      "file"
-    ]?.[0];
+    const file = req.file
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
@@ -112,63 +110,143 @@ export const uploadFile = async (req: Request, res: Response) => {
 };
 
 /**
- * Builds the deposit instruction for upload transaction
+ * allows upload of multiple files or a directory to storacha
+ * @param req
+ * @param res
+ * @returns
  */
-export const deposit = async (req: Request, res: Response) => {
+export const uploadFiles = async (req: Request, res: Response) => {
   try {
-    const file = (req.files as { [fieldname: string]: Express.Multer.File[] })[
-      "file"
-    ]?.[0];
-    if (!file) return res.status(400).json({ message: "No file selected" });
-    const fileMap: Record<string, Uint8Array> = {
-      [file.originalname]: new Uint8Array(file.buffer),
+    const files = req.files as Express.Multer.File[];
+
+    if (!files)
+      return res.status(400).json({ message: "No files uploaded" });
+
+    const cid = req.query.cid as string;
+    if (!cid) return res.status(400).json({ message: "CID is required" });
+
+    const fileObjects = files.map(
+      (f) => new File([f.buffer], f.originalname, { type: f.mimetype }),
+    );
+
+    const client = await initStorachaClient();
+    const uploadedCID = await client.uploadDirectory(fileObjects);
+
+    if (uploadedCID.toString() !== cid)
+      throw new Error(
+        `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`,
+      );
+
+    const uploadObject = {
+      cid: uploadedCID,
+      directoryName: `Upload-${crypto.randomUUID()}`,
+      url: `https://w3s.link/ipfs/${cid}`,
+      size: files.reduce((sum, f) => sum + f.size, 0),
+      files: files.map((f) => ({
+        filename: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+        url: `https://w3s.link/ipfs/${cid}/${f.originalname}`,
+      })),
     };
 
-    const { publicKey, duration } = req.body;
-    const durationInSeconds = parseInt(duration as string, 10);
-    const sizeBytes = file.size;
-    const ratePerBytePerDay = 1000;
-    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
-    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
-
-    const computedCID = await computeCID(fileMap);
-
-    if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
-      throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
-    }
-    const durationNum = Number(duration);
-    if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
-
-    const depositInstructions = await createDepositTransaction({
-      publicKey,
-      fileSize: sizeBytes,
-      contentCID: computedCID,
-      durationDays: duration_days,
-      depositAmount: amountInLamports,
-    });
-
-    const depositItem: typeof depositAccount.$inferInsert = {
-      deposit_amount: amountInLamports,
-      duration_days,
-      content_cid: computedCID,
-      deposit_key: publicKey.toLowerCase(),
-      deposit_slot: 1,
-      last_claimed_slot: 1,
-    };
-
-    await db.insert(depositAccount).values(depositItem).returning();
     res.status(200).json({
-      message: "Deposit instruction ready — sign to finalize upload",
-      cid: computedCID,
-      instructions: depositInstructions,
+      message: "Upload successful",
+      cid: uploadedCID,
+      object: uploadObject,
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: "Error making a desposit",
-    });
+    console.error("Error uploading files:", error);
+    res.status(400).json({ message: "Error uploading files" });
   }
 };
+
+/**
+ * Builds the deposit instruction for upload transaction
+ */
+ export const deposit = async (req: Request, res: Response) => {
+   try {
+     // we're handling both single file and multiple files here as opposed to previous approach
+     const files = req.files as Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
+     let fileArray: Express.Multer.File[] = [];
+
+     if (Array.isArray(files)) {
+       fileArray = files;
+     } else if (files && typeof files === 'object') {
+       const fileField = files["file"] || files["files"];
+       if (fileField && Array.isArray(fileField)) {
+         fileArray = fileField;
+       } else {
+         return res.status(400).json({ message: "No files selected" });
+       }
+     } else {
+       return res.status(400).json({ message: "No files selected" });
+     }
+
+     if (fileArray.length === 0) {
+       return res.status(400).json({ message: "No files selected" });
+     }
+
+     const fileMap: Record<string, Uint8Array> = {};
+     let totalSize = 0;
+
+     for (const file of fileArray) {
+       fileMap[file.originalname] = new Uint8Array(file.buffer);
+       totalSize += file.size;
+     }
+
+     const { publicKey, duration } = req.body;
+     const durationInSeconds = parseInt(duration as string, 10);
+     const ratePerBytePerDay = 1000;
+     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
+     const amountInLamports = totalSize * duration_days * ratePerBytePerDay;
+
+     const computedCID = await computeCID(fileMap);
+
+     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
+       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
+     }
+     const durationNum = Number(duration);
+     if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
+
+     const depositInstructions = await createDepositTransaction({
+       publicKey,
+       fileSize: totalSize,
+       contentCID: computedCID,
+       durationDays: duration_days,
+       depositAmount: amountInLamports,
+     });
+
+     const depositItem: typeof depositAccount.$inferInsert = {
+       deposit_amount: amountInLamports,
+       duration_days,
+       content_cid: computedCID,
+       deposit_key: publicKey.toLowerCase(),
+       deposit_slot: 1,
+       last_claimed_slot: 1,
+     };
+
+     await db.insert(depositAccount).values(depositItem).returning();
+
+     res.status(200).json({
+       message: "Deposit instruction ready — sign to finalize upload",
+       cid: computedCID,
+       instructions: depositInstructions,
+       fileCount: fileArray.length,
+       totalSize: totalSize,
+       files: fileArray.map(f => ({
+         name: f.originalname,
+         size: f.size,
+         type: f.mimetype
+       }))
+     });
+   } catch (error) {
+     console.error(error);
+     res.status(400).json({
+       message: "Error making a deposit",
+     });
+   }
+ };
 
 /**
  * Function to get Quote For File Upload

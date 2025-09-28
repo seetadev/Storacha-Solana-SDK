@@ -84,7 +84,7 @@ export interface OnChainDeposit {
   /** public key of the depositor */
   depositor: Address;
   /** file object containing metadata about the upload */
-  file: File;
+  file: File[];
   /** storage duration (days) */
   duration: number;
   /** amount deposited in lamports */

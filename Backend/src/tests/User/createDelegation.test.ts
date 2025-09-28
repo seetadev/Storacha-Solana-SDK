@@ -18,7 +18,7 @@ test("Create delegation on behalf of the user", async () => {
     storachaKey: process.env.STORACHA_KEY,
   };
   const result = await axios.post(
-    `${BASE_URL}/createDelegation`,
+    `${BASE_URL}/create-delegation`,
     DelegationObject
   );
   // expect(typeof result.data.message).toBe(string);
