@@ -146,7 +146,6 @@ export async function ensureConfigInitialized(): Promise<void> {
   );
 
   const configAccount = await connection.getAccountInfo(configPda);
-  console.log("The config account is",configAccount);
   if (!configAccount) {
     console.log("Config not found — initializing it now...");
 

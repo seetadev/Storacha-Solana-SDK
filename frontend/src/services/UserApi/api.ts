@@ -3,12 +3,12 @@ import axios from "axios";
 
 /**
  * Function to get user upload history
- * @param walletAddress 
- * @returns 
+ * @param walletAddress
+ * @returns
  */
 export const getUserUploadHistory = async (walletAddress: string) => {
-    
-  const response = await axios.get(`${API_BASE_URL}/user/getUserUploadHistory`, {
+
+  const response = await axios.get(`${API_BASE_URL}/user/user-upload-history`, {
     params: { walletAddress },
   });
 

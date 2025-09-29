@@ -1,5 +1,5 @@
 {
-  "id": "c3e82ef3-8dc0-4ac5-a026-c685c5a5eb23",
+  "id": "84456245-bc31-4841-9d41-b3a7690a6b55",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -12,18 +12,7 @@
           "name": "id",
           "type": "integer",
           "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "config_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
+          "notNull": true
         },
         "admin_key": {
           "name": "admin_key",
