@@ -4,3 +4,5 @@ export const ENDPOINT =
   NODE_ENV === 'development'
     ? 'http://localhost:5040'
     : 'https://storacha-solana-sdk-bshc.onrender.com';
+
+export const DAY_TIME_IN_SECONDS = 86400;

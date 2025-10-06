@@ -1,5 +1,5 @@
 {
-  "id": "84456245-bc31-4841-9d41-b3a7690a6b55",
+  "id": "9d6385ca-ad6e-452d-a20d-84df2f503960",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -110,6 +110,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'2025-01-01'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'2025-10-22'"
         }
       },
       "indexes": {},

@@ -2,6 +2,7 @@ import { PublicKey, Connection } from '@solana/web3.js';
 import { createDepositTxn } from './payment';
 import { CreateDepositArgs, UploadResult } from './types';
 import { fetchUserDepositHistory } from './depositHistory';
+import { DAY_TIME_IN_SECONDS } from './constants';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -79,7 +80,7 @@ export class Client {
 
     return await createDepositTxn({
       file,
-      duration: durationDays * 86400,
+      duration: durationDays * DAY_TIME_IN_SECONDS,
       payer,
       connection,
       signTransaction,

@@ -14,6 +14,7 @@ import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
 import { computeCID } from "../utils/compute-cid.js";
 import { createDepositTransaction } from "./solana.controller.js";
 import { getUserHistory } from "../db/depositTable.js";
+import { getExpiryDate } from "../utils/functions.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -68,7 +69,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
-    const file = req.file
+    const file = req.file;
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
@@ -119,8 +120,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
 
-    if (!files)
-      return res.status(400).json({ message: "No files uploaded" });
+    if (!files) return res.status(400).json({ message: "No files uploaded" });
 
     const cid = req.query.cid as string;
     if (!cid) return res.status(400).json({ message: "CID is required" });
@@ -164,89 +164,95 @@ export const uploadFiles = async (req: Request, res: Response) => {
 /**
  * Builds the deposit instruction for upload transaction
  */
- export const deposit = async (req: Request, res: Response) => {
-   try {
-     // we're handling both single file and multiple files here as opposed to previous approach
-     const files = req.files as Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
-     let fileArray: Express.Multer.File[] = [];
+export const deposit = async (req: Request, res: Response) => {
+  try {
+    // we're handling both single file and multiple files here as opposed to previous approach
+    const files = req.files as
+      | Express.Multer.File[]
+      | { [fieldname: string]: Express.Multer.File[] };
+    let fileArray: Express.Multer.File[] = [];
 
-     if (Array.isArray(files)) {
-       fileArray = files;
-     } else if (files && typeof files === 'object') {
-       const fileField = files["file"] || files["files"];
-       if (fileField && Array.isArray(fileField)) {
-         fileArray = fileField;
-       } else {
-         return res.status(400).json({ message: "No files selected" });
-       }
-     } else {
-       return res.status(400).json({ message: "No files selected" });
-     }
+    if (Array.isArray(files)) {
+      fileArray = files;
+    } else if (files && typeof files === "object") {
+      const fileField = files["file"] || files["files"];
+      if (fileField && Array.isArray(fileField)) {
+        fileArray = fileField;
+      } else {
+        return res.status(400).json({ message: "No files selected" });
+      }
+    } else {
+      return res.status(400).json({ message: "No files selected" });
+    }
 
-     if (fileArray.length === 0) {
-       return res.status(400).json({ message: "No files selected" });
-     }
+    if (fileArray.length === 0) {
+      return res.status(400).json({ message: "No files selected" });
+    }
 
-     const fileMap: Record<string, Uint8Array> = {};
-     let totalSize = 0;
+    const fileMap: Record<string, Uint8Array> = {};
+    let totalSize = 0;
 
-     for (const file of fileArray) {
-       fileMap[file.originalname] = new Uint8Array(file.buffer);
-       totalSize += file.size;
-     }
+    for (const file of fileArray) {
+      fileMap[file.originalname] = new Uint8Array(file.buffer);
+      totalSize += file.size;
+    }
 
-     const { publicKey, duration } = req.body;
-     const durationInSeconds = parseInt(duration as string, 10);
-     const ratePerBytePerDay = 1000;
-     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
-     const amountInLamports = totalSize * duration_days * ratePerBytePerDay;
+    const { publicKey, duration } = req.body;
+    const durationInSeconds = parseInt(duration as string, 10);
+    const ratePerBytePerDay = 1000;
+    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
+    const amountInLamports = totalSize * duration_days * ratePerBytePerDay;
 
-     const computedCID = await computeCID(fileMap);
+    const computedCID = await computeCID(fileMap);
 
-     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
-       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
-     }
-     const durationNum = Number(duration);
-     if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
+    if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
+      throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
+    }
+    const durationNum = Number(duration);
+    if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
 
-     const depositInstructions = await createDepositTransaction({
-       publicKey,
-       fileSize: totalSize,
-       contentCID: computedCID,
-       durationDays: duration_days,
-       depositAmount: amountInLamports,
-     });
+    const depositInstructions = await createDepositTransaction({
+      publicKey,
+      fileSize: totalSize,
+      contentCID: computedCID,
+      durationDays: duration_days,
+      depositAmount: amountInLamports,
+    });
 
-     const depositItem: typeof depositAccount.$inferInsert = {
-       deposit_amount: amountInLamports,
-       duration_days,
-       content_cid: computedCID,
-       deposit_key: publicKey.toLowerCase(),
-       deposit_slot: 1,
-       last_claimed_slot: 1,
-     };
+    const backupExpirationDate = getExpiryDate(duration_days);
 
-     await db.insert(depositAccount).values(depositItem).returning();
+    const depositItem: typeof depositAccount.$inferInsert = {
+      deposit_amount: amountInLamports,
+      duration_days,
+      content_cid: computedCID,
+      deposit_key: publicKey.toLowerCase(),
+      deposit_slot: 1,
+      last_claimed_slot: 1,
+      expires_at: backupExpirationDate,
+      created_at: new Date().toISOString(),
+    };
 
-     res.status(200).json({
-       message: "Deposit instruction ready — sign to finalize upload",
-       cid: computedCID,
-       instructions: depositInstructions,
-       fileCount: fileArray.length,
-       totalSize: totalSize,
-       files: fileArray.map(f => ({
-         name: f.originalname,
-         size: f.size,
-         type: f.mimetype
-       }))
-     });
-   } catch (error) {
-     console.error(error);
-     res.status(400).json({
-       message: "Error making a deposit",
-     });
-   }
- };
+    await db.insert(depositAccount).values(depositItem).returning();
+
+    res.status(200).json({
+      message: "Deposit instruction ready — sign to finalize upload",
+      cid: computedCID,
+      instructions: depositInstructions,
+      fileCount: fileArray.length,
+      totalSize: totalSize,
+      files: fileArray.map((f) => ({
+        name: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({
+      message: "Error making a deposit",
+    });
+  }
+};
 
 /**
  * Function to get Quote For File Upload
