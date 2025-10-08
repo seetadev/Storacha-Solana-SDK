@@ -6,10 +6,15 @@ const upload = multer();
 export const userRouter = express.Router();
 
 userRouter.post(
-  "/uploadFile",
-  upload.fields([{ name: "file", maxCount: 1 }]),
+  "/upload-file",
+  upload.single("file"),
   userController.uploadFile,
 );
-userRouter.post("/createDelegation", userController.createUCANDelegation);
-userRouter.get("/getQuote", userController.GetQuoteForFileUpload);
-userRouter.get("/getUserUploadHistory", userController.GetUserUploadHistory);
+userRouter.post(
+  "/upload-files",
+  upload.array("file"),
+  userController.uploadFiles,
+);
+userRouter.post("/create-delegation", userController.createUCANDelegation);
+userRouter.get("/get-quote", userController.GetQuoteForFileUpload);
+userRouter.get("/user-upload-history", userController.GetUserUploadHistory);

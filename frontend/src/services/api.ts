@@ -66,7 +66,7 @@ export class UploadService {
       formData.append("duration", String(durationDays * 86400)); // Convert to seconds
       formData.append("publicKey", publicKey.toBase58());
 
-      const uploadResponse = await fetch(`${this.apiBaseUrl}/user/uploadFile`, {
+      const uploadResponse = await fetch(`${this.apiBaseUrl}/user/upload-file`, {
         method: "POST",
         body: formData,
       });
@@ -282,7 +282,7 @@ export class UploadService {
 export const uploadService = new UploadService();
 
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5040/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 
 export const adminApi = {
   updateRate: async (rate: number, apiKey: string) => {

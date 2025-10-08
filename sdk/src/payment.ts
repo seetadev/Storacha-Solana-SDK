@@ -5,6 +5,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
+import { ENDPOINT } from './constants';
 
 /**
  * Calls the deposit API for on-chain storage and returns a Transaction
@@ -28,13 +29,15 @@ export async function createDepositTxn({
 }: CreateDepositArgs): Promise<UploadResult> {
   try {
     const formData = new FormData();
-    formData.append('file', file);
+    file.forEach((f) => formData.append("file", f))
     formData.append('duration', duration.toString());
     formData.append('publicKey', payer.toBase58());
 
+    const isMultipleFiles = file.length > 1
+
     let uploadErr;
 
-    const depositReq = await fetch('http://localhost:3000/api/solana/deposit', {
+    const depositReq = await fetch(`${ENDPOINT}/api/solana/deposit`, {
       method: 'POST',
       body: formData,
     });
@@ -94,16 +97,27 @@ export async function createDepositTxn({
     }
 
     const uploadForm = new FormData();
-    uploadForm.append("file", file);
+    file.forEach((f) => uploadForm.append("file", f))
 
+    let fileUploadReq;
     // calls the upload functionality on our server with the file when deposit is succesful
-    const fileUploadReq = await fetch(
-      `http://localhost:3000/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
+    if (isMultipleFiles) {
+      fileUploadReq = await fetch(
+        `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadForm,
+        }
+      );
+    } else {
+      fileUploadReq = await fetch(
+        `${ENDPOINT}/api/user/upload-file?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadForm,
+        }
+      );
+    }
 
     if (!fileUploadReq.ok) {
       let err = 'Unknown error';
@@ -115,7 +129,7 @@ export async function createDepositTxn({
     }
 
     const fileUploadRes: Pick<DepositResult, 'object' | 'cid' | 'message'> =
-      await fileUploadReq.json();
+      await fileUploadReq?.json();
 
     return {
       signature: signature as Signature,

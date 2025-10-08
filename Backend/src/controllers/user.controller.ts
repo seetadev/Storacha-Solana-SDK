@@ -61,16 +61,14 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
 };
 
 /**
- * Function to upload file to storacha
+ * Function to upload a file to storacha
  * @param req
  * @param res
  * @returns
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
-    const file = (req.files as { [fieldname: string]: Express.Multer.File[] })[
-      "file"
-    ]?.[0];
+    const file = req.file
     if (!file) {
       return res.status(BAD_REQUEST_CODE).json({ message: "No file uploaded" });
     }
@@ -116,64 +114,100 @@ export const uploadFile = async (req: Request, res: Response) => {
  */
 export const deposit = async (req: Request, res: Response) => {
   try {
-    const file = (req.files as { [fieldname: string]: Express.Multer.File[] })[
-      "file"
-    ]?.[0];
-    if (!file) return res.status(400).json({ message: "No file selected" });
-    const fileMap: Record<string, Uint8Array> = {
-      [file.originalname]: new Uint8Array(file.buffer),
-    };
+    // Handle both single and multiple file uploads
+    const files = req.files as
+      | Express.Multer.File[]
+      | { [fieldname: string]: Express.Multer.File[] };
 
+    let fileArray: Express.Multer.File[] = [];
+
+    if (Array.isArray(files)) {
+      fileArray = files;
+    } else if (files && typeof files === "object") {
+      const fileField = files["file"] || files["files"];
+      if (fileField && Array.isArray(fileField)) {
+        fileArray = fileField;
+      } else {
+        return res.status(BAD_REQUEST_CODE).json({ message: "No files selected" });
+      }
+    } else {
+      return res.status(BAD_REQUEST_CODE).json({ message: "No files selected" });
+    }
+
+    if (fileArray.length === 0) {
+      return res.status(BAD_REQUEST_CODE).json({ message: "No files selected" });
+    }
+
+    // Prepare file buffers
+    const fileMap: Record<string, Uint8Array> = {};
+    let totalSize = 0;
+
+    for (const file of fileArray) {
+      fileMap[file.originalname] = new Uint8Array(file.buffer);
+      totalSize += file.size;
+    }
+
+    // Extract inputs
     const { publicKey, duration } = req.body;
     const durationInSeconds = parseInt(duration as string, 10);
-    const sizeBytes = file.size;
-    const ratePerBytePerDay = 1000;
-    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
-    const amountInLamports = sizeBytes * duration_days * ratePerBytePerDay;
 
+    if (!publicKey || !durationInSeconds) {
+      return res.status(BAD_REQUEST_CODE).json({ message: "Missing required parameters" });
+    }
+
+    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
+    const ratePerBytePerDay = 1000;
+    const totalDepositAmount = totalSize * duration_days * ratePerBytePerDay;
+
+    if (!Number.isSafeInteger(totalDepositAmount) || totalDepositAmount <= 0) {
+      throw new Error(`Invalid deposit amount calculated: ${totalDepositAmount}`);
+    }
+
+    // Compute a single CID for all files combined
     const computedCID = await computeCID(fileMap);
 
-    if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
-      throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
-    }
-    const durationNum = Number(duration);
-    if (!Number.isFinite(durationNum)) throw new Error("Invalid duration");
-
+    // Create the on-chain deposit transaction instructions
     const depositInstructions = await createDepositTransaction({
       publicKey,
-      fileSize: sizeBytes,
+      fileSize: totalSize,
       contentCID: computedCID,
       durationDays: duration_days,
-      depositAmount: amountInLamports,
+      depositAmount: totalDepositAmount,
     });
 
-    const depositItem: typeof depositAccount.$inferInsert = {
-      deposit_amount: amountInLamports,
-      duration_days,
-      content_cid: computedCID,
+    // Prepare multiple rows (one per file)
+    const depositRecords = fileArray.map((file) => ({
       deposit_key: publicKey.toLowerCase(),
+      content_cid: computedCID,
+      duration_days,
+      deposit_amount: totalDepositAmount, // or you could split proportionally by size
       deposit_slot: 1,
       last_claimed_slot: 1,
-      fileName:file.originalname,
-      fileSize:file.size.toString(),
-      signature:"",
-      created_at:new Date().toISOString()
-    };
+      created_at: new Date().toISOString().split("T")[0],
+      fileName: file.originalname,
+      fileSize: String(file.size),
+      signature: "",
+    }));
 
-    const entryResult=await db.insert(depositAccount).values(depositItem).returning();
+    await db.insert(depositAccount).values(depositRecords);
+
     res.status(SUCCESS_CODE).json({
       message: "Deposit instruction ready — sign to finalize upload",
       cid: computedCID,
       instructions: depositInstructions,
-      entryResult:entryResult
+      totalFiles: fileArray.length,
+      totalSize,
+      files: fileArray.map((f) => ({
+        name: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+      })),
     });
   } catch (error) {
-    console.error(error);
-    res.status(INTERNAL_SERVER_ERROR_CODE).json({
-      message: "Error making a desposit",
-    });
+    console.error("Deposit error:", error);
+    res.status(400).json({ message: "Error making a deposit", error: error});
   }
-};
+}
 
 /**
  * Function to get Quote For File Upload

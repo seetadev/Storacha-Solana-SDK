@@ -8,7 +8,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const configTable = pgTable("config", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().$default(() => 1), // we'd only ever have one config for the program
   admin_key: varchar({ length: 44 }).notNull(),
   rate_per_byte_per_day: integer().notNull(),
   min_duration_days: integer().notNull(),

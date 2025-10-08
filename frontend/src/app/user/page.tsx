@@ -78,7 +78,7 @@ const UploadPage: React.FC = () => {
 
   const calculateRealCost = () => {
     if (selectedFiles.length === 0) return 0;
-    const totalFile = selectedFiles[0]; // For now, handle single file
+    const totalFile = selectedFiles; // For now, handle single file
 
     const cost = client.estimateStorageCost(totalFile, storageDuration);
     return cost.sol;
@@ -113,19 +113,11 @@ const UploadPage: React.FC = () => {
     setUploadProgress(0);
 
     try {
-      const file = selectedFiles[0];
+      const file = selectedFiles;
 
       // Stage 1: Upload to API (0-30%)
       setUploadProgress(10);
       toast.loading("Uploading file to IPFS...", { id: "upload-progress" });
-
-      console.log("🚀 Starting upload process for file:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        duration: storageDuration,
-        publicKey: publicKey.toString(),
-      });
 
       const result = await client.createDeposit({
         file,
@@ -332,10 +324,7 @@ const UploadPage: React.FC = () => {
                 transition={{ duration: 0.3 }}
               >
                 <Card className="mb-8">
-                  <FileUpload
-                    onFilesSelected={handleFilesSelected}
-                    maxFiles={1} // For now, limit to 1 file
-                  />
+                  <FileUpload onFilesSelected={handleFilesSelected} />
                 </Card>
               </motion.div>
             )}
