@@ -25,7 +25,7 @@ export async function fetchUserDepositHistory(
   }
 
   // Default backend URL - can be overridden via options
-  const baseUrl = options.url || 'http://localhost:3000';
+  const baseUrl = options.url || 'http://localhost:3000/api/user';
   
   try {
     const response = await fetch(

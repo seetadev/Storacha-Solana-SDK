@@ -49,4 +49,25 @@ export interface StorageOption {
     transactionHash?: string;
     error?: string;
   }
+
+  export interface UploadedFile {
+    id: string;
+    cid: string;
+    filename: string;
+    size: number;
+    type?: string;
+    url: string;
+    uploadedAt: string;
+    signature: string;
+    duration: number;
+    cost: number; //
+    status: 'active' | 'expired' | 'pending';
+  }
+export interface DashboardStats {
+  totalFiles: number;
+  totalStorage: number;
+  totalSpent: number;
+  activeFiles: number;
+}
+  
   

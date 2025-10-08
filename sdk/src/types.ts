@@ -150,6 +150,12 @@ export interface DepositHistoryEntry {
   last_claimed_slot: number;
   /** Timestamp when the deposit was created */
   created_at: string;
+  /** File Name */
+  fileName:string;
+  /** Size of the File */
+  fileSize: string;
+  /** Signature of the transaction for the file */
+  signature:string;
 }
 
 /**

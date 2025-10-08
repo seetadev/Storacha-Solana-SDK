@@ -1,1 +1,39 @@
 export const DAY_TIME_IN_SECONDS = 86400;
+export const FILES_DEPOSIT_DATA=[
+    { id: 5, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 578, deposit_amount: 12427600000000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 6, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 578, deposit_amount: 12427600000000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 7, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 578, deposit_amount: 12427600000000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 8, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreidbrk7txmkzn2wqfkk4nqxd6qqxkm6j7dl2676mxhw4afhjljm7ku", duration_days: 578, deposit_amount: 4535650000000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 9, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreigycofio673re7xctbioiislowz2g7qlk4mqszy6joydd4kg3tqee", duration_days: 578, deposit_amount: 4493800000000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 10, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 7, deposit_amount: 644246784000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 11, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreigycofio673re7xctbioiislowz2g7qlk4mqszy6joydd4kg3tqee", duration_days: 7, deposit_amount: 232958592000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 12, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreiacjrthq26pslaczf35epugigixcmmcii65bggjehnszkafdpcf2y", duration_days: 7, deposit_amount: 467438688000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 13, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreigycofio673re7xctbioiislowz2g7qlk4mqszy6joydd4kg3tqee", duration_days: 7, deposit_amount: 232958592000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 14, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 7, deposit_amount: 644246784000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 15, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreighxf25y4dr3cwiilu4ioviystxogj72jatg7fqoreeuzaphnrmh4", duration_days: 7, deposit_amount: 578705472000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 16, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreidbrk7txmkzn2wqfkk4nqxd6qqxkm6j7dl2676mxhw4afhjljm7ku", duration_days: 1, deposit_amount: 235128096000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 17, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreieiiagub67xqg4byzymdq2lt2gndxufupivs3rgvzbxgqcbk7hbwm", duration_days: 1, deposit_amount: 644246784000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 18, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreighxf25y4dr3cwiilu4ioviystxogj72jatg7fqoreeuzaphnrmh4", duration_days: 1, deposit_amount: 578705472000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 19, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreigycofio673re7xctbioiislowz2g7qlk4mqszy6joydd4kg3tqee", duration_days: 1, deposit_amount: 232958592000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 20, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreighxf25y4dr3cwiilu4ioviystxogj72jatg7fqoreeuzaphnrmh4", duration_days: 7, deposit_amount: 578705472000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 21, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreighxf25y4dr3cwiilu4ioviystxogj72jatg7fqoreeuzaphnrmh4", duration_days: 7, deposit_amount: 578705472000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 22, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreidbrk7txmkzn2wqfkk4nqxd6qqxkm6j7dl2676mxhw4afhjljm7ku", duration_days: 8, deposit_amount: 235128096000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 23, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreihg2twyvkexwjw7ga4fjyknc2esvtghzw2aufbljxhrzcpsadswca", duration_days: 10, deposit_amount: 173959488000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 24, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreibluurjngwxdjcsslatmpfllldiwvirbki27nwmc4itut56hfflw4", duration_days: 7, deposit_amount: 753022656000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 25, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreibluurjngwxdjcsslatmpfllldiwvirbki27nwmc4itut56hfflw4", duration_days: 7, deposit_amount: 753022656000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 26, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreie2covfwxa7ulftmr52hwllhptv6foflvnuh3v2rxja3wrq6fa244", duration_days: 7, deposit_amount: 11378880000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 27, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreibluurjngwxdjcsslatmpfllldiwvirbki27nwmc4itut56hfflw4", duration_days: 7, deposit_amount: 753022656000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 28, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreibluurjngwxdjcsslatmpfllldiwvirbki27nwmc4itut56hfflw4", duration_days: 7, deposit_amount: 753022656000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 29, deposit_key: "c81xcos1vtorzyyq35n5afow5itrszmzlrpxdyv61eez", content_cid: "bafkreiakypxzt5ddu2sfjhxhldbkivwp6oz4jie4rb6hjb3tduee7zdo6u", duration_days: 7, deposit_amount: 97187040000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 30, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreigycofio673re7xctbioiislowz2g7qlk4mqszy6joydd4kg3tqee", duration_days: 15, deposit_amount: 232958592000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 31, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreicfjpnqmwsjcp3uafoptfrqbp6qa5mx7bmy6bfhomx4u6pnq4di64", duration_days: 5, deposit_amount: 1650570000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 32, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafybeicq63q74d37emt6gzboxym5b6kdjg5m2wk5t2ancddesa2ym24eai", duration_days: 5, deposit_amount: 35599290000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" },
+    { id: 33, deposit_key: "6hthojdbmme2p1fn3rn9y3bc7cn98dohisxqrrzh2zwb", content_cid: "bafkreicfp62ayjagqcp6xt7qgo2wmscqy4owqvrplwhcjnru6ye36dwa4a", duration_days: 4, deposit_amount: 1318468000, deposit_slot: 1, last_claimed_slot: 1, created_at: "" }
+  ];
+  
+
+  // API CODES
+  export const SUCCESS_CODE=200;
+  export const INTERNAL_SERVER_ERROR_CODE=500;
+  export const BAD_REQUEST_CODE=501;
+  

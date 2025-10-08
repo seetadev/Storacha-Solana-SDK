@@ -6,6 +6,7 @@ import {
   ensureConfigInitialized,
 } from "../utils/solana/index.js";
 import { getAdminDataForSolana } from "../utils/Storacha.js";
+import { BAD_REQUEST_CODE, INTERNAL_SERVER_ERROR_CODE, SUCCESS_CODE } from "../utils/constant.js";
 
 type DepositItem = {
   depositAmount: number;
@@ -25,10 +26,6 @@ export const createDepositTransaction = async (payload: DepositItem) => {
   } = payload;
 
   if (!userPublicKey || !contentCID || !fileSize || !durationDays) {
-    console.log("userpub keey", userPublicKey);
-    console.log("content CID", contentCID);
-    console.log("file size", fileSize);
-    console.log("durationDays", durationDays);
     throw new Error("Missing required parameters");
   }
 
@@ -65,7 +62,7 @@ export const initializeConfig = async (req: Request, res: Response) => {
   try {
     const { adminPubkey } = req.body;
     if (!adminPubkey) {
-      return res.status(400).json({ error: "Missing adminPubkey" });
+      return res.status(BAD_REQUEST_CODE).json({ error: "Missing adminPubkey" });
     }
 
     const adminKey = new PublicKey(adminPubkey);
@@ -89,11 +86,11 @@ export const initializeConfig = async (req: Request, res: Response) => {
       data: initIx.data.toString("base64"),
     };
 
-    res.status(200).json({ instructions: [serializedInstruction] });
+    res.status(SUCCESS_CODE).json({ instructions: [serializedInstruction] });
   } catch (err) {
     console.error("Error creating initializeConfig instruction:", err);
     res
-      .status(500)
+      .status(INTERNAL_SERVER_ERROR_CODE)
       .json({ error: "Failed to create initializeConfig instruction" });
   }
 };

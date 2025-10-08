@@ -30,26 +30,7 @@ import WalletConnection from '@/components/WalletConnection';
 import ReceiptModal from '@/components/ReceiptModel';
 import { uploadService } from '@/services/api';
 import { Environment, useDeposit, UploadResult, fetchUserDepositHistory } from "storacha-sol-sdk";
-interface UploadedFile {
-  id: string;
-  cid: string;
-  filename: string;
-  size: number;
-  type: string;
-  url: string;
-  uploadedAt: string;
-  signature: string;
-  duration: number;
-  cost: number;
-  status: 'active' | 'expired' | 'pending';
-}
-
-interface DashboardStats {
-  totalFiles: number;
-  totalStorage: number;
-  totalSpent: number;
-  activeFiles: number;
-}
+import { UploadedFile, DashboardStats } from '@/types';
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -83,56 +64,27 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      if(solanaPublicKey){
+      if(solanaPublicKey === null) return;
       const data= await client.getUserUploadHistory(solanaPublicKey);
-      console.log(data);
-      }
-      // Mock data - replace with real API calls
-      const mockFiles: UploadedFile[] = [
-        {
-          id: '1',
-          cid: 'bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u',
-          filename: 'presentation.pdf',
-          size: 2400000,
-          type: 'application/pdf',
-          url: 'https://w3s.link/ipfs/bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u',
-          uploadedAt: '2025-08-21T18:08:47.724Z',
-          signature: '5KJhG8xYzW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n',
-          duration: 30,
-          cost: 0.0045,
-          status: 'active'
-        },
-        {
-          id: '2',
-          cid: 'bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-          filename: 'contract.docx',
-          size: 856000,
-          type: 'application/docx',
-          url: 'https://w3s.link/ipfs/bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-          uploadedAt: '2025-08-20T14:30:22.154Z',
-          signature: '3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n',
-          duration: 90,
-          cost: 0.0087,
-          status: 'active'
-        },
-        {
-          id: '3',
-          cid: 'bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8',
-          filename: 'image.png',
-          size: 1200000,
-          type: 'image/png',
-          url: 'https://w3s.link/ipfs/bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8',
-          uploadedAt: '2025-08-19T09:15:33.987Z',
-          signature: '2PqYjdW1QEEEiGiYTx7Bbdcp7FiPLpJBnxaci3me77m',
-          duration: 7,
-          cost: 0.0012,
-          status: 'expired'
+      console.log(data.userHistory);
+      const filteredData:UploadedFile[]=data.userHistory!== null && data.userHistory?.length > 0 ? data.userHistory.map((item)=>{
+        return {
+          id:item.id.toString(),
+          cid:item.content_cid,
+          status: (new Date().getMilliseconds() - new Date(item.created_at).getMilliseconds()) > (item.duration_days * 86400) ? "active" : "expired",
+          filename:item.fileName,
+          size:Number(item.fileSize),
+          url:"",
+          uploadedAt:item.created_at,
+          duration:item.duration_days,
+          cost:item.deposit_amount,
+          signature:""
         }
-      ];
-
+      }) : [];
+      // Mock data - replace with real API calls
+      const mockFiles: UploadedFile[] = filteredData;
       setFiles(mockFiles);
 
-      // Calculate stats
       const totalStorage = mockFiles.reduce((sum, file) => sum + file.size, 0);
       const totalSpent = mockFiles.reduce((sum, file) => sum + file.cost, 0);
       const activeFiles = mockFiles.filter(file => file.status === 'active').length;
@@ -362,9 +314,9 @@ const Dashboard: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="text-2xl">
+                          {file.type && <div className="text-2xl">
                             {getFileIcon(file.type)}
-                          </div>
+                          </div>}
                           <div>
                             <h3 className="font-semibold text-gray-900">{file.filename}</h3>
                             <div className="text-sm text-gray-600 space-y-1">
@@ -534,7 +486,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Receipt Modal */}
       <AnimatePresence>
         {showReceipt && selectedFile && (
           <ReceiptModal
