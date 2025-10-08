@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X, Download, Printer, Copy, ExternalLink, FileText, Calendar, DollarSign, Hash } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Card from './Card';
 import Button from './Button';
 
 interface ReceiptModalProps {
@@ -13,7 +12,7 @@ interface ReceiptModalProps {
     cid: string;
     filename: string;
     size: number;
-    type: string;
+    type?: string;
     url: string;
     uploadedAt: string;
     signature: string;

@@ -1,0 +1,1 @@
+ALTER TABLE "deposit" DROP COLUMN "cost";

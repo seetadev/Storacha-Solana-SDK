@@ -34,7 +34,7 @@ export async function createDepositTxn({
 
     let uploadErr;
 
-    const depositReq = await fetch('http://localhost:5040/api/solana/deposit', {
+    const depositReq = await fetch('http://localhost:3000/api/solana/deposit', {
       method: 'POST',
       body: formData,
     });
@@ -98,7 +98,7 @@ export async function createDepositTxn({
 
     // calls the upload functionality on our server with the file when deposit is succesful
     const fileUploadReq = await fetch(
-      `http://localhost:5040/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
+      `http://localhost:3000/api/user/uploadFile?cid=${encodeURIComponent(depositRes.cid)}`,
       {
         method: 'POST',
         body: formData,
