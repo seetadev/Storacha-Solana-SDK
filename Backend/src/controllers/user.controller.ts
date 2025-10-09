@@ -148,6 +148,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
         type: f.mimetype,
         url: `https://w3s.link/ipfs/${cid}/${f.originalname}`,
       })),
+      uploadedAt: new Date().toISOString()
     };
 
     res.status(200).json({

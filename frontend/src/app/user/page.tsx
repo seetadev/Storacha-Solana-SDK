@@ -28,7 +28,7 @@ import FileUpload from "@/components/FileUpload";
 import StorageDurationSelector from "@/components/StorageDurationSelector";
 import ProgressBar from "@/components/ProgressBar";
 import WalletConnection from "@/components/WalletConnection";
-import { Environment, useDeposit, UploadResult } from "storacha-sol-sdk";
+import { Environment, useDeposit, UploadResult } from "storacha-sol";
 
 const UploadPage: React.FC = () => {
   const router = useRouter();
