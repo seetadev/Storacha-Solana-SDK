@@ -6,14 +6,15 @@ Here are a couple of things you can do with this package:
 
 - Estimate upload fees based on the file size and duration
 - Make SOL payments for Storage on Storacha
+- Multiple file (directory) uploads
+- Show how much time is left to expiry
 
 Stuffs we hope to cover or extend:
 
-- Multiple file (directory) uploads
 - List stored items in a wallet's space (space-management, pretty-much)
 - Allow payments from other chains. (Filecoin next)
 - Include implementations for other libs. Right now, we only have React. Hoping to cover, Vue, Svelte etc.
-- Show how much time is left to expiry and add ability to renew/icrease upload duration
+- Add ability to renew/icrease upload duration
 
 ## Usage
 
