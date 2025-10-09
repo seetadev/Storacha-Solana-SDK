@@ -14,5 +14,6 @@ CREATE TABLE "deposit" (
 	"deposit_amount" bigint NOT NULL,
 	"deposit_slot" integer NOT NULL,
 	"last_claimed_slot" integer NOT NULL,
-	"created_at" date DEFAULT '2025-01-01' NOT NULL
+	"created_at" date DEFAULT '2025-01-01' NOT NULL,
+	"expires_at" date DEFAULT '2025-10-22'
 );
