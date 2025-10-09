@@ -110,6 +110,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'2025-01-01'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'2025-10-22'"
         }
       },
       "indexes": {},

@@ -14,6 +14,7 @@ import { BAD_REQUEST_CODE, DAY_TIME_IN_SECONDS, INTERNAL_SERVER_ERROR_CODE, SUCC
 import { computeCID } from "../utils/compute-cid.js";
 import { createDepositTransaction } from "./solana.controller.js";
 import { getUserHistory } from "../db/depositTable.js";
+import { getExpiryDate } from "../utils/functions.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -68,7 +69,7 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
-    const file = req.file
+    const file = req.file;
     if (!file) {
       return res.status(BAD_REQUEST_CODE).json({ message: "No file uploaded" });
     }
@@ -114,11 +115,19 @@ export const uploadFile = async (req: Request, res: Response) => {
  */
 export const deposit = async (req: Request, res: Response) => {
   try {
-    // Handle both single and multiple file uploads
-    const files = req.files as
-      | Express.Multer.File[]
-      | { [fieldname: string]: Express.Multer.File[] };
+    const files = req.files as Express.Multer.File[];
 
+    if (!files) return res.status(400).json({ message: "No files uploaded" });
+
+    const cid = req.query.cid as string;
+    if (!cid) return res.status(400).json({ message: "CID is required" });
+
+    const fileObjects = files.map(
+      (f) => new File([f.buffer], f.originalname, { type: f.mimetype }),
+    );
+
+    const client = await initStorachaClient();
+    const uploadedCID = await client.uploadDirectory(fileObjects);
     let fileArray: Express.Multer.File[] = [];
 
     if (Array.isArray(files)) {
@@ -175,6 +184,8 @@ export const deposit = async (req: Request, res: Response) => {
       depositAmount: totalDepositAmount,
     });
 
+     const expiresAt = new Date().toISOString().split("T")[0];
+     expiresAt.setDate(expiresAt.getDate() + duration_days);
     // Prepare multiple rows (one per file)
     const depositRecords = fileArray.map((file) => ({
       deposit_key: publicKey.toLowerCase(),
@@ -187,6 +198,7 @@ export const deposit = async (req: Request, res: Response) => {
       fileName: file.originalname,
       fileSize: String(file.size),
       signature: "",
+      expires_at: expiresAt
     }));
 
     await db.insert(depositAccount).values(depositRecords);

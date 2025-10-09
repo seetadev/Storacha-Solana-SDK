@@ -29,4 +29,5 @@ export const depositAccount = pgTable("deposit", {
   fileName:varchar({ length:44}).notNull(),
   fileSize:varchar({ length:20}).notNull(),
   signature:text().default("")
+  expires_at: date().default("2025-10-22")
 });
