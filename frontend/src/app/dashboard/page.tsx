@@ -28,7 +28,7 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import WalletConnection from '@/components/WalletConnection';
 import ReceiptModal from '@/components/ReceiptModel';
-import { useDeposit } from "storacha-sol";
+import { useDeposit, Environment } from "storacha-sol";
 interface UploadedFile {
   id: string;
   cid: string;
