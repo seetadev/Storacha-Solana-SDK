@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import toast from 'react-hot-toast';
-import { 
-  FileText, 
-  Upload, 
-  History, 
-  Download, 
-  ExternalLink, 
+import {
+  FileText,
+  Upload,
+  History,
+  Download,
+  ExternalLink,
   Search,
   Filter,
   Receipt,
@@ -28,8 +28,7 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import WalletConnection from '@/components/WalletConnection';
 import ReceiptModal from '@/components/ReceiptModel';
-import { uploadService } from '@/services/api';
-import { Environment, useDeposit, UploadResult, fetchUserDepositHistory } from "storacha-sol-sdk";
+import { useDeposit } from "storacha-sol";
 interface UploadedFile {
   id: string;
   cid: string;
@@ -55,7 +54,7 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const { walletConnected, solanaPublicKey, solanaBalance } = useWallet();
   const { publicKey } = useSolanaWallet();
-  
+
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalFiles: 0,
@@ -205,7 +204,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gradient-purple">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-          
+
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
@@ -216,7 +215,7 @@ const Dashboard: React.FC = () => {
                 <ArrowLeft className="w-5 h-5" />
                 Back to Home
               </button>
-              
+
               <div className="flex gap-2">
                 <Button
                   onClick={() => router.push('/user')}
@@ -228,7 +227,7 @@ const Dashboard: React.FC = () => {
                 <WalletConnection showDisconnect={true} />
               </div>
             </div>
-            
+
             <div className="text-center text-white">
               <h1 className="text-4xl font-bold mb-4">Storage Dashboard</h1>
               <p className="text-white/80 text-lg">
@@ -374,10 +373,10 @@ const Dashboard: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            file.status === 'active' 
+                            file.status === 'active'
                               ? 'bg-green-100 text-green-800'
                               : file.status === 'expired'
                               ? 'bg-red-100 text-red-800'
@@ -385,7 +384,7 @@ const Dashboard: React.FC = () => {
                           }`}>
                             {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                           </span>
-                          
+
                           <div className="flex gap-1">
                             <button
                               onClick={() => window.open(file.url, '_blank')}
@@ -394,7 +393,7 @@ const Dashboard: React.FC = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </button>
-                            
+
                             <button
                               onClick={() => copyToClipboard(file.cid, 'CID')}
                               className="p-2 text-gray-500 hover:text-green-600 transition-colors"
@@ -402,7 +401,7 @@ const Dashboard: React.FC = () => {
                             >
                               <Copy className="w-4 h-4" />
                             </button>
-                            
+
                             <button
                               onClick={() => window.open(`https://explorer.solana.com/tx/${file.signature}?cluster=testnet`, '_blank')}
                               className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
@@ -410,7 +409,7 @@ const Dashboard: React.FC = () => {
                             >
                               <ExternalLink className="w-4 h-4" />
                             </button>
-                            
+
                             <button
                               onClick={() => {
                                 setSelectedFile(file);
