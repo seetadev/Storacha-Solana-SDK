@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*.local
+
+# Logs
+logs
+*.log
+*.log.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Optional: PM2 process manager files
+pids
+*.pid
+*.seed
+
+# Optional: MongoDB local data
+dump/
+*.lock
+mongod.lock
+
+# Optional: Redis dump
+dump.rdb
+
+# Optional: Docker
+docker-compose.override.yml
+
+# Optional: ESLint / Prettier
+.eslintcache
+.prettierignore
+.prettiercache
+
+# Optional: Test output
+test-output/
+.jest/
