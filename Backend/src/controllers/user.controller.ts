@@ -76,10 +76,11 @@ export const uploadFile = async (req: Request, res: Response) => {
   try {
     const file = req.file;
     if (!file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(BAD_REQUEST_CODE).json({ message: "No file uploaded" });
     }
     const cid = req.query.cid as string;
-    if (!cid) return res.status(400).json({ message: "CID is required" });
+    if (!cid)
+      return res.status(BAD_REQUEST_CODE).json({ message: "CID is required" });
     const files = [
       new File([file.buffer], file.originalname, { type: file.mimetype }),
     ];
@@ -102,14 +103,14 @@ export const uploadFile = async (req: Request, res: Response) => {
       uploadedAt: new Date().toISOString(),
     };
 
-    res.status(200).json({
+    res.status(SUCCESS_CODE).json({
       message: "Upload successful",
       cid: uploadedCID,
       object: uploadObject,
     });
   } catch (error: any) {
     console.error("Error uploading file to Storacha:", error);
-    res.status(400).json({
+    res.status(INTERNAL_SERVER_ERROR_CODE).json({
       message: "Error uploading file to directory",
     });
   }
@@ -278,6 +279,12 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
+    if (!duration || !size) {
+      return res.status(BAD_REQUEST_CODE).json({
+        quoteObject: null,
+        success: false,
+      });
+    }
     const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,

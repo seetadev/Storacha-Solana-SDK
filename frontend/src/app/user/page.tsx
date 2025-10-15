@@ -129,8 +129,6 @@ const UploadPage: React.FC = () => {
             id: "upload-progress",
           });
 
-          console.log("📝 Transaction ready for signing:", tx);
-
           try {
             const signed = await signTransaction(tx);
             console.log("✅ Transaction signed successfully");
@@ -145,7 +143,9 @@ const UploadPage: React.FC = () => {
           } catch (signError) {
             console.error("❌ Transaction signing failed:", signError);
             throw new Error(
-              `Transaction signing failed: ${signError instanceof Error ? signError.message : "Unknown error"}`,
+              `Transaction signing failed: ${
+                signError instanceof Error ? signError.message : "Unknown error"
+              }`
             );
           }
         },
@@ -272,19 +272,19 @@ const UploadPage: React.FC = () => {
                         uploadStep === step
                           ? "bg-yellow-400 text-gray-900"
                           : index <
-                              [
-                                "select",
-                                "configure",
-                                "uploading",
-                                "complete",
-                              ].indexOf(uploadStep)
-                            ? "bg-green-400 text-gray-900"
-                            : "bg-white/20 text-white"
+                            [
+                              "select",
+                              "configure",
+                              "uploading",
+                              "complete",
+                            ].indexOf(uploadStep)
+                          ? "bg-green-400 text-gray-900"
+                          : "bg-white/20 text-white"
                       }`}
                     >
                       {index <
                       ["select", "configure", "uploading", "complete"].indexOf(
-                        uploadStep,
+                        uploadStep
                       ) ? (
                         <CheckCircle className="w-5 h-5" />
                       ) : (
@@ -307,7 +307,7 @@ const UploadPage: React.FC = () => {
                       ></div>
                     )}
                   </div>
-                ),
+                )
               )}
             </div>
           </div>
@@ -542,7 +542,7 @@ const UploadPage: React.FC = () => {
                           onClick={() =>
                             window.open(
                               `https://explorer.solana.com/tx/${transactionHash}?cluster=testnet`,
-                              "_blank",
+                              "_blank"
                             )
                           }
                           className="text-green-600 hover:text-green-800 transition-colors"
@@ -566,7 +566,7 @@ const UploadPage: React.FC = () => {
                           onClick={() =>
                             window.open(
                               `https://ipfs.io/ipfs/${uploadResult.cid}`,
-                              "_blank",
+                              "_blank"
                             )
                           }
                           className="text-blue-600 hover:text-blue-800 transition-colors"

@@ -50,7 +50,7 @@ export class UploadService {
   constructor() {
     this.connection = new Connection(clusterApiUrl("testnet"), "confirmed");
     this.apiBaseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5040/api";
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
   }
 
   async uploadFileWithDeposit(
