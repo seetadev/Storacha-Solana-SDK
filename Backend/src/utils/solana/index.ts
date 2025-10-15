@@ -21,7 +21,7 @@ const DEPOSIT_SEED = "deposit";
 // we'll switch this interchangeably between mainnet/testnet/localnet/devnet
 export const connection = new Connection(
   "https://api.testnet.solana.com",
-  "confirmed",
+  "confirmed"
 );
 
 let PROGRAM_KEYPAIR: Keypair | null = null;
@@ -41,7 +41,7 @@ export async function getIdlAndProgramId() {
       CACHED_IDL = JSON.parse(process.env.SOLANA_PROGRAM_IDL) as Idl;
     } catch (err) {
       throw new Error(
-        `❌ Failed to parse SOLANA_PROGRAM_IDL: ${(err as Error).message}`,
+        `❌ Failed to parse SOLANA_PROGRAM_IDL: ${(err as Error).message}`
       );
     }
 
@@ -67,12 +67,12 @@ export async function loadProgramKeypair(): Promise<Keypair> {
     const keypairData = await fs.readFile(
       path.resolve(
         __dirname,
-        "../../../../solana-programs/target/deploy/solana_programs-keypair.json",
+        "../../../../solana-programs/target/deploy/solana_programs-keypair.json"
       ),
-      "utf-8",
+      "utf-8"
     );
     PROGRAM_KEYPAIR = Keypair.fromSecretKey(
-      Uint8Array.from(JSON.parse(keypairData)),
+      Uint8Array.from(JSON.parse(keypairData))
     );
   }
 
@@ -87,7 +87,7 @@ export async function createInitializeConfigInstruction(
   adminPubkey: web3.PublicKey,
   ratePerBytePerDay: number,
   minDurationDays: number,
-  withdrawalWallet: web3.PublicKey,
+  withdrawalWallet: web3.PublicKey
 ): Promise<TransactionInstruction> {
   const { idl, programId } = await getIdlAndProgramId();
 
@@ -104,12 +104,12 @@ export async function createInitializeConfigInstruction(
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
-    programId,
+    programId
   );
 
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from("escrow")],
-    programId,
+    programId
   );
 
   // Create instruction with required accounts per IDL:
@@ -123,7 +123,7 @@ export async function createInitializeConfigInstruction(
       adminPubkey,
       new BN(ratePerBytePerDay),
       minDurationDays,
-      withdrawalWallet,
+      withdrawalWallet
     )
     .accounts({
       config: configPda,
@@ -142,7 +142,7 @@ export async function ensureConfigInitialized(): Promise<void> {
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
-    programId,
+    programId
   );
 
   const configAccount = await connection.getAccountInfo(configPda);
@@ -155,7 +155,7 @@ export async function ensureConfigInitialized(): Promise<void> {
       adminKeypair.publicKey,
       1000,
       1,
-      adminKeypair.publicKey,
+      adminKeypair.publicKey
     );
 
     const { blockhash } = await connection.getLatestBlockhash();
@@ -173,7 +173,6 @@ export async function ensureConfigInitialized(): Promise<void> {
         preflightCommitment: "confirmed",
       });
       await connection.confirmTransaction(sig, "confirmed");
-      console.log(`✅ Config initialized. Tx: ${sig}`);
     } catch (err) {
       console.error("Failed to send init transaction:", err);
       throw err;
@@ -191,7 +190,7 @@ export async function createDepositInstruction(
   cid: string,
   size: number,
   duration: number,
-  depositAmountLamports: number,
+  depositAmountLamports: number
 ): Promise<TransactionInstruction> {
   const { idl, programId } = await getIdlAndProgramId();
   const dummyWallet = {
@@ -204,17 +203,17 @@ export async function createDepositInstruction(
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
-    programId,
+    programId
   );
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from("escrow")],
-    programId,
+    programId
   );
 
   const cidHash = Buffer.from(sha256.digest(cid));
   const [depositPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
-    programId,
+    programId
   );
 
   const durationNum = Number(duration);
@@ -229,7 +228,7 @@ export async function createDepositInstruction(
       cid,
       new BN(size.toString()),
       new BN(durationNum.toString()),
-      depositAmountLamportsBN,
+      depositAmountLamportsBN
     )
     .accounts({
       deposit: depositPda,

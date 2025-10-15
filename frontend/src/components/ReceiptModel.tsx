@@ -1,11 +1,21 @@
 "use client";
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { X, Download, Printer, Copy, ExternalLink, FileText, Calendar, DollarSign, Hash } from 'lucide-react';
-import toast from 'react-hot-toast';
-import Card from './Card';
-import Button from './Button';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  X,
+  Download,
+  Printer,
+  Copy,
+  ExternalLink,
+  FileText,
+  Calendar,
+  DollarSign,
+  Hash,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import Card from "./Card";
+import Button from "./Button";
 
 interface ReceiptModalProps {
   file: {
@@ -13,7 +23,7 @@ interface ReceiptModalProps {
     cid: string;
     filename: string;
     size: number;
-    type: string;
+    type?: string;
     url: string;
     uploadedAt: string;
     signature: string;
@@ -26,11 +36,11 @@ interface ReceiptModalProps {
 
 const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -51,30 +61,30 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
         size: formatFileSize(file.size),
         type: file.type,
         cid: file.cid,
-        url: file.url
+        url: file.url,
       },
       transaction: {
         signature: file.signature,
         cost: file.cost,
         duration: file.duration,
         uploadedAt: file.uploadedAt,
-        status: file.status
-      }
+        status: file.status,
+      },
     };
 
     const blob = new Blob([JSON.stringify(receiptData, null, 2)], {
-      type: 'application/json'
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `receipt-${file.filename}-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
-    toast.success('Receipt downloaded successfully!');
+
+    toast.success("Receipt downloaded successfully!");
   };
 
   return (
@@ -99,7 +109,9 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
               <FileText className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Storage Receipt</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Storage Receipt
+              </h2>
               <p className="text-sm text-gray-600">Transaction Details</p>
             </div>
           </div>
@@ -118,8 +130,12 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
             <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Storacha Storage Receipt</h3>
-            <p className="text-gray-600">Decentralized File Storage on Solana</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Storacha Storage Receipt
+            </h3>
+            <p className="text-gray-600">
+              Decentralized File Storage on Solana
+            </p>
             <div className="mt-4 text-sm text-gray-500">
               Receipt ID: RCP-{file.id}-{Date.now().toString().slice(-6)}
             </div>
@@ -134,11 +150,15 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Filename:</span>
-                <span className="font-medium text-gray-900">{file.filename}</span>
+                <span className="font-medium text-gray-900">
+                  {file.filename}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">File Size:</span>
-                <span className="font-medium text-gray-900">{formatFileSize(file.size)}</span>
+                <span className="font-medium text-gray-900">
+                  {formatFileSize(file.size)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">File Type:</span>
@@ -151,7 +171,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
                     {file.cid.substring(0, 20)}...
                   </code>
                   <button
-                    onClick={() => copyToClipboard(file.cid, 'CID')}
+                    onClick={() => copyToClipboard(file.cid, "CID")}
                     className="text-purple-600 hover:text-purple-800 transition-colors"
                   >
                     <Copy className="w-3 h-3" />
@@ -175,13 +195,20 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
                     {file.signature.substring(0, 16)}...
                   </code>
                   <button
-                    onClick={() => copyToClipboard(file.signature, 'Transaction Hash')}
+                    onClick={() =>
+                      copyToClipboard(file.signature, "Transaction Hash")
+                    }
                     className="text-purple-600 hover:text-purple-800 transition-colors"
                   >
                     <Copy className="w-3 h-3" />
                   </button>
                   <button
-                    onClick={() => window.open(`https://explorer.solana.com/tx/${file.signature}?cluster=testnet`, '_blank')}
+                    onClick={() =>
+                      window.open(
+                        `https://explorer.solana.com/tx/${file.signature}?cluster=testnet`,
+                        "_blank"
+                      )
+                    }
                     className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
                     <ExternalLink className="w-3 h-3" />
@@ -190,14 +217,21 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Network:</span>
-                <span className="font-medium text-gray-900">Solana Testnet</span>
+                <span className="font-medium text-gray-900">
+                  Solana Testnet
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Status:</span>
-                <span className={`font-medium ${
-                  file.status === 'active' ? 'text-green-600' : 
-                  file.status === 'expired' ? 'text-red-600' : 'text-yellow-600'
-                }`}>
+                <span
+                  className={`font-medium ${
+                    file.status === "active"
+                      ? "text-green-600"
+                      : file.status === "expired"
+                      ? "text-red-600"
+                      : "text-yellow-600"
+                  }`}
+                >
                   {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                 </span>
               </div>
@@ -219,12 +253,17 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Storage Duration:</span>
-                <span className="font-medium text-gray-900">{file.duration} days</span>
+                <span className="font-medium text-gray-900">
+                  {file.duration} days
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Expiry Date:</span>
                 <span className="font-medium text-gray-900">
-                  {new Date(new Date(file.uploadedAt).getTime() + file.duration * 24 * 60 * 60 * 1000).toLocaleString()}
+                  {new Date(
+                    new Date(file.uploadedAt).getTime() +
+                      file.duration * 24 * 60 * 60 * 1000
+                  ).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -239,11 +278,17 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-700">Storage Deposit:</span>
-                <span className="font-bold text-lg text-green-700">{file.cost.toFixed(4)} SOL</span>
+                <span className="font-bold text-lg text-green-700">
+                  {file.cost.toFixed(4)} SOL
+                </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 text-sm">USD Value (approx):</span>
-                <span className="text-gray-600 text-sm">${(file.cost * 25).toFixed(2)}</span>
+                <span className="text-gray-600 text-sm">
+                  USD Value (approx):
+                </span>
+                <span className="text-gray-600 text-sm">
+                  ${(file.cost * 25).toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
@@ -255,10 +300,12 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-blue-900">IPFS Gateway URL</p>
-                  <p className="text-blue-700 text-sm">Access your file via IPFS</p>
+                  <p className="text-blue-700 text-sm">
+                    Access your file via IPFS
+                  </p>
                 </div>
                 <button
-                  onClick={() => window.open(file.url, '_blank')}
+                  onClick={() => window.open(file.url, "_blank")}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -270,7 +317,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ file, onClose }) => {
 
           {/* Footer */}
           <div className="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
-            <p>This receipt serves as proof of your decentralized storage transaction.</p>
+            <p>
+              This receipt serves as proof of your decentralized storage
+              transaction.
+            </p>
             <p className="mt-1">Generated on {new Date().toLocaleString()}</p>
           </div>
         </div>

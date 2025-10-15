@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
+import toast from "react-hot-toast";
 import {
   FileText,
   Upload,
@@ -21,34 +21,15 @@ import {
   Calendar,
   DollarSign,
   HardDrive,
-  Clock
-} from 'lucide-react';
-import { useWallet } from '@/contexts/WalletContext';
-import Card from '@/components/Card';
-import Button from '@/components/Button';
-import WalletConnection from '@/components/WalletConnection';
-import ReceiptModal from '@/components/ReceiptModel';
+  Clock,
+} from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import WalletConnection from "@/components/WalletConnection";
+import ReceiptModal from "@/components/ReceiptModel";
 import { useDeposit, Environment } from "storacha-sol";
-interface UploadedFile {
-  id: string;
-  cid: string;
-  filename: string;
-  size: number;
-  type: string;
-  url: string;
-  uploadedAt: string;
-  signature: string;
-  duration: number;
-  cost: number;
-  status: 'active' | 'expired' | 'pending';
-}
-
-interface DashboardStats {
-  totalFiles: number;
-  totalStorage: number;
-  totalSpent: number;
-  activeFiles: number;
-}
+import { DashboardStats, UploadedFile } from "@/types";
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
@@ -60,19 +41,23 @@ const Dashboard: React.FC = () => {
     totalFiles: 0,
     totalStorage: 0,
     totalSpent: 0,
-    activeFiles: 0
+    activeFiles: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'active' | 'expired'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "active" | "expired">(
+    "all"
+  );
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [activeTab, setActiveTab] = useState<'files' | 'transactions' | 'stats'>('files');
+  const [activeTab, setActiveTab] = useState<
+    "files" | "transactions" | "stats"
+  >("files");
   const client = useDeposit("testnet" as Environment);
   // Mock data for demonstration - replace with real API calls
   useEffect(() => {
     if (!walletConnected || !solanaPublicKey) {
-      router.push('/');
+      router.push("/");
       return;
     }
 
@@ -82,51 +67,51 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      if(solanaPublicKey){
-      const data= await client.getUserUploadHistory(solanaPublicKey);
-      console.log(data);
+      if (solanaPublicKey) {
+        const data = await client.getUserUploadHistory(solanaPublicKey);
+        console.log(data);
       }
       // Mock data - replace with real API calls
       const mockFiles: UploadedFile[] = [
         {
-          id: '1',
-          cid: 'bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u',
-          filename: 'presentation.pdf',
+          id: "1",
+          cid: "bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u",
+          filename: "presentation.pdf",
           size: 2400000,
-          type: 'application/pdf',
-          url: 'https://w3s.link/ipfs/bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u',
-          uploadedAt: '2025-08-21T18:08:47.724Z',
-          signature: '5KJhG8xYzW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n',
+          type: "application/pdf",
+          url: "https://w3s.link/ipfs/bafkreiha67s2x5hvraj4fve34agnehp5x276uzyc4kh6lb6r56gnk2536u",
+          uploadedAt: "2025-08-21T18:08:47.724Z",
+          signature: "5KJhG8xYzW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n",
           duration: 30,
           cost: 0.0045,
-          status: 'active'
+          status: "active",
         },
         {
-          id: '2',
-          cid: 'bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-          filename: 'contract.docx',
+          id: "2",
+          cid: "bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+          filename: "contract.docx",
           size: 856000,
-          type: 'application/docx',
-          url: 'https://w3s.link/ipfs/bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-          uploadedAt: '2025-08-20T14:30:22.154Z',
-          signature: '3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n',
+          type: "application/docx",
+          url: "https://w3s.link/ipfs/bafkreiab23d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+          uploadedAt: "2025-08-20T14:30:22.154Z",
+          signature: "3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n",
           duration: 90,
           cost: 0.0087,
-          status: 'active'
+          status: "active",
         },
         {
-          id: '3',
-          cid: 'bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8',
-          filename: 'image.png',
+          id: "3",
+          cid: "bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8",
+          filename: "image.png",
           size: 1200000,
-          type: 'image/png',
-          url: 'https://w3s.link/ipfs/bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8',
-          uploadedAt: '2025-08-19T09:15:33.987Z',
-          signature: '2PqYjdW1QEEEiGiYTx7Bbdcp7FiPLpJBnxaci3me77m',
+          type: "image/png",
+          url: "https://w3s.link/ipfs/bafkreicd45e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8",
+          uploadedAt: "2025-08-19T09:15:33.987Z",
+          signature: "2PqYjdW1QEEEiGiYTx7Bbdcp7FiPLpJBnxaci3me77m",
           duration: 7,
           cost: 0.0012,
-          status: 'expired'
-        }
+          status: "expired",
+        },
       ];
 
       setFiles(mockFiles);
@@ -134,42 +119,46 @@ const Dashboard: React.FC = () => {
       // Calculate stats
       const totalStorage = mockFiles.reduce((sum, file) => sum + file.size, 0);
       const totalSpent = mockFiles.reduce((sum, file) => sum + file.cost, 0);
-      const activeFiles = mockFiles.filter(file => file.status === 'active').length;
+      const activeFiles = mockFiles.filter(
+        (file) => file.status === "active"
+      ).length;
 
       setStats({
         totalFiles: mockFiles.length,
         totalStorage,
         totalSpent,
-        activeFiles
+        activeFiles,
       });
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      console.error("Error loading dashboard data:", error);
+      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return '🖼️';
-    if (type.startsWith('video/')) return '🎥';
-    if (type.startsWith('audio/')) return '🎵';
-    if (type.includes('pdf')) return '📄';
-    if (type.includes('document') || type.includes('docx')) return '📝';
-    return '📁';
+    if (type.startsWith("image/")) return "🖼️";
+    if (type.startsWith("video/")) return "🎥";
+    if (type.startsWith("audio/")) return "🎵";
+    if (type.includes("pdf")) return "📄";
+    if (type.includes("document") || type.includes("docx")) return "📝";
+    return "📁";
   };
 
-  const filteredFiles = files.filter(file => {
-    const matchesSearch = file.filename.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === 'all' || file.status === filterType;
+  const filteredFiles = files.filter((file) => {
+    const matchesSearch = file.filename
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesFilter = filterType === "all" || file.status === filterType;
     return matchesSearch && matchesFilter;
   });
 
@@ -188,10 +177,11 @@ const Dashboard: React.FC = () => {
               Connect Wallet
             </h2>
             <p className="text-gray-600 mb-6">
-              Please connect your Solana wallet to view your uploaded files and transaction history.
+              Please connect your Solana wallet to view your uploaded files and
+              transaction history.
             </p>
             <WalletConnection className="w-full mb-4" />
-            <Button variant="secondary" onClick={() => router.push('/')}>
+            <Button variant="secondary" onClick={() => router.push("/")}>
               Go Back Home
             </Button>
           </div>
@@ -204,12 +194,11 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gradient-purple">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push("/")}
                 className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -218,7 +207,7 @@ const Dashboard: React.FC = () => {
 
               <div className="flex gap-2">
                 <Button
-                  onClick={() => router.push('/user')}
+                  onClick={() => router.push("/user")}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -231,7 +220,8 @@ const Dashboard: React.FC = () => {
             <div className="text-center text-white">
               <h1 className="text-4xl font-bold mb-4">Storage Dashboard</h1>
               <p className="text-white/80 text-lg">
-                Manage your decentralized file storage and view transaction history
+                Manage your decentralized file storage and view transaction
+                history
               </p>
             </div>
           </div>
@@ -283,17 +273,17 @@ const Dashboard: React.FC = () => {
           <Card className="mb-6">
             <div className="flex border-b border-gray-200">
               {[
-                { key: 'files', label: 'Files', icon: FileText },
-                { key: 'transactions', label: 'Transactions', icon: History },
-                { key: 'stats', label: 'Analytics', icon: Receipt }
-              ].map(tab => (
+                { key: "files", label: "Files", icon: FileText },
+                { key: "transactions", label: "Transactions", icon: History },
+                { key: "stats", label: "Analytics", icon: Receipt },
+              ].map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
                     activeTab === tab.key
-                      ? 'text-purple-600 border-b-2 border-purple-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? "text-purple-600 border-b-2 border-purple-600"
+                      : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
@@ -304,7 +294,7 @@ const Dashboard: React.FC = () => {
           </Card>
 
           {/* Files Tab */}
-          {activeTab === 'files' && (
+          {activeTab === "files" && (
             <Card>
               {/* Search and Filter */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -342,10 +332,12 @@ const Dashboard: React.FC = () => {
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 mb-2">
-                    {searchTerm || filterType !== 'all' ? 'No files match your criteria' : 'No files uploaded yet'}
+                    {searchTerm || filterType !== "all"
+                      ? "No files match your criteria"
+                      : "No files uploaded yet"}
                   </p>
-                  {!searchTerm && filterType === 'all' && (
-                    <Button onClick={() => router.push('/upload')}>
+                  {!searchTerm && filterType === "all" && (
+                    <Button onClick={() => router.push("/upload")}>
                       Upload Your First File
                     </Button>
                   )}
@@ -362,32 +354,46 @@ const Dashboard: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="text-2xl">
-                            {getFileIcon(file.type)}
+                            {getFileIcon(file.type || "")}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900">{file.filename}</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              {file.filename}
+                            </h3>
                             <div className="text-sm text-gray-600 space-y-1">
-                              <p>Size: {formatFileSize(file.size)} • Type: {file.type}</p>
-                              <p>Uploaded: {new Date(file.uploadedAt).toLocaleDateString()}</p>
-                              <p>Duration: {file.duration} days • Cost: {file.cost.toFixed(4)} SOL</p>
+                              <p>
+                                Size: {formatFileSize(file.size)} • Type:{" "}
+                                {file.type}
+                              </p>
+                              <p>
+                                Uploaded:{" "}
+                                {new Date(file.uploadedAt).toLocaleDateString()}
+                              </p>
+                              <p>
+                                Duration: {file.duration} days • Cost:{" "}
+                                {file.cost.toFixed(4)} SOL
+                              </p>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            file.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : file.status === 'expired'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              file.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : file.status === "expired"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {file.status.charAt(0).toUpperCase() +
+                              file.status.slice(1)}
                           </span>
 
                           <div className="flex gap-1">
                             <button
-                              onClick={() => window.open(file.url, '_blank')}
+                              onClick={() => window.open(file.url, "_blank")}
                               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
                               title="View File"
                             >
@@ -395,7 +401,7 @@ const Dashboard: React.FC = () => {
                             </button>
 
                             <button
-                              onClick={() => copyToClipboard(file.cid, 'CID')}
+                              onClick={() => copyToClipboard(file.cid, "CID")}
                               className="p-2 text-gray-500 hover:text-green-600 transition-colors"
                               title="Copy CID"
                             >
@@ -403,7 +409,12 @@ const Dashboard: React.FC = () => {
                             </button>
 
                             <button
-                              onClick={() => window.open(`https://explorer.solana.com/tx/${file.signature}?cluster=testnet`, '_blank')}
+                              onClick={() =>
+                                window.open(
+                                  `https://explorer.solana.com/tx/${file.signature}?cluster=testnet`,
+                                  "_blank"
+                                )
+                              }
                               className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
                               title="View Transaction"
                             >
@@ -431,15 +442,22 @@ const Dashboard: React.FC = () => {
           )}
 
           {/* Transactions Tab */}
-          {activeTab === 'transactions' && (
+          {activeTab === "transactions" && (
             <Card>
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Transaction History</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                Transaction History
+              </h3>
               <div className="space-y-4">
                 {files.map((file) => (
-                  <div key={file.id} className="border border-gray-200 rounded-lg p-4">
+                  <div
+                    key={file.id}
+                    className="border border-gray-200 rounded-lg p-4"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">{file.filename}</div>
+                        <div className="font-semibold text-gray-900">
+                          {file.filename}
+                        </div>
                         <div className="text-sm text-gray-600">
                           {new Date(file.uploadedAt).toLocaleString()}
                         </div>
@@ -456,14 +474,21 @@ const Dashboard: React.FC = () => {
                     <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                       <span>TX: {file.signature.substring(0, 16)}...</span>
                       <button
-                        onClick={() => copyToClipboard(file.signature, 'Transaction Hash')}
+                        onClick={() =>
+                          copyToClipboard(file.signature, "Transaction Hash")
+                        }
                         className="hover:text-purple-600 transition-colors"
                       >
                         <Copy className="w-3 h-3 inline mr-1" />
                         Copy
                       </button>
                       <button
-                        onClick={() => window.open(`https://explorer.solana.com/tx/${file.signature}?cluster=testnet`, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            `https://explorer.solana.com/tx/${file.signature}?cluster=testnet`,
+                            "_blank"
+                          )
+                        }
                         className="hover:text-purple-600 transition-colors"
                       >
                         <ExternalLink className="w-3 h-3 inline mr-1" />
@@ -477,10 +502,12 @@ const Dashboard: React.FC = () => {
           )}
 
           {/* Analytics Tab */}
-          {activeTab === 'stats' && (
+          {activeTab === "stats" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Storage Usage</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  Storage Usage
+                </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total Files</span>
@@ -488,11 +515,15 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total Storage</span>
-                    <span className="font-semibold">{formatFileSize(stats.totalStorage)}</span>
+                    <span className="font-semibold">
+                      {formatFileSize(stats.totalStorage)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Active Files</span>
-                    <span className="font-semibold text-green-600">{stats.activeFiles}</span>
+                    <span className="font-semibold text-green-600">
+                      {stats.activeFiles}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Expired Files</span>
@@ -504,20 +535,29 @@ const Dashboard: React.FC = () => {
               </Card>
 
               <Card>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Spending Summary</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  Spending Summary
+                </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total Spent</span>
-                    <span className="font-semibold">{stats.totalSpent.toFixed(4)} SOL</span>
+                    <span className="font-semibold">
+                      {stats.totalSpent.toFixed(4)} SOL
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">USD Value</span>
-                    <span className="font-semibold">${(stats.totalSpent * 25).toFixed(2)}</span>
+                    <span className="font-semibold">
+                      ${(stats.totalSpent * 25).toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Average per File</span>
                     <span className="font-semibold">
-                      {stats.totalFiles > 0 ? (stats.totalSpent / stats.totalFiles).toFixed(4) : '0.0000'} SOL
+                      {stats.totalFiles > 0
+                        ? (stats.totalSpent / stats.totalFiles).toFixed(4)
+                        : "0.0000"}{" "}
+                      SOL
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -537,7 +577,7 @@ const Dashboard: React.FC = () => {
       <AnimatePresence>
         {showReceipt && selectedFile && (
           <ReceiptModal
-            file={selectedFile}
+            file={{ ...selectedFile, type: selectedFile.type || "" }}
             onClose={() => {
               setShowReceipt(false);
               setSelectedFile(null);

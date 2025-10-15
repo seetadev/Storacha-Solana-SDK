@@ -10,7 +10,12 @@ import { Link } from "@ucanto/core/schema";
 import { Capabilities } from "@storacha/client/types";
 import { depositAccount } from "../db/schema.js";
 import { db } from "../db/db.js";
-import { DAY_TIME_IN_SECONDS } from "../utils/constant.js";
+import {
+  BAD_REQUEST_CODE,
+  DAY_TIME_IN_SECONDS,
+  INTERNAL_SERVER_ERROR_CODE,
+  SUCCESS_CODE,
+} from "../utils/constant.js";
 import { computeCID } from "../utils/compute-cid.js";
 import { createDepositTransaction } from "./solana.controller.js";
 import { getUserHistory } from "../db/depositTable.js";
@@ -71,10 +76,11 @@ export const uploadFile = async (req: Request, res: Response) => {
   try {
     const file = req.file;
     if (!file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(BAD_REQUEST_CODE).json({ message: "No file uploaded" });
     }
     const cid = req.query.cid as string;
-    if (!cid) return res.status(400).json({ message: "CID is required" });
+    if (!cid)
+      return res.status(BAD_REQUEST_CODE).json({ message: "CID is required" });
     const files = [
       new File([file.buffer], file.originalname, { type: file.mimetype }),
     ];
@@ -84,7 +90,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     if (uploadedCID.toString() !== cid) {
       throw new Error(
-        `CID mismatch! Precomputed: ${cid}, Uploaded: ${uploadedCID}`,
+        `CID mismatch! Precomputed: ${cid}, Uploaded: ${uploadedCID}`
       );
     }
 
@@ -97,14 +103,14 @@ export const uploadFile = async (req: Request, res: Response) => {
       uploadedAt: new Date().toISOString(),
     };
 
-    res.status(200).json({
+    res.status(SUCCESS_CODE).json({
       message: "Upload successful",
       cid: uploadedCID,
       object: uploadObject,
     });
   } catch (error: any) {
     console.error("Error uploading file to Storacha:", error);
-    res.status(400).json({
+    res.status(INTERNAL_SERVER_ERROR_CODE).json({
       message: "Error uploading file to directory",
     });
   }
@@ -120,13 +126,17 @@ export const uploadFiles = async (req: Request, res: Response) => {
   try {
     const files = req.files as Express.Multer.File[];
 
-    if (!files) return res.status(400).json({ message: "No files uploaded" });
+    if (!files)
+      return res
+        .status(BAD_REQUEST_CODE)
+        .json({ message: "No files uploaded" });
 
     const cid = req.query.cid as string;
-    if (!cid) return res.status(400).json({ message: "CID is required" });
+    if (!cid)
+      return res.status(BAD_REQUEST_CODE).json({ message: "CID is required" });
 
     const fileObjects = files.map(
-      (f) => new File([f.buffer], f.originalname, { type: f.mimetype }),
+      (f) => new File([f.buffer], f.originalname, { type: f.mimetype })
     );
 
     const client = await initStorachaClient();
@@ -134,7 +144,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
 
     if (uploadedCID.toString() !== cid)
       throw new Error(
-        `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`,
+        `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`
       );
 
     const uploadObject = {
@@ -148,17 +158,19 @@ export const uploadFiles = async (req: Request, res: Response) => {
         type: f.mimetype,
         url: `https://w3s.link/ipfs/${cid}/${f.originalname}`,
       })),
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
     };
 
-    res.status(200).json({
+    res.status(SUCCESS_CODE).json({
       message: "Upload successful",
       cid: uploadedCID,
       object: uploadObject,
     });
   } catch (error) {
     console.error("Error uploading files:", error);
-    res.status(400).json({ message: "Error uploading files" });
+    res
+      .status(INTERNAL_SERVER_ERROR_CODE)
+      .json({ message: "Error uploading files" });
   }
 };
 
@@ -231,11 +243,13 @@ export const deposit = async (req: Request, res: Response) => {
       last_claimed_slot: 1,
       expires_at: backupExpirationDate,
       created_at: new Date().toISOString(),
+      fileName: fileArray[0].filename,
+      fileSize: totalSize.toString(),
     };
 
     await db.insert(depositAccount).values(depositItem).returning();
 
-    res.status(200).json({
+    res.status(SUCCESS_CODE).json({
       message: "Deposit instruction ready — sign to finalize upload",
       cid: computedCID,
       instructions: depositInstructions,
@@ -249,7 +263,7 @@ export const deposit = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({
+    res.status(INTERNAL_SERVER_ERROR_CODE).json({
       message: "Error making a deposit",
     });
   }
@@ -265,6 +279,12 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10);
     const size = parseInt(req.query.size as string, 10);
+    if (!duration || !size) {
+      return res.status(BAD_REQUEST_CODE).json({
+        quoteObject: null,
+        success: false,
+      });
+    }
     const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
@@ -275,7 +295,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.log("The error is", err);
-    return res.status(400).json({
+    return res.status(INTERNAL_SERVER_ERROR_CODE).json({
       quoteObject: null,
       success: false,
     });
@@ -292,17 +312,17 @@ export const GetUserUploadHistory = async (req: Request, res: Response) => {
   try {
     const userAddress = req.query.userAddress as string;
     if (userAddress === null || userAddress === undefined) {
-      return res.status(400).json({
+      return res.status(BAD_REQUEST_CODE).json({
         message: "Error getting the user address from the params",
       });
     }
     const userHistory = await getUserHistory(userAddress);
-    return res.status(200).json({
+    return res.status(SUCCESS_CODE).json({
       userHistory: userHistory,
       userAddress: userAddress,
     });
   } catch (err) {
-    return res.status(400).json({
+    return res.status(INTERNAL_SERVER_ERROR_CODE).json({
       message: "Error getting the user history",
     });
   }
