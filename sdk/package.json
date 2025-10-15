@@ -1,0 +1,49 @@
+{
+  "name": "storacha-sol",
+  "version": "0.0.3",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup src/index.ts --minify",
+    "dev": "pnpm build --watch"
+  },
+  "exports": {
+    "import": {
+      "node": "./dist/index.cjs",
+      "browser": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "require": "./dist/index.cjs"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.js.map"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seetadev/storacha-solana-sdk"
+  },
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "module": "./dist/index.js",
+  "keywords": [
+    "solana",
+    "storacha",
+    "typescript",
+    "rust",
+    "dapp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "@solana/kit": "^2.3.0",
+    "@solana/web3.js": "^1.98.2",
+    "standard-version": "^9.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  }
+}
