@@ -19,7 +19,7 @@ function validateEnv() {
   if (missing.length > 0) {
     console.log(missing);
     throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`,
+      `Missing required environment variables: ${missing.join(", ")}`
     );
   }
 }
@@ -34,13 +34,11 @@ app.use("/api/user", userRouter);
 app.use("/api/solana", solanaRouter);
 
 app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
-    try {
-        const result=await ensureConfigInitialized();
-        console.log("✅ Solana config initialized successfully");
-    } catch (error) {
-        console.error("❌ Failed to initialize Solana config:", error);
-        process.exit(1);
-    }
+  console.log(`Server running on port ${PORT}`);
+  try {
+    const result = await ensureConfigInitialized();
+  } catch (error) {
+    console.error("❌ Failed to initialize Solana config:", error);
+    process.exit(1);
+  }
 });
-

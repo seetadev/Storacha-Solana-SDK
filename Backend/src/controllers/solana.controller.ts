@@ -25,10 +25,6 @@ export const createDepositTransaction = async (payload: DepositItem) => {
   } = payload;
 
   if (!userPublicKey || !contentCID || !fileSize || !durationDays) {
-    console.log("userpub keey", userPublicKey);
-    console.log("content CID", contentCID);
-    console.log("file size", fileSize);
-    console.log("durationDays", durationDays);
     throw new Error("Missing required parameters");
   }
 
