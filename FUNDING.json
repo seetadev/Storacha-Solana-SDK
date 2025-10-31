@@ -1,3 +1,7 @@
 {
-  "filecoin_address": "0x00c315187de7e0ade6f745f8cdd33209af1edb6d"
+  "drips": {
+    "filecoin": {
+      "ownedBy": "0x1ddee29aebc7ed652b295c909d42f8314ff6734b"
+    }
+  }
 }
