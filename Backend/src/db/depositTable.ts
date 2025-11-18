@@ -13,7 +13,7 @@ export const getUserHistory = async (wallet: string) => {
     const userFiles = await db
       .select()
       .from(depositAccount)
-      .where(eq(depositAccount.deposit_key, userAddres));
+      .where(eq(depositAccount.depositKey, userAddres));
     return userFiles;
   } catch (err) {
     console.log("Error getting user history", err);

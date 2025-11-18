@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { configTable } from "../db/schema.js";
 import { db } from "../db/db.js";
+import { configTable } from "../db/schema.js";
 
 //All the endpoints in this Particular controller are protected using Auth middleware
 
@@ -10,12 +10,12 @@ export const updateRate = async (req: Request, res: Response) => {
     const result = await db
       .update(configTable)
       .set({
-        rate_per_byte_per_day: rate,
+        ratePerBytePerDay: rate,
       })
       .returning();
     return res.status(200).json({
       message: "Successfully updated the rate per file",
-      value: result[0].rate_per_byte_per_day,
+      value: result[0].ratePerBytePerDay,
     });
   } catch (err) {
     console.log("The error is", err);
@@ -34,12 +34,12 @@ export const updateMinDuration = async (req: Request, res: Response) => {
     const result = await db
       .update(configTable)
       .set({
-        min_duration_days: daysInSeconds,
+        minDurationDays: daysInSeconds,
       })
       .returning();
     return res.status(200).json({
       message: "Successfully updated the minimum Duration",
-      value: result[0].min_duration_days,
+      value: result[0].minDurationDays,
     });
   } catch (err) {
     console.log("The error is", err);

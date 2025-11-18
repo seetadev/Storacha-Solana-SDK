@@ -4,7 +4,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup src/index.ts --minify",
-    "dev": "pnpm build --watch"
+    "dev": "pnpm build --watch",
+    "pack:local": "pnpm build && pnpm pack"
   },
   "exports": {
     "import": {

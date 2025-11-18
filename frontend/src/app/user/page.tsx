@@ -1,34 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import FileUpload from "@/components/FileUpload";
+import ProgressBar from "@/components/ProgressBar";
+import StorageDurationSelector from "@/components/StorageDurationSelector";
+import WalletConnection from "@/components/WalletConnection";
+import { useWallet } from "@/contexts/WalletContext";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
-import toast from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Upload,
-  FileText,
-  Image,
-  Video,
-  Music,
-  File,
-  X,
-  DollarSign,
-  Zap,
-  CheckCircle,
   AlertCircle,
   ArrowLeft,
+  CheckCircle,
+  DollarSign,
   ExternalLink,
+  File,
+  FileText,
   History,
+  Image,
+  Music,
+  Upload,
+  Video,
+  X,
+  Zap,
 } from "lucide-react";
-import { useWallet } from "@/contexts/WalletContext";
-import Card from "@/components/Card";
-import Button from "@/components/Button";
-import FileUpload from "@/components/FileUpload";
-import StorageDurationSelector from "@/components/StorageDurationSelector";
-import ProgressBar from "@/components/ProgressBar";
-import WalletConnection from "@/components/WalletConnection";
-import { Environment, useDeposit, UploadResult } from "storacha-sol";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Environment, UploadResult, useDeposit } from "storacha-sol";
 
 const UploadPage: React.FC = () => {
   const router = useRouter();
@@ -45,6 +45,7 @@ const UploadPage: React.FC = () => {
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const client = useDeposit("testnet" as Environment);
   // Redirect if not connected
@@ -114,8 +115,6 @@ const UploadPage: React.FC = () => {
 
     try {
       const file = selectedFiles;
-
-      // Stage 1: Upload to API (0-30%)
       setUploadProgress(10);
       toast.loading("Uploading file to IPFS...", { id: "upload-progress" });
 
@@ -123,19 +122,15 @@ const UploadPage: React.FC = () => {
         file,
         durationDays: storageDuration,
         payer: publicKey,
+        userEmail: userEmail || "",
         signTransaction: async (tx) => {
           setUploadProgress(40);
           toast.loading("Please sign the transaction in your wallet...", {
             id: "upload-progress",
           });
 
-          console.log("📝 Transaction ready for signing:", tx);
-
           try {
             const signed = await signTransaction(tx);
-            console.log("✅ Transaction signed successfully");
-
-            // Stage 3: Transaction sent (50-80%)
             setUploadProgress(60);
             toast.loading("Transaction sent to network...", {
               id: "upload-progress",
@@ -151,9 +146,7 @@ const UploadPage: React.FC = () => {
         },
       });
 
-      // Stage 4: Confirming (80-100%)
       setUploadProgress(90);
-
       toast.loading("Confirming transaction...", { id: "upload-progress" });
 
       if (result.success) {
@@ -164,14 +157,6 @@ const UploadPage: React.FC = () => {
 
         toast.success("Upload and deposit successful!", {
           id: "upload-progress",
-        });
-
-        // Log success details
-        console.log("🎉 Upload completed successfully:", {
-          signature: result.signature,
-          cid: result.cid,
-          fileUrl: result.url,
-          fileInfo: result.fileInfo,
         });
       } else {
         console.error("❌ Upload failed:", result.error);
@@ -344,7 +329,7 @@ const UploadPage: React.FC = () => {
                 <Card>
                   <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    Selected File
+                    Selected File{selectedFiles.length > 1 ? "s" : ""}
                   </h3>
                   <div className="space-y-3">
                     {selectedFiles.map((file, index) => {
@@ -387,6 +372,23 @@ const UploadPage: React.FC = () => {
                     selectedDuration={storageDuration}
                     onDurationChange={setStorageDuration}
                     fileSize={calculateTotalSize() / (1024 * 1024)}
+                  />
+                </Card>
+
+                {/* Email for Notifications */}
+                <Card>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Email Notifications (Optional)
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Get notified when your storage is about to expire
+                  </p>
+                  <input
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </Card>
 

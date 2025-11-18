@@ -1,12 +1,11 @@
-import { create } from "@storacha/client";
 import * as Client from "@storacha/client";
-import { StoreMemory } from "@storacha/client/stores/memory";
-import * as Proof from "@storacha/client/proof";
+import { create } from "@storacha/client";
 import { Signer } from "@storacha/client/principal/ed25519";
-import { QuoteInput } from "../types/StorachaTypes.js";
-import { ADMIN_CONFIG } from "../config/config.js";
+import * as Proof from "@storacha/client/proof";
+import { StoreMemory } from "@storacha/client/stores/memory";
 import { db } from "../db/db.js";
 import { configTable } from "../db/schema.js";
+import { QuoteInput } from "../types/StorachaTypes.js";
 
 /**
  * Initializes a Storacha client using user-provided key and proof.
@@ -35,8 +34,8 @@ export const getQuoteForFileUpload = async ({
 }: QuoteInput) => {
   const data = await db
     .select({
-      MINIMUM_DURATION_UNIT: configTable.min_duration_days,
-      RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
+      MINIMUM_DURATION_UNIT: configTable.minDurationDays,
+      RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
     })
     .from(configTable); // e.g. in SOL; or use lamports: 1000 lamports/byte/day
   const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
@@ -58,8 +57,8 @@ export const getAdminDataForSolana = async () => {
   try {
     const data = await db
       .select({
-        MINIMUM_DURATION_UNIT: configTable.min_duration_days,
-        RATE_PER_BYTE_PER_UNIT: configTable.rate_per_byte_per_day,
+        MINIMUM_DURATION_UNIT: configTable.minDurationDays,
+        RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
       })
       .from(configTable);
     const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];

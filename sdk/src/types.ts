@@ -128,6 +128,8 @@ export interface CreateDepositArgs
    * const signTransaction = await signTransaction(tx)
    * */
   signTransaction: (tx: Transaction) => Promise<Transaction>;
+  /** Optional user email for expiration notifications */
+  userEmail?: string;
 }
 
 /**
@@ -137,19 +139,35 @@ export interface DepositHistoryEntry {
   /** Unique identifier for the deposit */
   id: number;
   /** User's wallet address (deposit key) */
-  deposit_key: string;
+  depositKey: string;
   /** Content identifier of the uploaded file */
-  content_cid: string;
+  contentCid: string;
   /** Duration in days the file is stored for */
-  duration_days: number;
+  durationDays: number;
   /** Amount deposited in lamports */
-  deposit_amount: number;
+  depositAmount: number;
   /** Slot when the deposit was made */
-  deposit_slot: number;
+  depositSlot: number;
   /** Last slot when rewards were claimed */
-  last_claimed_slot: number;
+  lastClaimedSlot: number;
   /** Timestamp when the deposit was created */
-  created_at: string;
+  createdAt: string;
+  /** Expiration date of the upload */
+  expiresAt?: string;
+  /** User email for notifications */
+  userEmail?: string;
+  /** Name of the uploaded file */
+  fileName?: string;
+  /** MIME type of the file */
+  fileType?: string;
+  /** Size of the file in bytes */
+  fileSize?: number;
+  /** Solana transaction hash */
+  transactionHash?: string;
+  /** Deletion status: 'active' | 'warned' | 'deleted' */
+  deletionStatus?: string;
+  /** Timestamp when warning email was sent */
+  warningSentAt?: string;
 }
 
 /**
