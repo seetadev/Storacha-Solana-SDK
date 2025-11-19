@@ -1,43 +1,64 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { X, ChevronDown, Wallet, Zap } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { WalletName } from '@solana/wallet-adapter-base';
+import { WalletName } from "@solana/wallet-adapter-base";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Wallet, X } from "lucide-react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 interface CustomWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }) => {
+const CustomWalletModal: React.FC<CustomWalletModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { wallets, select, connecting, connected } = useWallet();
   const [showAll, setShowAll] = useState(false);
 
   const handleWalletSelect = async (walletName: string) => {
     try {
       select(walletName as WalletName);
-      toast.loading('Connecting to wallet...', { id: 'wallet-connect' });
-    } catch (error) {
-      console.error('Wallet selection error:', error);
-      toast.error('Failed to connect wallet', { id: 'wallet-connect' });
+      toast.loading("Connecting to wallet...", { id: "wallet-connect" });
+    } catch (error: any) {
+      console.error("Wallet selection error:", error);
+
+      // Check if it's the ethereum property redefinition error
+      if (
+        error?.message?.includes("redefine property") ||
+        error?.message?.includes("ethereum")
+      ) {
+        toast.error(
+          "Wallet conflict detected. Please disable Brave Wallet in brave://settings/web3",
+          { id: "wallet-connect", duration: 6000 },
+        );
+      } else {
+        toast.error("Failed to connect wallet", { id: "wallet-connect" });
+      }
     }
   };
 
   React.useEffect(() => {
     if (connected) {
       onClose();
-      toast.success('Wallet connected successfully!', { id: 'wallet-connect' });
+      toast.success("Wallet connected successfully!", { id: "wallet-connect" });
     }
   }, [connected, onClose]);
 
-  const installedWallets = wallets.filter(wallet => wallet.readyState === 'Installed');
-  const loadableWallets = wallets.filter(wallet => wallet.readyState === 'Loadable');
-  const notDetectedWallets = wallets.filter(wallet => wallet.readyState === 'NotDetected');
+  const installedWallets = wallets.filter(
+    (wallet) => wallet.readyState === "Installed",
+  );
+  const loadableWallets = wallets.filter(
+    (wallet) => wallet.readyState === "Loadable",
+  );
+  const notDetectedWallets = wallets.filter(
+    (wallet) => wallet.readyState === "NotDetected",
+  );
 
-  const displayWallets = showAll 
+  const displayWallets = showAll
     ? [...installedWallets, ...loadableWallets, ...notDetectedWallets]
     : [...installedWallets, ...loadableWallets.slice(0, 3)];
 
@@ -53,7 +74,7 @@ const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }
         >
           {/* Custom Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-pink-900/60 to-purple-900/80 backdrop-blur-xl" />
-          
+
           {/* Floating Background Elements */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
@@ -81,7 +102,7 @@ const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }
               <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
-              
+
               <h2 className="text-2xl font-bold text-white mb-2">
                 Connect Wallet
               </h2>
@@ -107,26 +128,25 @@ const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }
                       alt={wallet.adapter.name}
                       className="w-12 h-12 rounded-xl"
                     />
-                    {wallet.readyState === 'Installed' && (
+                    {wallet.readyState === "Installed" && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white/20" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 text-left">
                     <div className="text-white font-semibold text-lg">
                       {wallet.adapter.name}
                     </div>
                     <div className="text-white/60 text-sm">
-                      {wallet.readyState === 'Installed' 
-                        ? 'Ready to connect'
-                        : wallet.readyState === 'Loadable'
-                        ? 'Click to install'
-                        : 'Not detected'
-                      }
+                      {wallet.readyState === "Installed"
+                        ? "Ready to connect"
+                        : wallet.readyState === "Loadable"
+                          ? "Click to install"
+                          : "Not detected"}
                     </div>
                   </div>
 
-                  {wallet.readyState === 'Installed' && (
+                  {wallet.readyState === "Installed" && (
                     <div className="px-3 py-1 bg-green-500/20 text-green-300 text-xs font-bold rounded-full border border-green-500/30">
                       DETECTED
                     </div>
@@ -149,15 +169,17 @@ const CustomWalletModal: React.FC<CustomWalletModalProps> = ({ isOpen, onClose }
                 onClick={() => setShowAll(!showAll)}
                 className="w-full mt-4 p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-400/50 rounded-xl text-white/80 hover:text-white transition-all duration-200 flex items-center justify-center gap-2"
               >
-                <span>{showAll ? 'Show Less' : 'More Options'}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAll ? 'rotate-180' : ''}`} />
+                <span>{showAll ? "Show Less" : "More Options"}</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${showAll ? "rotate-180" : ""}`}
+                />
               </motion.button>
             )}
 
             {/* Footer */}
             <div className="mt-6 text-center">
               <p className="text-white/50 text-xs">
-                New to Solana?{' '}
+                New to Solana?{" "}
                 <a
                   href="https://phantom.app/"
                   target="_blank"

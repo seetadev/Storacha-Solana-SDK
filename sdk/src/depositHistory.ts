@@ -1,3 +1,4 @@
+import { ENDPOINT } from './constants';
 import { DepositHistoryResponse, ServerOptions } from './types';
 
 /**
@@ -24,12 +25,12 @@ export async function fetchUserDepositHistory(
     throw new Error('User address is required and must be a string');
   }
 
-  // Default backend URL - can be overridden via options
-  const baseUrl = options.url || 'http://localhost:3000';
+  // Use ENDPOINT constant, or allow override via options
+  const baseUrl = options.url || ENDPOINT;
 
   try {
     const response = await fetch(
-      `${baseUrl}/user-upload-history?userAddress=${encodeURIComponent(userAddress)}`,
+      `${baseUrl}/api/user/user-upload-history?userAddress=${encodeURIComponent(userAddress)}`,
       {
         method: 'GET',
         headers: {
@@ -42,7 +43,7 @@ export async function fetchUserDepositHistory(
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-        `Failed to fetch deposit history: ${response.status} ${response.statusText}`
+          `Failed to fetch deposit history: ${response.status} ${response.statusText}`
       );
     }
 

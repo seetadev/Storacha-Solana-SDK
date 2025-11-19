@@ -1,8 +1,8 @@
-import { PublicKey, Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { DAY_TIME_IN_SECONDS } from './constants';
+import { fetchUserDepositHistory } from './depositHistory';
 import { createDepositTxn } from './payment';
 import { CreateDepositArgs, UploadResult } from './types';
-import { fetchUserDepositHistory } from './depositHistory';
-import { DAY_TIME_IN_SECONDS } from './constants';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -29,7 +29,7 @@ export interface ClientOptions {
 }
 
 export interface DepositParams
-  extends Pick<CreateDepositArgs, 'signTransaction'> {
+  extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
   /** File(s) to be stored */
@@ -74,6 +74,7 @@ export class Client {
     file,
     durationDays,
     signTransaction,
+    userEmail,
   }: DepositParams): Promise<UploadResult> {
     console.log('Creating deposit transaction with environment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
@@ -84,6 +85,7 @@ export class Client {
       payer,
       connection,
       signTransaction,
+      userEmail,
     });
   }
 

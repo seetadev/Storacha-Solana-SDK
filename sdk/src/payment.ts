@@ -1,11 +1,11 @@
 import { Signature } from '@solana/kit';
-import { CreateDepositArgs, DepositResult, UploadResult } from './types';
 import {
   PublicKey,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { ENDPOINT } from './constants';
+import { CreateDepositArgs, DepositResult, UploadResult } from './types';
 
 /**
  * Calls the deposit API for on-chain storage and returns a Transaction
@@ -26,14 +26,18 @@ export async function createDepositTxn({
   payer,
   connection,
   signTransaction,
+  userEmail,
 }: CreateDepositArgs): Promise<UploadResult> {
   try {
     const formData = new FormData();
-    file.forEach((f) => formData.append("file", f))
+    file.forEach((f) => formData.append('file', f));
     formData.append('duration', duration.toString());
     formData.append('publicKey', payer.toBase58());
+    if (userEmail) {
+      formData.append('userEmail', userEmail);
+    }
 
-    const isMultipleFiles = file.length > 1
+    const isMultipleFiles = file.length > 1;
 
     let uploadErr;
 
@@ -92,12 +96,27 @@ export async function createDepositTxn({
       );
     }
 
+    try {
+      await fetch(`${ENDPOINT}/api/user/update-transaction-hash`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cid: depositRes.cid,
+          transactionHash: signature,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to update transaction hash:', err);
+    }
+
     if (depositRes.error) {
       uploadErr = depositRes.error;
     }
 
     const uploadForm = new FormData();
-    file.forEach((f) => uploadForm.append("file", f))
+    file.forEach((f) => uploadForm.append('file', f));
 
     let fileUploadReq;
     // calls the upload functionality on our server with the file when deposit is succesful
