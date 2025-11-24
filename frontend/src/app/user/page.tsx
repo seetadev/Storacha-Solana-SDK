@@ -3,6 +3,7 @@
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import FileUpload from "@/components/FileUpload";
+import FileThumbnail from "@/components/FileThumbnail";
 import ProgressBar from "@/components/ProgressBar";
 import StorageDurationSelector from "@/components/StorageDurationSelector";
 import WalletConnection from "@/components/WalletConnection";
@@ -342,9 +343,15 @@ const UploadPage: React.FC = () => {
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                              <FileIcon className="w-5 h-5 text-purple-600" />
-                            </div>
+                            <FileThumbnail
+                              file={{
+                                filename: file.name,
+                                type: file.type,
+                                url: URL.createObjectURL(file),
+                                size: file.size
+                              }}
+                              size="sm"
+                            />
                             <div>
                               <p className="font-medium text-gray-900">
                                 {file.name}
