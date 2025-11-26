@@ -27,7 +27,11 @@ export const verifyQStashRequest = async (
     });
 
     const signature = req.headers["upstash-signature"] as string;
-    const body = JSON.stringify(req.body);
+
+    // upstash scheduled requests have empty body (optional while setting up)
+    // if body is empty object, we should use it as (an empty string) for verification
+    const body =
+      Object.keys(req.body).length === 0 ? "" : JSON.stringify(req.body);
 
     // Verify the signature - SDK will throw if signature is missing or invalid
     const isValid = await receiver.verify({
