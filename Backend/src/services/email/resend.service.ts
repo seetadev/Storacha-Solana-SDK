@@ -100,7 +100,7 @@ function getExpirationWarningEmailHtml(data: {
     </div>
     
     <p style="color: #1f2937; font-size: 16px; margin: 0 0 24px 0;">
-      If you need to keep this file, please upload it again with a new storage duration.
+      To keep this file stored, you'll need to extend the storage duration before it expires.
     </p>
     
     <div style="margin-bottom: 32px;">
@@ -162,7 +162,7 @@ File Details:
 What happens after expiration?
 After the expiration date, your file will be automatically deleted from Storacha and removed from IPFS within 30 days.
 
-If you need to keep this file, please upload it again with a new storage duration.
+To keep this file stored, you'll need to extend the storage duration before it expires.
 
 View your file: https://w3s.link/ipfs/${data.cid}
 
