@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import {
   getDepositsNeedingWarning,
   getExpiredDeposits,
+  updateWarningSentAt,
 } from "../db/depositTable.js";
+import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
 
 /**
- * Checks for deposits needing expiration warnings (daily at 9AM)
+ * Checks for deposits needing expiration warnings
  */
 export const sendExpirationWarnings = async (req: Request, res: Response) => {
   try {
@@ -17,7 +19,6 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
       return res.status(200).json({
         success: true,
         message: "No deposits need warnings",
-        count: 0,
       });
     }
 
@@ -26,27 +27,53 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
     );
 
     for (const deposit of depositsNeedingWarning) {
-      console.log(`Would send warning email for deposit:`, {
-        id: deposit.id,
-        cid: deposit.contentCid,
-        email: deposit.userEmail,
-        expiresAt: deposit.expiresAt,
-        fileName: deposit.fileName,
-      });
+      try {
+        if (!deposit.userEmail) {
+          console.warn(`Skipping deposit ${deposit.id}: no email address`);
+          continue;
+        }
 
-      // await sendWarningEmail(deposit);
-      // await updateWarningSentAt(deposit.id);
+        if (!deposit.expiresAt) {
+          console.warn(`Skipping deposit ${deposit.id}: no expiration date`);
+          continue;
+        }
+
+        const expirationDate = new Date(deposit.expiresAt);
+        const now = new Date();
+        const daysRemaining = Math.ceil(
+          (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        console.log(`Sending warning email for deposit ${deposit.id}...`);
+        const emailResult = await sendExpirationWarningEmail(
+          deposit.userEmail,
+          {
+            fileName: deposit.fileName || "Unknown File",
+            cid: deposit.contentCid,
+            expiresAt: deposit.expiresAt,
+            daysRemaining,
+          },
+        );
+
+        if (emailResult.success) {
+          await updateWarningSentAt(deposit.id);
+          console.log(`Warning email sent for deposit ${deposit.id}`);
+        } else {
+          console.error(
+            `Failed to send email for deposit ${deposit.id}:`,
+            emailResult.error,
+          );
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error(`Error processing deposit ${deposit.id}:`, errorMessage);
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message: `${depositsNeedingWarning.length} warning emails will be sent`,
-      count: depositsNeedingWarning.length,
-      deposits: depositsNeedingWarning.map((d) => ({
-        id: d.id,
-        cid: d.contentCid,
-        email: d.userEmail,
-      })),
+      message: "Expiration warnings processed",
     });
   } catch (error) {
     console.error("Error in sendExpirationWarnings cron:", error);
@@ -59,7 +86,7 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
 };
 
 /**
- * Deletes expired deposits from Storacha (runs daily 11AM for now)
+ * Deletes expired deposits from Storacha
  */
 export const deleteExpiredDeposits = async (req: Request, res: Response) => {
   try {
@@ -71,7 +98,6 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
       return res.status(200).json({
         success: true,
         message: "No expired deposits to delete",
-        count: 0,
       });
     }
 
@@ -92,13 +118,7 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: `Would delete ${expiredDeposits.length} expired deposits`,
-      count: expiredDeposits.length,
-      deposits: expiredDeposits.map((d) => ({
-        id: d.id,
-        cid: d.contentCid,
-        status: d.deletionStatus,
-      })),
+      message: "Expired deposits processed",
     });
   } catch (error) {
     console.error("Error in deleteExpiredDeposits job:", error);

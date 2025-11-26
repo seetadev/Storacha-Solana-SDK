@@ -40,7 +40,7 @@ export const verifyQStashRequest = async (
     });
 
     if (!isValid) {
-      console.warn("🚫 Unauthorized cron request: invalid signature");
+      console.warn("Unauthorized job request: invalid signature");
       return res.status(403).json({
         success: false,
         message: "Forbidden: invalid signature",
