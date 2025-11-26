@@ -1,9 +1,12 @@
 import {
   bigint,
+  boolean,
   date,
   integer,
+  json,
   pgTable,
   text,
+  timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -39,4 +42,37 @@ export const depositAccount = pgTable("deposit", {
     .notNull()
     .default("active"),
   warningSentAt: date("warning_sent_at"),
+});
+
+export const shareLinks = pgTable("share_links", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  shareToken: varchar("share_token", { length: 64 }).notNull().unique(),
+  contentCid: text("content_cid").notNull(),
+  ownerId: varchar("owner_id", { length: 44 }).notNull(),
+  fileName: text("file_name"),
+  fileType: varchar("file_type", { length: 100 }),
+  fileSize: bigint("file_size", { mode: "number" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  maxViews: integer("max_views"),
+  currentViews: integer("current_views").notNull().default(0),
+  passwordHash: varchar("password_hash", { length: 255 }),
+  passwordHint: varchar("password_hint", { length: 255 }),
+  permissions: json("permissions").$type<string[]>().notNull().default(["view"]),
+  isActive: boolean("is_active").notNull().default(true),
+  lastAccessedAt: timestamp("last_accessed_at"),
+  metadata: json("metadata").$type<Record<string, any>>(),
+});
+
+export const shareAccessLog = pgTable("share_access_log", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  shareId: integer("share_id")
+    .notNull()
+    .references(() => shareLinks.id, { onDelete: "cascade" }),
+  accessedAt: timestamp("accessed_at").notNull().defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  location: varchar("location", { length: 255 }),
+  accessType: varchar("access_type", { length: 20 }).notNull().default("view"),
+  success: boolean("success").notNull().default(true),
 });

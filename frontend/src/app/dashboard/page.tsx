@@ -19,12 +19,14 @@ import {
   History,
   Receipt,
   Search,
+  Share2,
   Upload,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Environment, useDeposit } from "storacha-sol";
+import ShareModal from "@/components/ShareModal";
 interface UploadedFile {
   id: string;
   cid: string;
@@ -64,6 +66,8 @@ const Dashboard: React.FC = () => {
   );
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [fileToShare, setFileToShare] = useState<UploadedFile | null>(null);
   const [activeTab, setActiveTab] = useState<
     "files" | "transactions" | "stats"
   >("files");
@@ -287,6 +291,13 @@ const Dashboard: React.FC = () => {
 
               <div className="flex gap-2">
                 <Button
+                  onClick={() => router.push("/shares")}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Manage Shares
+                </Button>
+                <Button
                   onClick={() => router.push("/user")}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
@@ -496,6 +507,16 @@ const Dashboard: React.FC = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </button>
+                            <button
+                              onClick={() => {
+                                setFileToShare(file);
+                                setShowShareModal(true);
+                              }}
+                              className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
+                              title="Share File"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
 
                             <button
                               onClick={() => copyToClipboard(file.cid, "CID")}
@@ -682,6 +703,23 @@ const Dashboard: React.FC = () => {
           />
         )}
       </AnimatePresence>
+
+      {showShareModal && fileToShare && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setFileToShare(null);
+          }}
+          file={{
+            cid: fileToShare.cid,
+            fileName: fileToShare.filename,
+            fileType: fileToShare.type,
+            fileSize: fileToShare.size,
+          }}
+          walletAddress={solanaPublicKey || ""}
+        />
+      )}
     </div>
   );
 };
