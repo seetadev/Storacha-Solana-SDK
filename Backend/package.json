@@ -39,6 +39,7 @@
     "@storacha/client": "^1.6.0",
     "@types/bn.js": "^5.2.0",
     "@ucanto/core": "^10.4.0",
+    "@upstash/qstash": "^2.8.4",
     "@web3-storage/w3cli": "^7.12.0",
     "@web3-storage/w3up-client": "^17.3.0",
     "axios": "^1.10.0",

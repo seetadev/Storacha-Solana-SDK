@@ -1,9 +1,10 @@
-import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import express from "express";
 import { adminRouter } from "./routes/admin.route.js";
-import { userRouter } from "./routes/user.route.js";
+import { jobs as jobsRouter } from "./routes/jobs.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
+import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
 
 dotenv.config();
@@ -13,7 +14,12 @@ const PORT = process.env.PORT || 3000;
  *  Validate all required env variables upfront
  */
 function validateEnv() {
-  const requiredVars = ["DATABASE_URL", "ADMIN_API_KEY"];
+  const requiredVars = [
+    "DATABASE_URL",
+    "ADMIN_API_KEY",
+    "QSTASH_CURRENT_SIGNING_KEY",
+    "QSTASH_NEXT_SIGNING_KEY",
+  ];
   const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
@@ -32,15 +38,15 @@ app.use(express.json());
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
 app.use("/api/solana", solanaRouter);
+app.use("/api/jobs", jobsRouter);
 
 app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
-    try {
-        const result=await ensureConfigInitialized();
-        console.log("✅ Solana config initialized successfully");
-    } catch (error) {
-        console.error("❌ Failed to initialize Solana config:", error);
-        process.exit(1);
-    }
+  console.log(`Server running on port ${PORT}`);
+  try {
+    const result = await ensureConfigInitialized();
+    console.log("Solana config initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize Solana config:", error);
+    process.exit(1);
+  }
 });
-
