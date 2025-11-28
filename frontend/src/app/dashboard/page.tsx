@@ -4,6 +4,8 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ReceiptModal from "@/components/ReceiptModel";
 import WalletConnection from "@/components/WalletConnection";
+import FilePreviewModal from "@/components/FilePreviewModal";
+import FileThumbnail from "@/components/FileThumbnail";
 import { useWallet } from "@/contexts/WalletContext";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -64,6 +66,8 @@ const Dashboard: React.FC = () => {
   );
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [activeTab, setActiveTab] = useState<
     "files" | "transactions" | "stats"
   >("files");
@@ -433,9 +437,11 @@ const Dashboard: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="text-2xl">
-                            {getFileIcon(file.type)}
-                          </div>
+                          <FileThumbnail
+                            file={file}
+                            size="md"
+                            showFallback={true}
+                          />
                           <div>
                             <h3 className="font-semibold text-gray-900">
                               {file.filename}
@@ -490,9 +496,12 @@ const Dashboard: React.FC = () => {
 
                           <div className="flex gap-1">
                             <button
-                              onClick={() => window.open(file.url, "_blank")}
+                              onClick={() => {
+                                setPreviewFile(file);
+                                setShowPreview(true);
+                              }}
                               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                              title="View File"
+                              title="Preview File"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -682,6 +691,15 @@ const Dashboard: React.FC = () => {
           />
         )}
       </AnimatePresence>
+
+      <FilePreviewModal
+        isOpen={showPreview}
+        onClose={() => {
+          setShowPreview(false);
+          setPreviewFile(null);
+        }}
+        file={previewFile}
+      />
     </div>
   );
 };
