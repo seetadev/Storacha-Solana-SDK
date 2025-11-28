@@ -31,7 +31,7 @@ export const sendExpirationWarningEmail = async (
 ) => {
   try {
     const response = await resend.emails.send({
-      from: EMAIL_CONFIG.from,
+      from: `Seven from Keep <${EMAIL_CONFIG.from}>`,
       to,
       replyTo: EMAIL_CONFIG.replyTo,
       subject: `Your file "${data.fileName}" will expire soon`,

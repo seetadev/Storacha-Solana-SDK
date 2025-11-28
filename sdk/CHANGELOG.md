@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.3...v0.0.4) (2025-11-28)
+
+
+### Features
+
+* add database queries for deposit expiration management ([#48](https://github.com/seetadev/storacha-solana-sdk/issues/48)) ([a278719](https://github.com/seetadev/storacha-solana-sdk/commit/a27871931b16a9c0118bf90ae191336b1ce8f187))
+* add optional user email collection for expiration notifications ([#47](https://github.com/seetadev/storacha-solana-sdk/issues/47)) ([83d0921](https://github.com/seetadev/storacha-solana-sdk/commit/83d092180275ae854aaea73941f7e0d5d6e31855))
+* calculate backup expiration ([#39](https://github.com/seetadev/storacha-solana-sdk/issues/39)) ([e41082c](https://github.com/seetadev/storacha-solana-sdk/commit/e41082c6751db502dd1b976b780b3c4760a75340))
+* run deletion job for expired file uploads ([c036642](https://github.com/seetadev/storacha-solana-sdk/commit/c0366428a54303c1f10b8e89b2c4b639eadac5d8))
+* setup email delivery with Resend ([#56](https://github.com/seetadev/storacha-solana-sdk/issues/56)) ([3425477](https://github.com/seetadev/storacha-solana-sdk/commit/342547712086234ca8e97c29face9f02d15dd4f3))
+* setup job endpoints with upstash ([#53](https://github.com/seetadev/storacha-solana-sdk/issues/53)) ([ab23946](https://github.com/seetadev/storacha-solana-sdk/commit/ab23946c165288d7823a8f87b95350fc239e8662))
+
+
+### Bug Fixes
+
+* fixed an issue where upstash signature verification fails ([#55](https://github.com/seetadev/storacha-solana-sdk/issues/55)) ([d6e102a](https://github.com/seetadev/storacha-solana-sdk/commit/d6e102aa48cb1e53f2f7fcba3a546ce66d498481))
+* package mismatch & add new expiration column ([#41](https://github.com/seetadev/storacha-solana-sdk/issues/41)) ([5510bd5](https://github.com/seetadev/storacha-solana-sdk/commit/5510bd5f8ee311d8666a2891be39c388fb50e001))
+* use correct JSON structure in the FUNDING.json file ([#46](https://github.com/seetadev/storacha-solana-sdk/issues/46)) ([4ea259c](https://github.com/seetadev/storacha-solana-sdk/commit/4ea259c04cb4683388187a0f689897b7602d9971))
+* vercel build still breaks because of a missing type declaration ([#43](https://github.com/seetadev/storacha-solana-sdk/issues/43)) ([7addab8](https://github.com/seetadev/storacha-solana-sdk/commit/7addab8e168804c4c823255eaf740c79a77fd126))
+
 ### 0.0.3 (2025-09-27)
 
 
