@@ -1,10 +1,13 @@
+import { UnknownLink } from "@storacha/client/types";
 import { Request, Response } from "express";
 import {
   getDepositsNeedingWarning,
   getExpiredDeposits,
+  updateDeletionStatus,
   updateWarningSentAt,
 } from "../db/depositTable.js";
 import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
+import { initStorachaClient } from "../utils/Storacha.js";
 
 /**
  * Checks for deposits needing expiration warnings
@@ -102,18 +105,28 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
     }
 
     console.log(`Found ${expiredDeposits.length} expired deposits to delete`);
+    const client = await initStorachaClient();
 
     for (const deposit of expiredDeposits) {
-      console.log(`Would delete expired deposit:`, {
-        id: deposit.id,
-        cid: deposit.contentCid,
-        expiresAt: deposit.expiresAt,
-        fileName: deposit.fileName,
-        status: deposit.deletionStatus,
-      });
+      try {
+        console.log(`Deleting expired deposit:`, {
+          id: deposit.id,
+          cid: deposit.contentCid,
+          expiresAt: deposit.expiresAt,
+          fileName: deposit.fileName,
+          status: deposit.deletionStatus,
+        });
 
-      // await storachaClient.remove(deposit.contentCid, { shards: true });
-      // await updateDeletionStatus(deposit.id, "deleted");
+        await client.remove(deposit.contentCid as unknown as UnknownLink, {
+          shards: true,
+        });
+        await updateDeletionStatus(deposit.id, "deleted");
+        console.log(`Successfully deleted deposit ${deposit.id}`);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error(`Failed to delete deposit ${deposit.id}:`, errorMessage);
+      }
     }
 
     return res.status(200).json({
