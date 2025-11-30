@@ -8,13 +8,15 @@ Here are a couple of things you can do with this package:
 - Make SOL payments for Storage on Storacha
 - Multiple file (directory) uploads
 - Show how much time is left to expiry
+- View your upload history (all files you've stored with their details)
+- Get expiration warnings via email before your files expire
+- Automatic deletion of expired files from Storacha
 
 Stuffs we hope to cover or extend:
 
-- List stored items in a wallet's space (space-management, pretty-much)
 - Allow payments from other chains. (Filecoin next)
 - Include implementations for other libs. Right now, we only have React. Hoping to cover, Vue, Svelte etc.
-- Add ability to renew/icrease upload duration
+- Add ability to renew/increase upload duration (coming soon! see [GitHub issues](https://github.com/seetadev/storacha-solana-sdk/issues))
 
 ## Usage
 
@@ -108,6 +110,58 @@ if (result.success) {
 An edge-case you may want to consider before calling `createDeposit` is to check if the estimated storage cost is more than the wallet balance of the user, as this would fail to create the transaction.
 
 You can use `client.estimateStorageCost` to get the values in SOL and compare if the balance is less than what was estimated before paying and provide a reasonable error message for your end-users.
+
+### View Upload History
+
+You can fetch all uploads associated with a wallet address:
+
+```ts
+const client = useDeposit('testnet' as Environment);
+const history = await client.getUserUploadHistory(publicKey.toString());
+
+console.log(history.userHistory); // Array of all deposits
+```
+
+Each deposit in the history includes:
+- File details (name, size, type, CID)
+- Expiration date
+- Deletion status (`active`, `warned`, `deleted`)
+- Transaction hash
+- Duration and cost information
+
+### Email Expiration Warnings
+
+When creating a deposit, you can optionally provide an email address to receive expiration warnings:
+
+```ts
+const result = await client.createDeposit({
+  file,
+  durationDays: storageDuration,
+  payer: publicKey,
+  userEmail: 'user@example.com', // Optional email for expiration warnings
+  signTransaction: async (tx) => {
+    const signed = await signTransaction(tx);
+    return signed;
+  },
+});
+```
+
+If provided, you'll receive an email notification **7 days before your file expires**, giving you time to extend the storage duration (feature coming soon!).
+
+The warning email includes:
+- File name and CID
+- Exact expiration date
+- Number of days remaining
+- Direct link to view your file on IPFS
+
+### Automatic Cleanup
+
+Files that have expired are automatically deleted from Storacha storage. This happens through a scheduled job that:
+1. Identifies expired deposits
+2. Removes the data from Storacha (including shards)
+3. Updates the deletion status in the database
+
+Your upload history will show the deletion status, so you can track which files are still active, warned, or deleted.
 
 ## Want to contribute?
 

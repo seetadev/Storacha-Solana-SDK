@@ -11,6 +11,9 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 - **Escrow-based Rewards** – Funds released linearly per block to service providers.
 - **Backend API with UCAN Delegation** – Secure storage delegation via UCAN tokens.
 - **TypeScript SDK** – Easily integrate with dapps (supports Solana Mobile dapp publishing).
+- **Upload History** – Track all your uploads with detailed metadata (file name, size, expiration, status).
+- **Email Notifications** – Get warned 7 days before your files expire (powered by Resend).
+- **Automatic Cleanup** – Expired files are automatically deleted from Storacha storage.
 - **Extensible** – Designed for multi-chain support (Phase 2).
 
 ## Monorepo Structure
@@ -145,6 +148,17 @@ pnpm test
 
 ---
 
+### Environment Variables
+
+To set up your backend environment:
+
+```bash
+cd Backend
+cp .env.example .env
+```
+
+Then fill in your values for Resend API key, database credentials, and Storacha keys. Get your Resend API key at [resend.com](https://resend.com).
+
 ## Testing and actually using the program
 
 Install a Solana wallet like Phantom wallet in your browser. Go your settings and click on "Developer Settings".
@@ -153,7 +167,7 @@ Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.
 
 When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto-sol) to basically test that you can make a deposit. The backend server has to be running locally for this to work. Please ensure that is right.
 
-You can also the test the sdk locally without publishing it by cloning this [react-example](https://github.com/HarshS1611/Storacha-Solana-SDK-Example) to test the desposit. Follow the setup instructions to link the sdk with the project.
+You can also test everything out on the playground [here](https://storacha-sol.vercel.app/)
 
 ## Side Notes
 
@@ -173,8 +187,3 @@ You can also the test the sdk locally without publishing it by cloning this [rea
 - **Anchor Versioning:**
   Ensure your `anchor-lang` version in Cargo.toml matches the Anchor CLI version.
   You might need to tweak `[features]` in Anchor.toml if the need arises
-
-```
-
-```
-
