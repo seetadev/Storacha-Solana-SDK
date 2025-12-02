@@ -131,7 +131,7 @@ export const updateWarningSentAt = async (depositId: number) => {
 
 /**
  *
- * @param cid - CID of the upload/deposit to remove
+ * @param cid - CID of the upload/deposit to renew
  * @param duration - Number of additional days to extend storage for.
  * @returns Updated uplaod information
  */

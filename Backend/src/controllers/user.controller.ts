@@ -457,7 +457,7 @@ export const renewStorage = async (req: Request, res: Response) => {
     if (deposit.deletionStatus === "deleted") {
       return res.status(400).json({
         message:
-          "You can't renew storage for an upload that has already been removed IPFS",
+          "You can't renew storage for an upload that has already been removed on IPFS",
       });
     }
 
@@ -502,18 +502,15 @@ export const renewStorage = async (req: Request, res: Response) => {
  */
 export const confirmStorageRenewal = async (req: Request, res: Response) => {
   try {
-    const { cid, transactionHash, additionalDays } = req.body;
+    const { cid, transactionHash, duration } = req.body;
 
-    if (!cid || !transactionHash || !additionalDays) {
+    if (!cid || !transactionHash || !duration) {
       return res.status(400).json({
-        message: "CID, transactionHash, and additionalDays are required",
+        message: "CID, transactionHash, and duration are required",
       });
     }
 
-    const updated = await renewStorageDuration(
-      cid,
-      parseInt(additionalDays, 10),
-    );
+    const updated = await renewStorageDuration(cid, parseInt(duration, 10));
 
     if (!updated) {
       return res.status(404).json({
