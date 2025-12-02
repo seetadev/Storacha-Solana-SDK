@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
 import { PublicKey } from "@solana/web3.js";
+import { Request, Response } from "express";
 import {
   createDepositInstruction,
   createInitializeConfigInstruction,
@@ -24,13 +24,8 @@ export const createDepositTransaction = async (payload: DepositItem) => {
     depositAmount,
   } = payload;
 
-  if (!userPublicKey || !contentCID || !fileSize || !durationDays) {
-    console.log("userpub keey", userPublicKey);
-    console.log("content CID", contentCID);
-    console.log("file size", fileSize);
-    console.log("durationDays", durationDays);
+  if (!userPublicKey || !contentCID || !fileSize || !durationDays)
     throw new Error("Missing required parameters");
-  }
 
   const userPubkey = new PublicKey(userPublicKey);
   const sizeNum = Number(fileSize);
@@ -45,7 +40,7 @@ export const createDepositTransaction = async (payload: DepositItem) => {
     contentCID,
     sizeNum,
     durationNum,
-    Number(depositAmount)
+    Number(depositAmount),
   );
 
   return [
@@ -75,7 +70,7 @@ export const initializeConfig = async (req: Request, res: Response) => {
       adminKey,
       solanaData?.RATE_PER_BYTE_PER_UNIT || 1000,
       solanaData?.MINIMUM_DURATION_UNIT || 1,
-      adminKey
+      adminKey,
     );
 
     // Serialize instruction to send to frontend

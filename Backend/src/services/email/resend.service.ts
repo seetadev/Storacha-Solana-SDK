@@ -103,10 +103,14 @@ function getExpirationWarningEmailHtml(data: {
       To keep this file stored, you'll need to extend the storage duration before it expires.
     </p>
     
-    <div style="margin-bottom: 32px;">
+    <div style="margin-bottom: 32px; diplay: flex; gap: 1em;">
       <a href="https://w3s.link/ipfs/${data.cid}" 
          style="background: #111827; color: #ffffff; padding: 10px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 14px; font-weight: 500;">
         View Your File
+      </a>
+      <a href="https://storacha-sol.vercel.app/renew?cid=${data.cid}" 
+         style="background: #111827; color: #ffffff; padding: 10px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 14px; font-weight: 500;">
+        Extend Storage Duration
       </a>
     </div>
   </div>

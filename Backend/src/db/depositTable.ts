@@ -128,3 +128,52 @@ export const updateWarningSentAt = async (depositId: number) => {
     return null;
   }
 };
+
+/**
+ *
+ * @param cid - CID of the upload/deposit to remove
+ * @param duration - Number of additional days to extend storage for.
+ * @returns Updated uplaod information
+ */
+export const renewStorageDuration = async (cid: string, duration: number) => {
+  try {
+    const existingUpload = await db
+      .select()
+      .from(depositAccount)
+      .where(eq(depositAccount.contentCid, cid))
+      .limit(1);
+
+    if (!existingUpload || existingUpload.length === 0) {
+      console.error(`File upload with this CID: ${cid} does not exist`);
+      return null;
+    }
+
+    const deposit = existingUpload[0];
+
+    const uploadExpirationDate = deposit.expiresAt
+      ? new Date(deposit.expiresAt)
+      : new Date();
+    const today = new Date();
+    const baseDate =
+      uploadExpirationDate > today ? uploadExpirationDate : today;
+    baseDate.setUTCDate(baseDate.getDate() + duration);
+    const newStorageExpirationDate = baseDate.toISOString().split("T")[0];
+
+    const newDuration = deposit.durationDays + duration;
+    const deposits = await db
+      .update(depositAccount)
+      .set({
+        durationDays: newDuration,
+        deletionStatus: "active",
+        warningSentAt: null,
+        expiresAt: newStorageExpirationDate,
+      })
+      .where(eq(depositAccount.contentCid, cid))
+      .returning();
+
+    return deposits[0] || null;
+  } catch (error) {
+    console.error("Failed to renew storage duration", error);
+    return null;
+  }
+};

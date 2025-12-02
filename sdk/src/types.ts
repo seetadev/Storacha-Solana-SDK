@@ -179,3 +179,57 @@ export interface DepositHistoryResponse {
   /** The user address that was queried */
   userAddress: string;
 }
+
+/**
+ * Storage renewal cost estimation
+ */
+export type StorageRenewalCost = {
+  /** New expiration date after renewal */
+  newExpirationDate: string;
+  /** Current expiration date before renewal */
+  currentExpirationDate: string;
+  /** Number of additional days being added */
+  additionalDays: string;
+  /** Cost of renewal in lamports */
+  costInLamports: number;
+  /** Cost of renewal in SOL */
+  costInSOL: number;
+  /** Details about the file being renewed */
+  fileDetails: {
+    /** Content identifier */
+    cid: string;
+    /** Name of the file */
+    fileName: string;
+    /** Size of the file in bytes */
+    fileSize: number;
+  };
+};
+
+/**
+ * Storage renewal transaction result
+ */
+export type StorageRenewalResult = {
+  /** Content identifier of the uploaded data to be renewed */
+  cid: string;
+  /** Status message about the renewal */
+  message: string;
+  /** Transaction instructions for the user to sign */
+  instructions: Array<{
+    programId: string;
+    keys: Array<{
+      pubkey: string;
+      isSigner: boolean;
+      isWritable: boolean;
+    }>;
+    data: string;
+  }>;
+  /** Number of additional days being added */
+  duration: number;
+  /** Cost breakdown for the renewal */
+  cost: {
+    /** Cost in lamports */
+    lamports: number;
+    /** Cost in SOL */
+    sol: number;
+  };
+};
