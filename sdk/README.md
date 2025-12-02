@@ -11,12 +11,12 @@ Here are a couple of things you can do with this package:
 - View your upload history (all files you've stored with their details)
 - Get expiration warnings via email before your files expire
 - Automatic deletion of expired files from Storacha
+- Renew/extend storage duration for existing uploads
 
 Stuffs we hope to cover or extend:
 
 - Allow payments from other chains. (Filecoin next)
 - Include implementations for other libs. Right now, we only have React. Hoping to cover, Vue, Svelte etc.
-- Add ability to renew/increase upload duration (coming soon! see [GitHub issues](https://github.com/seetadev/storacha-solana-sdk/issues))
 
 ## Usage
 
@@ -162,6 +162,41 @@ Files that have expired are automatically deleted from Storacha storage. This ha
 3. Updates the deletion status in the database
 
 Your upload history will show the deletion status, so you can track which files are still active, warned, or deleted.
+
+### Storage Renewal
+
+Extend the storage duration for your existing uploads before they expire:
+
+```ts
+const client = useDeposit('testnet' as Environment);
+const { publicKey, signTransaction } = useSolanaWallet();
+
+// First, get a quote to see what it'll cost
+const quote = await client.getStorageRenewalCost(cid, 30); // 30 additional days
+
+console.log(`Current expiration: ${quote.currentExpirationDate}`);
+console.log(`New expiration: ${quote.newExpirationDate}`);
+console.log(`Cost: ${quote.costInSOL} SOL`);
+
+const result = await client.renewStorageDuration({
+  cid,
+  additionalDays: 30,
+  payer: publicKey,
+  signTransaction: async (tx) => {
+    const signed = await signTransaction(tx);
+    return signed;
+  },
+});
+
+if (result.success) {
+  console.log('Storage renewed! Transaction:', result.signature);
+}
+```
+
+**How it works:**
+- `getStorageRenewalCost()` shows you the cost and new expiration date before committing
+- `renewStorageDuration()` creates a payment transaction (same flow as initial upload)
+- After payment confirms, your file's expiration date gets updated
 
 ## Want to contribute?
 

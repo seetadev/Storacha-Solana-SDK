@@ -132,6 +132,13 @@ export interface CreateDepositArgs
   userEmail?: string;
 }
 
+/** A mirror of the Deposit args but with the CID for Storage renewal */
+export interface RenewStorageDurationArgs
+  extends Omit<CreateDepositArgs, 'file'> {
+  /** Content identifier of the uploaded data to be renewed */
+  cid: string;
+}
+
 /**
  * Individual deposit history entry from the backend
  */
