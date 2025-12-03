@@ -119,7 +119,7 @@ export async function createDepositTxn({
     file.forEach((f) => uploadForm.append('file', f));
 
     let fileUploadReq;
-    // calls the upload functionality on our server with the file when deposit is succesful
+    // calls the upload functionality on our server with the file when deposit is successful
     if (isMultipleFiles) {
       fileUploadReq = await fetch(
         `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(depositRes.cid)}`,
