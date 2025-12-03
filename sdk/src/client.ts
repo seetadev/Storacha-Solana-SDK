@@ -1,8 +1,21 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { DAY_TIME_IN_SECONDS } from './constants';
-import { fetchUserDepositHistory } from './depositHistory';
-import { createDepositTxn } from './payment';
-import { CreateDepositArgs, UploadResult } from './types';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  DAY_TIME_IN_SECONDS,
+  getAmountInLamports,
+  ONE_BILLION_LAMPORTS,
+} from './constants';
+import { fetchUserDepositHistory } from './deposit-history';
+import {
+  createDepositTxn,
+  getStorageRenewalCost,
+  renewStorageTxn,
+} from './payment';
+import {
+  CreateDepositArgs,
+  RenewStorageDurationArgs,
+  StorageRenewalCost,
+  UploadResult,
+} from './types';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -97,8 +110,12 @@ export class Client {
   estimateStorageCost = (file: File[], duration: number) => {
     const ratePerBytePerDay = 1000; // this would be obtained from the program config later
     const fileSizeInBytes = file.reduce((acc, f) => acc + f.size, 0);
-    const totalLamports = fileSizeInBytes * duration * ratePerBytePerDay;
-    const totalSOL = totalLamports / 1_000_000_000;
+    const totalLamports = getAmountInLamports(
+      fileSizeInBytes,
+      ratePerBytePerDay,
+      duration
+    );
+    const totalSOL = totalLamports / ONE_BILLION_LAMPORTS;
 
     return {
       sol: totalSOL,
@@ -109,5 +126,61 @@ export class Client {
   async getUserUploadHistory(userAddress: string) {
     const response = await fetchUserDepositHistory(userAddress);
     return response;
+  }
+
+  /**
+   * Get cost estimate for renewing storage duration
+   *
+   * @param {string} cid - Content identifier of the file to renew
+   * @param {number} duration - Number of additional days to extend storage
+   *
+   * @example
+   * const quote = await client.getRenewalQuote('bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi', 30);
+   * console.log(`Renewal cost: ${quote.costInSOL} SOL`);
+   *
+   * @returns {Promise<StorageRenewalCost | null>} Cost breakdown and expiration details
+   */
+  async getStorageRenewalCost(
+    cid: string,
+    duration: number
+  ): Promise<StorageRenewalCost | null> {
+    return await getStorageRenewalCost(cid, duration);
+  }
+
+  /**
+   * Renew storage for an existing deposit
+   *
+   * @param {Object} params
+   * @param {string} params.cid - Content identifier of the file to renew
+   * @param {number} params.duration - Number of additional days to extend storage
+   * @param {PublicKey} params.payer - Wallet public key paying for the renewal
+   * @param {(tx: Transaction) => Promise<Transaction>} params.signTransaction - Transaction signing callback
+   *
+   * @example
+   * const { publicKey, signTransaction } = useSolanaWallet();
+   * const result = await client.renewStorage({
+   *   cid: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+   *   duration: 30,
+   *   payer: publicKey,
+   *   signTransaction,
+   * });
+   *
+   * @returns {Promise<UploadResult>} Result of the renewal transaction
+   */
+  async renewStorageDuration({
+    cid,
+    duration,
+    payer,
+    signTransaction,
+  }: RenewStorageDurationArgs): Promise<UploadResult> {
+    const connection = new Connection(this.rpcUrl, 'confirmed');
+
+    return await renewStorageTxn({
+      cid,
+      duration,
+      payer,
+      connection,
+      signTransaction,
+    });
   }
 }

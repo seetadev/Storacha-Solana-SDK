@@ -5,7 +5,14 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { ENDPOINT } from './constants';
-import { CreateDepositArgs, DepositResult, UploadResult } from './types';
+import {
+  CreateDepositArgs,
+  DepositResult,
+  RenewStorageDurationArgs,
+  StorageRenewalCost,
+  StorageRenewalResult,
+  UploadResult,
+} from './types';
 
 /**
  * Calls the deposit API for on-chain storage and returns a Transaction
@@ -183,4 +190,134 @@ export async function createDepositTxn({
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
+}
+
+/**
+ * Get cost estimate for renewing storage duration
+ *
+ * @param {string} cid - Content identifier of the uploaded data to renew
+ * @param {number} duration - Number of additional days to extend storage
+ *
+ * @example
+ * const quote = await client.getRenewalQuote('bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi', 30);
+ * console.log(`Renewal cost: ${quote.costInSOL} SOL`);
+ *
+ * @returns {Promise<StorageRenewalCost | null>} Cost breakdown and expiration details
+ */
+export async function getStorageRenewalCost(
+  cid: string,
+  duration: number
+): Promise<StorageRenewalCost | null> {
+  try {
+    const request = await fetch(
+      `${ENDPOINT}/api/user/renewal-cost?cid=${encodeURIComponent(cid)}&duration=${duration}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    const response = await request.json();
+    if (!request.ok) {
+      throw new Error(response.message || 'Failed to get storage renewal cost');
+    }
+
+    return await request.json();
+  } catch (error) {
+    console.error('Failed to get storge renewal cost', error);
+    return null;
+  }
+}
+
+/**
+ * Renew storage for an existing deposit
+ *
+ * @param {Object} params
+ * @param {string} params.cid - Content identifier of the uploaded data to renew
+ * @param {number} params.duration - Number of additional days to extend storage
+ * @param {PublicKey} params.payer - Wallet public key paying for the renewal
+ * @param {(tx: Transaction) => Promise<Transaction>} params.signTransaction - Transaction signing callback
+ *
+ * @example
+ * const { publicKey, signTransaction } = useSolanaWallet();
+ * const result = await client.renewStorage({
+ *   cid: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+ *   additionalDays: 30,
+ *   payer: publicKey,
+ *   signTransaction,
+ * });
+ *
+ * @returns {Promise<UploadResult>} Result of the renewal transaction
+ */
+export async function renewStorageTxn({
+  cid,
+  duration,
+  payer,
+  connection,
+  signTransaction,
+}: RenewStorageDurationArgs): Promise<UploadResult> {
+  const renewalTransactionIx = await fetch(
+    `${ENDPOINT}/api/user/renew-storage`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cid,
+        duration,
+        publicKey: payer.toString(),
+      }),
+    }
+  );
+
+  if (!renewalTransactionIx.ok) {
+    const errorData = await renewalTransactionIx.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || 'Failed to create renewal transaction'
+    );
+  }
+
+  const renewalData: StorageRenewalResult = await renewalTransactionIx.json();
+  const transaction = new Transaction();
+
+  renewalData.instructions.forEach((ix) => {
+    transaction.add({
+      programId: new PublicKey(ix.programId),
+      keys: ix.keys.map((key) => ({
+        pubkey: new PublicKey(key.pubkey),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable,
+      })),
+      data: Buffer.from(ix.data, 'base64'),
+    });
+  });
+
+  const { blockhash } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = payer;
+
+  const signed = await signTransaction(transaction);
+  const signature = await connection.sendRawTransaction(signed.serialize());
+  await connection.confirmTransaction(signature, 'confirmed');
+
+  const confirmRenewalTx = await fetch(`${ENDPOINT}/api/user/confirm-renewal`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      cid,
+      duration,
+      transactionHash: signature,
+    }),
+  });
+
+  if (!confirmRenewalTx.ok) {
+    console.error('Failed to confirm renewal on backend');
+  }
+
+  return {
+    success: true,
+    cid,
+    signature: signature as Signature,
+    url: `https://w3s.link/ipfs/${cid}`,
+    message: 'Storage renewed successfully',
+  };
 }
