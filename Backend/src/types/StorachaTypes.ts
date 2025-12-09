@@ -1,11 +1,3 @@
-export type DelegationInput = {
-  recipientDID: string;
-  deadline: number; // expiration timestamp (seconds)
-  notBefore?: number; // "not valid before" timestamp (seconds)
-  baseCapabilities: string[];
-  fileCID: string;
-};
-
 export type QuoteInput = {
   sizeInBytes: number;
   durationInUnits: number;

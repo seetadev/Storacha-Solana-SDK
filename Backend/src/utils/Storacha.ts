@@ -49,21 +49,22 @@ export const getQuoteForFileUpload = async ({
   };
 };
 
-/**
- * Returns Admin Data for Solana
- * @returns
- */
-export const getAdminDataForSolana = async () => {
-  try {
-    const data = await db
-      .select({
-        MINIMUM_DURATION_UNIT: configTable.minDurationDays,
-        RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
-      })
-      .from(configTable);
-    const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
-    return { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT };
-  } catch (error) {
-    console.log("Error fetching admin info from the databse", error);
-  }
-};
+// we'll have a need for this once the PR to update teh config table is up
+// /**
+//  * Returns Admin Data for Solana
+//  * @returns
+//  */
+// export const getAdminDataForSolana = async () => {
+//   try {
+//     const data = await db
+//       .select({
+//         MINIMUM_DURATION_UNIT: configTable.minDurationDays,
+//         RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
+//       })
+//       .from(configTable);
+//     const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
+//     return { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT };
+//   } catch (error) {
+//     console.log("Error fetching admin info from the databse", error);
+//   }
+// };
