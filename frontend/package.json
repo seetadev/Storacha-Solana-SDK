@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack --port 5173",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "knip": "knip"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "knip": "^5.72.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
