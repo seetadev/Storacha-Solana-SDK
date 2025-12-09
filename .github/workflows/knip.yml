@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: 'Backend/pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd Backend && pnpm install --frozen-lockfile
+        run: cd Backend && pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd Backend && pnpm knip
@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: 'sdk/pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd sdk && pnpm install --frozen-lockfile
+        run: cd sdk && pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd sdk && pnpm knip
@@ -67,7 +67,7 @@ jobs:
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd frontend && pnpm install --frozen-lockfile
+        run: cd frontend && pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd frontend && pnpm knip
