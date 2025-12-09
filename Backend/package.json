@@ -7,7 +7,8 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "dev": "tsc -b && node dist/index.js",
     "migrations-generate": "npx drizzle-kit generate",
-    "migrations-apply": "npx drizzle-kit migrate"
+    "migrations-apply": "npx drizzle-kit migrate",
+    "knip": "knip"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "babel-jest": "^29.7.0",
     "drizzle-kit": "^0.31.4",
     "jest": "^30.0.4",
+    "knip": "^5.72.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"

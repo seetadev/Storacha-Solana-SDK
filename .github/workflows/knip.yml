@@ -1,0 +1,73 @@
+name: Check Unused Dependencies
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend - Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'Backend/pnpm-lock.yaml'
+      
+      - name: Install dependencies
+        run: cd Backend && pnpm install --frozen-lockfile
+      
+      - name: Run knip
+        run: cd Backend && pnpm knip
+
+  sdk:
+    name: SDK - Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'sdk/pnpm-lock.yaml'
+      
+      - name: Install dependencies
+        run: cd sdk && pnpm install --frozen-lockfile
+      
+      - name: Run knip
+        run: cd sdk && pnpm knip
+
+  frontend:
+    name: Frontend - Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+      
+      - name: Install dependencies
+        run: cd frontend && pnpm install --frozen-lockfile
+      
+      - name: Run knip
+        run: cd frontend && pnpm knip
