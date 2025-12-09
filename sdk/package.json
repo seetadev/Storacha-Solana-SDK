@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsup src/index.ts --minify",
     "dev": "pnpm build --watch",
-    "pack:local": "pnpm build && pnpm pack"
+    "pack:local": "pnpm build && pnpm pack",
+    "knip": "knip"
   },
   "exports": {
     "import": {
@@ -43,7 +44,7 @@
     "standard-version": "^9.5.0"
   },
   "devDependencies": {
-    "esbuild": "^0.21.4",
+    "knip": "^5.72.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   }
