@@ -17,7 +17,7 @@
     "@solana/web3.js": "^1.98.4",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.540.0",
-    "next": "15.4.6",
+    "next": "16.0.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
@@ -25,10 +25,13 @@
     "storacha-sol": "^0.0.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.8",
     "knip": "^5.72.0",
     "postcss": "^8",
     "tailwindcss": "^4",
