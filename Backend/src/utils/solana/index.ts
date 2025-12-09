@@ -1,15 +1,15 @@
+import { AnchorProvider, Idl, Program, web3 } from "@coral-xyz/anchor";
 import {
   Connection,
   Keypair,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import fs from "fs/promises";
-import path from "path";
-import { sha256 } from "js-sha256";
-import { fileURLToPath } from "url";
-import { Idl, Program, AnchorProvider, web3 } from "@coral-xyz/anchor";
 import BN from "bn.js";
+import fs from "fs/promises";
+import { sha256 } from "js-sha256";
+import path from "path";
+import { fileURLToPath } from "url";
 import { SolanaPrograms as StorachaSolProgram } from "./program.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +19,7 @@ const CONFIG_SEED = "config";
 const DEPOSIT_SEED = "deposit";
 
 // we'll switch this interchangeably between mainnet/testnet/localnet/devnet
-export const connection = new Connection(
+const connection = new Connection(
   "https://api.testnet.solana.com",
   "confirmed",
 );
@@ -31,7 +31,7 @@ let PROGRAM_ID: web3.PublicKey | null = null;
 /**
  * Loads the IDL and sets up the program ID
  */
-export async function getIdlAndProgramId() {
+async function getIdlAndProgramId() {
   if (!CACHED_IDL) {
     if (!process.env.SOLANA_PROGRAM_IDL) {
       throw new Error("❌ SOLANA_PROGRAM_IDL environment variable is not set");
@@ -54,7 +54,7 @@ export async function getIdlAndProgramId() {
 /**
  * Loads the Program Signer Keypair from local file (once)
  */
-export async function loadProgramKeypair(): Promise<Keypair> {
+async function loadProgramKeypair(): Promise<Keypair> {
   if (PROGRAM_KEYPAIR) return PROGRAM_KEYPAIR;
 
   if (process.env.NODE_ENV === "production") {
@@ -83,7 +83,7 @@ export async function loadProgramKeypair(): Promise<Keypair> {
  * Creates an Initialize Config Instruction (admin only
  * we'll look for a way to ensure this is programmatic from the server
  */
-export async function createInitializeConfigInstruction(
+async function createInitializeConfigInstruction(
   adminPubkey: web3.PublicKey,
   ratePerBytePerDay: number,
   minDurationDays: number,

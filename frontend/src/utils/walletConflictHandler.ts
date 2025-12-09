@@ -7,7 +7,7 @@
  * I've got multiple wallet providers installed in browser which led to this issue.
  */
 
-export interface WalletConflictInfo {
+interface WalletConflictInfo {
   hasConflict: boolean;
   detectedWallets: string[];
   recommendations: string[];
@@ -16,7 +16,7 @@ export interface WalletConflictInfo {
 /**
  * Detects which wallet extensions are installed
  */
-export function detectInstalledWallets(): string[] {
+function detectInstalledWallets(): string[] {
   const detected: string[] = [];
 
   if (typeof window === "undefined") {
@@ -91,25 +91,6 @@ export function warnAboutWalletConflicts(): WalletConflictInfo {
   }
 
   return conflictInfo;
-}
-
-/**
- * Attempts to get the correct Solana provider (prioritizing Phantom)
- */
-export function getSolanaProvider() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  if (window.phantom?.solana) {
-    return window.phantom.solana;
-  }
-
-  if (window.solana) {
-    return window.solana;
-  }
-
-  return null;
 }
 
 declare global {
