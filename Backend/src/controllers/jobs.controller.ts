@@ -5,7 +5,7 @@ import {
   getExpiredDeposits,
   updateDeletionStatus,
   updateWarningSentAt,
-} from "../db/depositTable.js";
+} from "../db/uploads-table.js";
 import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
 import { initStorachaClient } from "../utils/Storacha.js";
 

@@ -4,7 +4,7 @@ import {
   getAmountInLamports,
   ONE_BILLION_LAMPORTS,
 } from './constants';
-import { fetchUserDepositHistory } from './deposit-history';
+import { getUserUploadHistory } from './deposit-history';
 import {
   createDepositTxn,
   getStorageRenewalCost,
@@ -124,7 +124,7 @@ export class Client {
   };
 
   async getUserUploadHistory(userAddress: string) {
-    const response = await fetchUserDepositHistory(userAddress);
+    const response = await getUserUploadHistory(userAddress);
     return response;
   }
 

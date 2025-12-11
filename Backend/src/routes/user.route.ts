@@ -28,3 +28,4 @@ userRouter.post(
   "/api/user/confirm-renewal",
   userController.confirmStorageRenewal,
 );
+userRouter.get("/api/user/transactions", userController.getUploadTransactions);

@@ -1,6 +1,15 @@
 import { and, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
-import { depositAccount } from "./schema.js";
+import { transaction, uploads } from "./schema.js";
+
+export type TransactionData = {
+  depositId: number;
+  contentCid: string;
+  transactionHash: string;
+  transactionType: "initial_deposit" | "renewal";
+  amountInLamports: number;
+  durationDays: number;
+};
 
 /**
  * Get transactions related to a user addresss
@@ -12,8 +21,8 @@ export const getUserHistory = async (wallet: string) => {
     const userAddres = wallet.toLowerCase();
     const userFiles = await db
       .select()
-      .from(depositAccount)
-      .where(eq(depositAccount.depositKey, userAddres));
+      .from(uploads)
+      .where(eq(uploads.depositKey, userAddres));
     return userFiles;
   } catch (err) {
     console.log("Error getting user history", err);
@@ -36,16 +45,13 @@ export const getDepositsNeedingWarning = async (
 
     const deposits = await db
       .select()
-      .from(depositAccount)
+      .from(uploads)
       .where(
         and(
-          eq(depositAccount.deletionStatus, "active"),
-          lte(
-            sql`DATE(${depositAccount.expiresAt})`,
-            sql`DATE(${targetDateString})`,
-          ),
-          sql`${depositAccount.userEmail} IS NOT NULL`,
-          sql`${depositAccount.userEmail} != ''`,
+          eq(uploads.deletionStatus, "active"),
+          lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
+          sql`${uploads.userEmail} IS NOT NULL`,
+          sql`${uploads.userEmail} != ''`,
         ),
       );
 
@@ -66,11 +72,11 @@ export const getExpiredDeposits = async () => {
 
     const deposits = await db
       .select()
-      .from(depositAccount)
+      .from(uploads)
       .where(
         and(
-          sql`DATE(${depositAccount.expiresAt}) < DATE(${now})`,
-          sql`${depositAccount.deletionStatus} IN ('active', 'warned')`,
+          sql`DATE(${uploads.expiresAt}) < DATE(${now})`,
+          sql`${uploads.deletionStatus} IN ('active', 'warned')`,
         ),
       );
 
@@ -93,9 +99,9 @@ export const updateDeletionStatus = async (
 ) => {
   try {
     const updated = await db
-      .update(depositAccount)
+      .update(uploads)
       .set({ deletionStatus: status })
-      .where(eq(depositAccount.id, depositId))
+      .where(eq(uploads.id, depositId))
       .returning();
 
     return updated[0] || null;
@@ -114,12 +120,12 @@ export const updateWarningSentAt = async (depositId: number) => {
   try {
     const now = new Date().toISOString();
     const updated = await db
-      .update(depositAccount)
+      .update(uploads)
       .set({
         warningSentAt: now,
         deletionStatus: "warned",
       })
-      .where(eq(depositAccount.id, depositId))
+      .where(eq(uploads.id, depositId))
       .returning();
 
     return updated[0] || null;
@@ -139,8 +145,8 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
   try {
     const existingUpload = await db
       .select()
-      .from(depositAccount)
-      .where(eq(depositAccount.contentCid, cid))
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
       .limit(1);
 
     if (!existingUpload || existingUpload.length === 0) {
@@ -161,19 +167,81 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
 
     const newDuration = deposit.durationDays + duration;
     const deposits = await db
-      .update(depositAccount)
+      .update(uploads)
       .set({
         durationDays: newDuration,
         deletionStatus: "active",
         warningSentAt: null,
         expiresAt: newStorageExpirationDate,
       })
-      .where(eq(depositAccount.contentCid, cid))
+      .where(eq(uploads.contentCid, cid))
       .returning();
 
     return deposits[0] || null;
   } catch (error) {
     console.error("Failed to renew storage duration", error);
+    return null;
+  }
+};
+
+/**
+ * Save a transaction for an upload
+ */
+export const saveTransaction = async (data: TransactionData) => {
+  try {
+    const result = await db
+      .insert(transaction)
+      .values({
+        depositId: data.depositId,
+        contentCid: data.contentCid,
+        transactionHash: data.transactionHash,
+        transactionType: data.transactionType,
+        amountInLamports: data.amountInLamports,
+        durationDays: data.durationDays,
+      })
+      .returning();
+
+    return result[0] || null;
+  } catch (err) {
+    console.error("Error saving transaction:", err);
+    return null;
+  }
+};
+
+/**
+ * Get all transactions for an upload (by deposit ID)
+ */
+export const getUploadTransactions = async (depositId: number) => {
+  try {
+    const transactions = await db
+      .select()
+      .from(transaction)
+      .where(eq(transaction.depositId, depositId))
+      .orderBy(transaction.createdAt);
+
+    return transactions;
+  } catch (err) {
+    console.error("Error getting upload transactions:", err);
+    return null;
+  }
+};
+
+/**
+ * Get all transactions for a specific CID
+ */
+export const getTransactionsForCID = async (cid: string) => {
+  try {
+    const deposit = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
+      .limit(1);
+
+    if (!deposit || deposit.length === 0) return null;
+
+    return await getUploadTransactions(deposit[0].id);
+  } catch (err) {
+    console.error("Error getting transactions for CID:", err);
     return null;
   }
 };

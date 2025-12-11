@@ -17,7 +17,7 @@ export const configTable = pgTable("config", {
   withdrawalWallet: varchar("withdrawal_wallet", { length: 255 }).notNull(),
 });
 
-export const depositAccount = pgTable("deposit", {
+export const uploads = pgTable("uploads", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   depositKey: varchar("deposit_key", { length: 44 }).notNull(),
   contentCid: text("content_cid").notNull(),
@@ -39,4 +39,19 @@ export const depositAccount = pgTable("deposit", {
     .notNull()
     .default("active"),
   warningSentAt: date("warning_sent_at"),
+});
+
+export const transaction = pgTable("transaction", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  depositId: integer("deposit_id")
+    .notNull()
+    .references(() => uploads.id, { onDelete: "cascade" }),
+  contentCid: text("content_cid").notNull(),
+  transactionHash: varchar("transaction_hash", { length: 255 })
+    .notNull()
+    .unique(),
+  transactionType: varchar("transaction_type", { length: 20 }).notNull(), // 'initial_deposit' | 'renewal'
+  amountInLamports: bigint("amount_in_lamports", { mode: "number" }).notNull(),
+  durationDays: integer("duration_days").notNull(),
+  createdAt: date("created_at", { mode: "date" }).notNull().defaultNow(),
 });

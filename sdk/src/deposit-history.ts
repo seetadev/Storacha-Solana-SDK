@@ -1,25 +1,25 @@
 import { ENDPOINT } from './constants';
-import { DepositHistoryResponse, ServerOptions } from './types';
+import { ServerOptions, UploadHistoryResponse } from './types';
 
 /**
- * Fetches the deposit history for a given user address from the backend
+ * Get the upload history for a given user address from the backend
  *
- * @param userAddress - The wallet address of the user to fetch deposit history for
+ * @param userAddress - The wallet address of the user to fetch upload history for
  * @param options - Optional server configuration
- * @returns Promise<DepositHistoryResponse> - The user's deposit history
+ * @returns Promise<UploadHistoryResponse> - The user's upload history
  *
  * @example
  * ```typescript
- * const history = await fetchUserDepositHistory('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
- * console.log('User deposit history:', history.userHistory);
+ * const history = await getUserUploadHistory('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
+ * console.log('User upload history:', history.userHistory);
  * ```
  *
  * @throws {Error} When the user address is invalid or the request fails
  */
-export async function fetchUserDepositHistory(
+export async function getUserUploadHistory(
   userAddress: string,
   options: ServerOptions = {}
-): Promise<DepositHistoryResponse> {
+): Promise<UploadHistoryResponse> {
   // Validate user address
   if (!userAddress || typeof userAddress !== 'string') {
     throw new Error('User address is required and must be a string');
@@ -43,11 +43,11 @@ export async function fetchUserDepositHistory(
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-          `Failed to fetch deposit history: ${response.status} ${response.statusText}`
+          `Failed to fetch upload history: ${response.status} ${response.statusText}`
       );
     }
 
-    const data: DepositHistoryResponse = await response.json();
+    const data: UploadHistoryResponse = await response.json();
 
     // Validate response structure
     if (typeof data !== 'object' || data === null) {
@@ -63,6 +63,16 @@ export async function fetchUserDepositHistory(
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Unknown error occurred while fetching deposit history');
+    throw new Error('Unknown error occurred while fetching upload history');
   }
 }
+
+/**
+ * @deprecated Use getUserUploadHistory instead
+ */
+export const fetchUserUploadHistory = getUserUploadHistory;
+
+/**
+ * @deprecated Use getUserUploadHistory instead
+ */
+export const fetchUserDepositHistory = getUserUploadHistory;
