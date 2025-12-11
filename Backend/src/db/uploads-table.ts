@@ -2,7 +2,7 @@ import { and, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
 
-export type TransactionData = {
+type TransactionData = {
   depositId: number;
   contentCid: string;
   transactionHash: string;
@@ -210,8 +210,9 @@ export const saveTransaction = async (data: TransactionData) => {
 
 /**
  * Get all transactions for an upload (by deposit ID)
+ * Internal helper used by getTransactionsForCID
  */
-export const getUploadTransactions = async (depositId: number) => {
+const getUploadTransactions = async (depositId: number) => {
   try {
     const transactions = await db
       .select()

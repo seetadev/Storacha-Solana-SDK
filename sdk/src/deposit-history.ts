@@ -70,9 +70,9 @@ export async function getUserUploadHistory(
 /**
  * @deprecated Use getUserUploadHistory instead
  */
-export const fetchUserUploadHistory = getUserUploadHistory;
+export { getUserUploadHistory as fetchUserUploadHistory };
 
 /**
  * @deprecated Use getUserUploadHistory instead
  */
-export const fetchUserDepositHistory = getUserUploadHistory;
+export { getUserUploadHistory as fetchUserDepositHistory };
