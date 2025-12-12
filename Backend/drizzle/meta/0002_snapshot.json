@@ -1,0 +1,280 @@
+{
+  "id": "68a45401-144b-4736-8c18-6e1eecbfa8ed",
+  "prevId": "33c6838c-07c3-4874-90d5-2ed8f96991c2",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.config": {
+      "name": "config",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "admin_key": {
+          "name": "admin_key",
+          "type": "varchar(44)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate_per_byte_per_day": {
+          "name": "rate_per_byte_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "min_duration_days": {
+          "name": "min_duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "withdrawal_wallet": {
+          "name": "withdrawal_wallet",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.deposit": {
+      "name": "deposit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "deposit_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "deposit_key": {
+          "name": "deposit_key",
+          "type": "varchar(44)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_cid": {
+          "name": "content_cid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deposit_amount": {
+          "name": "deposit_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deposit_slot": {
+          "name": "deposit_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_claimed_slot": {
+          "name": "last_claimed_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2025-01-01'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'2025-10-22'"
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "file_size": {
+          "name": "file_size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transaction_hash": {
+          "name": "transaction_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deletion_status": {
+          "name": "deletion_status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "warning_sent_at": {
+          "name": "warning_sent_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.transaction": {
+      "name": "transaction",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "transaction_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "deposit_id": {
+          "name": "deposit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_cid": {
+          "name": "content_cid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_hash": {
+          "name": "transaction_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_type": {
+          "name": "transaction_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_in_lamports": {
+          "name": "amount_in_lamports",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "transaction_deposit_id_deposit_id_fk": {
+          "name": "transaction_deposit_id_deposit_id_fk",
+          "tableFrom": "transaction",
+          "tableTo": "deposit",
+          "columnsFrom": [
+            "deposit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "transaction_transaction_hash_unique": {
+          "name": "transaction_transaction_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "transaction_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

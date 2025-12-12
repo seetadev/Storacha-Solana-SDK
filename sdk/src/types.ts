@@ -1,5 +1,9 @@
 import { Address, Signature } from '@solana/kit';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  PublicKey,
+  Transaction as SolanaTransaction,
+} from '@solana/web3.js';
 
 export interface ServerOptions {
   /** URL pointing to the backend (mostly Storacha's) */
@@ -127,7 +131,7 @@ export interface CreateDepositArgs
    * const {publickKey, signTransaction} = useSolanaWallet()
    * const signTransaction = await signTransaction(tx)
    * */
-  signTransaction: (tx: Transaction) => Promise<Transaction>;
+  signTransaction: (tx: SolanaTransaction) => Promise<SolanaTransaction>;
   /** Optional user email for expiration notifications */
   userEmail?: string;
 }
@@ -140,9 +144,31 @@ export interface RenewStorageDurationArgs
 }
 
 /**
- * Individual deposit history entry from the backend
+ * Transaction record for an upload (initial deposit or renewal)
  */
-export interface DepositHistoryEntry {
+export interface Transaction {
+  /** Unique identifier for the transaction */
+  id: number;
+  /** ID of the associated deposit */
+  depositId: number;
+  /** Content identifier of the upload */
+  contentCid: string;
+  /** Solana transaction hash */
+  transactionHash: string;
+  /** Type of transaction: 'initial_deposit' | 'renewal' */
+  transactionType: string;
+  /** Amount paid in lamports */
+  amountInLamports: number;
+  /** Duration in days purchased */
+  durationDays: number;
+  /** Timestamp when the transaction was created */
+  createdAt: string;
+}
+
+/**
+ * Individual upload history entry from the server
+ */
+export interface UploadHistory {
   /** Unique identifier for the deposit */
   id: number;
   /** User's wallet address (deposit key) */
@@ -175,17 +201,29 @@ export interface DepositHistoryEntry {
   deletionStatus?: string;
   /** Timestamp when warning email was sent */
   warningSentAt?: string;
+  /** Optional array of all transactions for this upload */
+  transactions?: Transaction[];
 }
+
+/**
+ * @deprecated Use UploadHistory instead
+ */
+export type DepositHistoryEntry = UploadHistory;
 
 /**
  * Response from the getUserUploadHistory endpoint
  */
-export interface DepositHistoryResponse {
-  /** Array of deposit history entries */
-  userHistory: DepositHistoryEntry[] | null;
+export interface UploadHistoryResponse {
+  /** Array of upload history entries */
+  userHistory: UploadHistory[] | null;
   /** The user address that was queried */
   userAddress: string;
 }
+
+/**
+ * @deprecated Use UploadHistoryResponse instead
+ */
+export type DepositHistoryResponse = UploadHistoryResponse;
 
 /**
  * Storage renewal cost estimation

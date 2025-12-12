@@ -5,8 +5,13 @@ import { Link } from "@ucanto/core/schema";
 import { eq } from "drizzle-orm";
 import { Request, Response } from "express";
 import { db } from "../db/db.js";
-import { getUserHistory, renewStorageDuration } from "../db/depositTable.js";
-import { depositAccount } from "../db/schema.js";
+import { uploads } from "../db/schema.js";
+import {
+  getTransactionsForCID,
+  getUserHistory,
+  renewStorageDuration,
+  saveTransaction,
+} from "../db/uploads-table.js";
 import { QuoteOutput } from "../types/StorachaTypes.js";
 import { computeCID } from "../utils/compute-cid.js";
 import {
@@ -229,7 +234,7 @@ export const deposit = async (req: Request, res: Response) => {
 
     const backupExpirationDate = getExpiryDate(duration_days);
 
-    const depositItem: typeof depositAccount.$inferInsert = {
+    const depositItem: typeof uploads.$inferInsert = {
       depositAmount: amountInLamports,
       durationDays: duration_days,
       contentCid: computedCID,
@@ -249,7 +254,7 @@ export const deposit = async (req: Request, res: Response) => {
       warningSentAt: null,
     };
 
-    await db.insert(depositAccount).values(depositItem).returning();
+    await db.insert(uploads).values(depositItem).returning();
 
     res.status(200).json({
       message: "Deposit instruction ready — sign to finalize upload",
@@ -341,9 +346,9 @@ export const updateTransactionHash = async (req: Request, res: Response) => {
     }
 
     const updated = await db
-      .update(depositAccount)
+      .update(uploads)
       .set({ transactionHash: transactionHash })
-      .where(eq(depositAccount.contentCid, cid))
+      .where(eq(uploads.contentCid, cid))
       .returning();
 
     if (updated.length === 0) {
@@ -351,6 +356,15 @@ export const updateTransactionHash = async (req: Request, res: Response) => {
         message: "Deposit not found for the given CID",
       });
     }
+
+    await saveTransaction({
+      depositId: updated[0].id,
+      contentCid: cid,
+      transactionHash: transactionHash,
+      transactionType: "initial_deposit",
+      amountInLamports: updated[0].depositAmount,
+      durationDays: updated[0].durationDays,
+    });
 
     return res.status(200).json({
       message: "Transaction hash updated successfully",
@@ -378,8 +392,8 @@ export const getStorageRenewalCost = async (req: Request, res: Response) => {
 
     const deposits = await db
       .select()
-      .from(depositAccount)
-      .where(eq(depositAccount.contentCid, cid as string))
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid as string))
       .limit(1);
 
     if (!deposits || deposits.length === 0) {
@@ -444,8 +458,8 @@ export const renewStorage = async (req: Request, res: Response) => {
 
     const deposits = await db
       .select()
-      .from(depositAccount)
-      .where(eq(depositAccount.contentCid, cid))
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
       .limit(1);
     if (!deposits || deposits.length === 0) {
       return res.status(404).json({
@@ -477,8 +491,6 @@ export const renewStorage = async (req: Request, res: Response) => {
       depositAmount: amountInLamports,
     });
 
-    // we'll update the transaction hash in the db when this renewal is successful
-
     return res.status(200).json({
       cid,
       message: "Storage renewal instruction is ready. Sign it",
@@ -504,19 +516,35 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
   try {
     const { cid, transactionHash, duration } = req.body;
 
-    if (!cid || !transactionHash || !duration) {
+    if (!cid || !transactionHash || !duration)
       return res.status(400).json({
         message: "CID, transactionHash, and duration are required",
       });
-    }
 
     const updated = await renewStorageDuration(cid, parseInt(duration, 10));
 
-    if (!updated) {
+    if (!updated)
       return res.status(404).json({
         message: "Failed to update storage duration",
       });
-    }
+
+    const days = parseInt(duration, 10);
+    const ratePerBytePerDay = 1000;
+    const amountInLamports = getAmountInLamports(
+      Number(updated.fileSize),
+      ratePerBytePerDay,
+      days,
+    );
+
+    // Add renewal transaction to audit trail
+    await saveTransaction({
+      depositId: updated.id,
+      contentCid: cid,
+      transactionHash: transactionHash,
+      transactionType: "renewal",
+      amountInLamports: amountInLamports,
+      durationDays: days,
+    });
 
     return res.status(200).json({
       message: "Storage renewed successfully",
@@ -527,5 +555,27 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
     return res.status(500).json({
       message: "Failed to confirm renewal",
     });
+  }
+};
+
+/**
+ * Get all transactions for a specific upload (by CID)
+ */
+export const getUploadTransactions = async (req: Request, res: Response) => {
+  try {
+    const { cid } = req.query;
+    if (!cid) return res.status(400).json({ message: "CID is required" });
+
+    const transactions = await getTransactionsForCID(cid as string);
+    if (!transactions)
+      return res.status(404).json({ message: "No transactions found" });
+
+    return res.status(200).json({
+      success: true,
+      transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching transaction history:", error);
+    return res.status(500).json({ message: "Failed to fetch transactions" });
   }
 };
