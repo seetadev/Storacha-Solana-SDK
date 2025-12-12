@@ -136,11 +136,22 @@ export interface CreateDepositArgs
   userEmail?: string;
 }
 
-/** A mirror of the Deposit args but with the CID for Storage renewal */
-export interface RenewStorageDurationArgs
-  extends Omit<CreateDepositArgs, 'file'> {
+/** Arguments for renewing storage duration */
+export interface StorageRenewalParams
+  extends Pick<CreateDepositArgs, 'payer' | 'signTransaction'> {
   /** Content identifier of the uploaded data to be renewed */
   cid: string;
+  /** Duration in days to extend storage */
+  duration: number;
+}
+
+/** Internal arguments for renewStorageTxn */
+export interface RenewStorageDurationArgs
+  extends Pick<CreateDepositArgs, 'payer' | 'signTransaction' | 'connection'> {
+  /** Content identifier of the uploaded data to be renewed */
+  cid: string;
+  /** Duration in days to extend storage */
+  duration: number;
 }
 
 /**

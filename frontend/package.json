@@ -22,7 +22,8 @@
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
     "react-hot-toast": "^2.6.0",
-    "storacha-sol": "^0.0.4"
+    "storacha-sol": "file:../sdk/storacha-sol-0.0.4.tgz",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
