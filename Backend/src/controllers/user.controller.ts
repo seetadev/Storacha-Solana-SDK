@@ -357,7 +357,6 @@ export const updateTransactionHash = async (req: Request, res: Response) => {
       });
     }
 
-    // Add transaction entry for audit trail
     await saveTransaction({
       depositId: updated[0].id,
       contentCid: cid,
@@ -492,8 +491,6 @@ export const renewStorage = async (req: Request, res: Response) => {
       depositAmount: amountInLamports,
     });
 
-    // we'll update the transaction hash in the db when this renewal is successful
-
     return res.status(200).json({
       cid,
       message: "Storage renewal instruction is ready. Sign it",
@@ -519,21 +516,18 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
   try {
     const { cid, transactionHash, duration } = req.body;
 
-    if (!cid || !transactionHash || !duration) {
+    if (!cid || !transactionHash || !duration)
       return res.status(400).json({
         message: "CID, transactionHash, and duration are required",
       });
-    }
 
     const updated = await renewStorageDuration(cid, parseInt(duration, 10));
 
-    if (!updated) {
+    if (!updated)
       return res.status(404).json({
         message: "Failed to update storage duration",
       });
-    }
 
-    // Calculate renewal cost
     const days = parseInt(duration, 10);
     const ratePerBytePerDay = 1000;
     const amountInLamports = getAmountInLamports(
@@ -570,16 +564,11 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
 export const getUploadTransactions = async (req: Request, res: Response) => {
   try {
     const { cid } = req.query;
-
-    if (!cid) {
-      return res.status(400).json({ message: "CID is required" });
-    }
+    if (!cid) return res.status(400).json({ message: "CID is required" });
 
     const transactions = await getTransactionsForCID(cid as string);
-
-    if (!transactions) {
+    if (!transactions)
       return res.status(404).json({ message: "No transactions found" });
-    }
 
     return res.status(200).json({
       success: true,
