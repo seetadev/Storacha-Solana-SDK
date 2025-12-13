@@ -94,6 +94,60 @@ pub mod solana_programs {
         Ok(())
     }
 
+    /// Extend storage duration for an existing upload
+    pub fn extend_storage_duration(
+        ctx: Context<ExtendStorageDuration>,
+        content_cid: String,
+        duration: u32,
+        storage_extension_cost: u64,
+    ) -> Result<()> {
+        let config = &ctx.accounts.config;
+        let deposit = &mut ctx.accounts.deposit;
+
+        require!(duration > 0, StorachaError::InvalidDuration);
+
+        let required_cost = deposit.file_size * duration as u64 * config.rate_per_byte_per_day;
+        require!(
+            storage_extension_cost >= required_cost,
+            StorachaError::InsufficientDeposit
+        );
+
+        {
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.user.to_account_info(),
+                    to: ctx.accounts.escrow_vault.to_account_info(),
+                },
+            );
+            anchor_lang::system_program::transfer(cpi_ctx, storage_extension_cost)?;
+        }
+
+        deposit.duration_days = deposit.duration_days.checked_add(duration).unwrap();
+        deposit.deposit_amount = deposit
+            .deposit_amount
+            .checked_add(storage_extension_cost)
+            .unwrap();
+
+        let escrow = &mut ctx.accounts.escrow_vault;
+        escrow.total_deposits = escrow
+            .total_deposits
+            .checked_add(storage_extension_cost)
+            .unwrap();
+
+        emit!(StorageDurationExtended {
+            content_cid,
+            duration,
+            user: ctx.accounts.user.key(),
+            new_cost: storage_extension_cost,
+            slot: Clock::get()?.slot,
+            extended_duration: deposit.duration_days,
+            total_amount: deposit.deposit_amount
+        });
+        
+        Ok(())
+    }
+
     /// Service provider claims accrued rewards (linear release over time)
     pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
         let deposit = &mut ctx.accounts.deposit;
@@ -117,8 +171,16 @@ pub mod solana_programs {
         require!(actual_claim > 0, StorachaError::NothingToClaim);
 
         // Transfer from escrow vault to service provider
-        **ctx.accounts.escrow_vault.to_account_info().try_borrow_mut_lamports()? -= actual_claim;
-        **ctx.accounts.service_provider_wallet.to_account_info().try_borrow_mut_lamports()? += actual_claim;
+        **ctx
+            .accounts
+            .escrow_vault
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= actual_claim;
+        **ctx
+            .accounts
+            .service_provider_wallet
+            .to_account_info()
+            .try_borrow_mut_lamports()? += actual_claim;
 
         // Update deposit state
         deposit.last_claimed_slot = current_slot;
@@ -146,8 +208,16 @@ pub mod solana_programs {
         );
 
         // Transfer from escrow vault to withdrawal wallet
-        **ctx.accounts.escrow_vault.to_account_info().try_borrow_mut_lamports()? -= amount;
-        **ctx.accounts.withdrawal_wallet.to_account_info().try_borrow_mut_lamports()? += amount;
+        **ctx
+            .accounts
+            .escrow_vault
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= amount;
+        **ctx
+            .accounts
+            .withdrawal_wallet
+            .to_account_info()
+            .try_borrow_mut_lamports()? += amount;
 
         emit!(FeesWithdrawn {
             admin: ctx.accounts.admin.key(),
@@ -168,10 +238,7 @@ pub mod solana_programs {
         let old_rate = ctx.accounts.config.rate_per_byte_per_day;
         ctx.accounts.config.rate_per_byte_per_day = new_rate;
 
-        emit!(RateUpdated {
-            old_rate,
-            new_rate,
-        });
+        emit!(RateUpdated { old_rate, new_rate });
 
         Ok(())
     }
