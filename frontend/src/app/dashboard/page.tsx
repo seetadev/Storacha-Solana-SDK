@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Environment, useDeposit } from "storacha-sol";
+
 interface UploadedFile {
   id: string;
   cid: string;
