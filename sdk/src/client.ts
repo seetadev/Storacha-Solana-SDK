@@ -4,7 +4,6 @@ import {
   getAmountInLamports,
   ONE_BILLION_LAMPORTS,
 } from './constants';
-import { getUserUploadHistory } from './deposit-history';
 import {
   createDepositTxn,
   getStorageRenewalCost,
@@ -12,10 +11,11 @@ import {
 } from './payment';
 import {
   CreateDepositArgs,
-  RenewStorageDurationArgs,
   StorageRenewalCost,
+  StorageRenewalParams,
   UploadResult,
 } from './types';
+import { getUserUploadHistory } from './upload-history';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -41,7 +41,7 @@ export interface ClientOptions {
   environment: Environment;
 }
 
-export interface DepositParams
+export interface UploadParams
   extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail'> {
   /** Wallet public key of the payer */
   payer: PublicKey;
@@ -50,6 +50,11 @@ export interface DepositParams
   /** Duration in days to store the data */
   durationDays: number;
 }
+
+/**
+ * @deprecated Use {@link UploadParams} instead.
+ */
+export type DepositParams = UploadParams;
 
 /**
  * Solana Storage Client — simplified (no fee estimation)
@@ -88,7 +93,7 @@ export class Client {
     durationDays,
     signTransaction,
     userEmail,
-  }: DepositParams): Promise<UploadResult> {
+  }: UploadParams): Promise<UploadResult> {
     console.log('Creating deposit transaction with environment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
@@ -172,7 +177,7 @@ export class Client {
     duration,
     payer,
     signTransaction,
-  }: RenewStorageDurationArgs): Promise<UploadResult> {
+  }: StorageRenewalParams): Promise<UploadResult> {
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
     return await renewStorageTxn({
