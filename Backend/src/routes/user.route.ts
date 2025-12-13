@@ -22,10 +22,7 @@ userRouter.post(
   "/update-transaction-hash",
   userController.updateTransactionHash,
 );
-userRouter.get("/api/user/renewal-cost", userController.getStorageRenewalCost);
-userRouter.post("/api/user/renew-storage", userController.renewStorage);
-userRouter.post(
-  "/api/user/confirm-renewal",
-  userController.confirmStorageRenewal,
-);
-userRouter.get("/api/user/transactions", userController.getUploadTransactions);
+userRouter.get("/renewal-cost", userController.getStorageRenewalCost);
+userRouter.post("/renew-storage", userController.renewStorage);
+userRouter.post("/confirm-renewal", userController.confirmStorageRenewal);
+userRouter.get("/transactions", userController.getUploadTransactions);

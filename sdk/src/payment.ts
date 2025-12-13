@@ -217,14 +217,14 @@ export async function getStorageRenewalCost(
       }
     );
 
-    const response = await request.json();
     if (!request.ok) {
+      const response = await request.json();
       throw new Error(response.message || 'Failed to get storage renewal cost');
     }
 
     return await request.json();
   } catch (error) {
-    console.error('Failed to get storge renewal cost', error);
+    console.error('Failed to get storage renewal cost', error);
     return null;
   }
 }
