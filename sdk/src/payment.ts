@@ -3,6 +3,7 @@ import {
   PublicKey,
   Transaction,
   TransactionInstruction,
+  SendTransactionError,
 } from '@solana/web3.js';
 import { ENDPOINT } from './constants';
 import {
@@ -77,13 +78,34 @@ export async function createDepositTxn({
     tx.add(depositInstruction);
 
     const signedTx = await signTransaction(tx);
-    const signature = await connection.sendRawTransaction(
-      signedTx.serialize(),
-      {
+    let signature: string;
+
+    try {
+      signature = await connection.sendRawTransaction(signedTx.serialize(), {
         skipPreflight: false, // not sure we should be disabling this verification step
         preflightCommitment: 'confirmed',
+      });
+    } catch (err) {
+      if (err instanceof SendTransactionError) {
+        const logs = err.logs ?? [];
+
+        const isDuplicateUpload = logs.some((log) =>
+          log.includes('already in use')
+        );
+
+        if (isDuplicateUpload) {
+          throw new Error(
+            'This file has already been uploaded. You can find it in your dashboard.'
+          );
+        }
+
+        throw new Error(
+          'Transaction failed during simulation. Please try again.'
+        );
       }
-    );
+
+      throw err;
+    }
     const confirmation = await connection.confirmTransaction(
       {
         signature,
@@ -129,7 +151,9 @@ export async function createDepositTxn({
     // calls the upload functionality on our server with the file when deposit is successful
     if (isMultipleFiles) {
       fileUploadReq = await fetch(
-        `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(depositRes.cid)}`,
+        `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(
+          depositRes.cid
+        )}`,
         {
           method: 'POST',
           body: uploadForm,
@@ -137,7 +161,9 @@ export async function createDepositTxn({
       );
     } else {
       fileUploadReq = await fetch(
-        `${ENDPOINT}/api/user/upload-file?cid=${encodeURIComponent(depositRes.cid)}`,
+        `${ENDPOINT}/api/user/upload-file?cid=${encodeURIComponent(
+          depositRes.cid
+        )}`,
         {
           method: 'POST',
           body: uploadForm,
@@ -210,7 +236,9 @@ export async function getStorageRenewalCost(
 ): Promise<StorageRenewalCost | null> {
   try {
     const request = await fetch(
-      `${ENDPOINT}/api/user/renewal-cost?cid=${encodeURIComponent(cid)}&duration=${duration}`,
+      `${ENDPOINT}/api/user/renewal-cost?cid=${encodeURIComponent(
+        cid
+      )}&duration=${duration}`,
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
