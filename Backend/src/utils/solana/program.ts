@@ -4,815 +4,691 @@
  * Note that this is only a type helper and is not the actual IDL. The original
  * IDL can be found at `target/idl/solana_programs.json`.
  */
-export type SolanaPrograms = {
-  "address": "3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n",
-  "metadata": {
-    "name": "solanaPrograms",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "description": "Created with Anchor"
-  },
-  "instructions": [
+export type SolanaProgram = {
+  address: "3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n";
+  metadata: {
+    name: "solana_programs";
+    version: "0.1.0";
+    spec: "0.1.0";
+    description: "Created with Anchor";
+  };
+  instructions: [
     {
-      "name": "claimRewards",
-      "docs": [
-        "Service provider claims accrued rewards (linear release over time)"
-      ],
-      "discriminator": [
-        4,
-        144,
-        132,
-        71,
-        116,
-        23,
-        151,
-        80
-      ],
-      "accounts": [
+      name: "claim_rewards";
+      docs: [
+        "Service provider claims accrued rewards (linear release over time)",
+      ];
+      discriminator: [4, 144, 132, 71, 116, 23, 151, 80];
+      accounts: [
         {
-          "name": "deposit",
-          "writable": true
+          name: "deposit";
+          writable: true;
         },
         {
-          "name": "escrowVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "escrow_vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [101, 115, 99, 114, 111, 119];
+              },
+            ];
+          };
         },
         {
-          "name": "config",
-          "pda": {
-            "seeds": [
+          name: "config";
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "serviceProvider",
-          "signer": true
+          name: "service_provider";
+          signer: true;
         },
         {
-          "name": "serviceProviderWallet",
-          "writable": true
-        }
-      ],
-      "args": []
+          name: "service_provider_wallet";
+          writable: true;
+        },
+      ];
+      args: [];
     },
     {
-      "name": "createDeposit",
-      "docs": [
-        "User creates a deposit for file storage"
-      ],
-      "discriminator": [
-        157,
-        30,
-        11,
-        129,
-        16,
-        166,
-        115,
-        75
-      ],
-      "accounts": [
+      name: "create_deposit";
+      docs: ["User creates a deposit for file storage"];
+      discriminator: [157, 30, 11, 129, 16, 166, 115, 75];
+      accounts: [
         {
-          "name": "deposit",
-          "writable": true
+          name: "deposit";
+          writable: true;
         },
         {
-          "name": "escrowVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "escrow_vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [101, 115, 99, 114, 111, 119];
+              },
+            ];
+          };
         },
         {
-          "name": "config",
-          "pda": {
-            "seeds": [
+          name: "config";
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "user",
-          "writable": true,
-          "signer": true
+          name: "user";
+          writable: true;
+          signer: true;
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
+          name: "system_program";
+          address: "11111111111111111111111111111111";
+        },
+      ];
+      args: [
         {
-          "name": "contentCid",
-          "type": "string"
+          name: "content_cid";
+          type: "string";
         },
         {
-          "name": "fileSize",
-          "type": "u64"
+          name: "file_size";
+          type: "u64";
         },
         {
-          "name": "durationDays",
-          "type": "u32"
+          name: "duration_days";
+          type: "u32";
         },
         {
-          "name": "depositAmount",
-          "type": "u64"
-        }
-      ]
+          name: "deposit_amount";
+          type: "u64";
+        },
+      ];
     },
     {
-      "name": "initializeConfig",
-      "docs": [
-        "Initialize the global config (admin only)"
-      ],
-      "discriminator": [
-        208,
-        127,
-        21,
-        1,
-        194,
-        190,
-        196,
-        70
-      ],
-      "accounts": [
+      name: "extend_storage_duration";
+      docs: ["Extend storage duration for an existing upload"];
+      discriminator: [148, 148, 225, 35, 73, 248, 5, 120];
+      accounts: [
         {
-          "name": "config",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "deposit";
+          writable: true;
+        },
+        {
+          name: "escrow_vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [101, 115, 99, 114, 111, 119];
+              },
+            ];
+          };
         },
         {
-          "name": "escrowVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "config";
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "admin",
-          "writable": true,
-          "signer": true
+          name: "user";
+          writable: true;
+          signer: true;
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
+          name: "system_program";
+          address: "11111111111111111111111111111111";
+        },
+      ];
+      args: [
         {
-          "name": "adminKey",
-          "type": "pubkey"
+          name: "content_cid";
+          type: "string";
         },
         {
-          "name": "ratePerBytePerDay",
-          "type": "u64"
+          name: "duration";
+          type: "u32";
         },
         {
-          "name": "minDurationDays",
-          "type": "u32"
+          name: "storage_extension_cost";
+          type: "u64";
         },
-        {
-          "name": "withdrawalWallet",
-          "type": "pubkey"
-        }
-      ]
+      ];
     },
     {
-      "name": "updateMinDuration",
-      "docs": [
-        "Update minimum duration (admin only)"
-      ],
-      "discriminator": [
-        174,
-        164,
-        81,
-        38,
-        48,
-        254,
-        219,
-        189
-      ],
-      "accounts": [
+      name: "initialize_config";
+      docs: ["Initialize the global config (admin only)"];
+      discriminator: [208, 127, 21, 1, 194, 190, 196, 70];
+      accounts: [
         {
-          "name": "config",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "admin",
-          "signer": true
-        }
-      ],
-      "args": [
-        {
-          "name": "newMinDuration",
-          "type": "u32"
-        }
-      ]
-    },
-    {
-      "name": "updateRate",
-      "docs": [
-        "Update the rate (admin only)"
-      ],
-      "discriminator": [
-        24,
-        225,
-        53,
-        189,
-        72,
-        212,
-        225,
-        178
-      ],
-      "accounts": [
-        {
-          "name": "config",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "escrow_vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [101, 115, 99, 114, 111, 119];
+              },
+            ];
+          };
         },
         {
-          "name": "admin",
-          "signer": true
-        }
-      ],
-      "args": [
+          name: "admin";
+          writable: true;
+          signer: true;
+        },
         {
-          "name": "newRate",
-          "type": "u64"
-        }
-      ]
+          name: "system_program";
+          address: "11111111111111111111111111111111";
+        },
+      ];
+      args: [
+        {
+          name: "admin_key";
+          type: "pubkey";
+        },
+        {
+          name: "rate_per_byte_per_day";
+          type: "u64";
+        },
+        {
+          name: "min_duration_days";
+          type: "u32";
+        },
+        {
+          name: "withdrawal_wallet";
+          type: "pubkey";
+        },
+      ];
     },
     {
-      "name": "withdrawFees",
-      "docs": [
-        "Admin withdraws accumulated fees"
-      ],
-      "discriminator": [
-        198,
-        212,
-        171,
-        109,
-        144,
-        215,
-        174,
-        89
-      ],
-      "accounts": [
+      name: "update_min_duration";
+      docs: ["Update minimum duration (admin only)"];
+      discriminator: [174, 164, 81, 38, 48, 254, 219, 189];
+      accounts: [
         {
-          "name": "escrowVault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "config",
-          "pda": {
-            "seeds": [
+          name: "admin";
+          signer: true;
+        },
+      ];
+      args: [
+        {
+          name: "new_min_duration";
+          type: "u32";
+        },
+      ];
+    },
+    {
+      name: "update_rate";
+      docs: ["Update the rate (admin only)"];
+      discriminator: [24, 225, 53, 189, 72, 212, 225, 178];
+      accounts: [
+        {
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
         },
         {
-          "name": "admin",
-          "signer": true
+          name: "admin";
+          signer: true;
+        },
+      ];
+      args: [
+        {
+          name: "new_rate";
+          type: "u64";
+        },
+      ];
+    },
+    {
+      name: "withdraw_fees";
+      docs: ["Admin withdraws accumulated fees"];
+      discriminator: [198, 212, 171, 109, 144, 215, 174, 89];
+      accounts: [
+        {
+          name: "escrow_vault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [101, 115, 99, 114, 111, 119];
+              },
+            ];
+          };
         },
         {
-          "name": "withdrawalWallet",
-          "writable": true
-        }
-      ],
-      "args": [
+          name: "config";
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+            ];
+          };
+        },
         {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    }
-  ],
-  "accounts": [
+          name: "admin";
+          signer: true;
+        },
+        {
+          name: "withdrawal_wallet";
+          writable: true;
+        },
+      ];
+      args: [
+        {
+          name: "amount";
+          type: "u64";
+        },
+      ];
+    },
+  ];
+  accounts: [
     {
-      "name": "config",
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ]
+      name: "Config";
+      discriminator: [155, 12, 170, 224, 30, 250, 204, 130];
     },
     {
-      "name": "deposit",
-      "discriminator": [
-        148,
-        146,
-        121,
-        66,
-        207,
-        173,
-        21,
-        227
-      ]
+      name: "Deposit";
+      discriminator: [148, 146, 121, 66, 207, 173, 21, 227];
     },
     {
-      "name": "escrowVault",
-      "discriminator": [
-        54,
-        84,
-        41,
-        149,
-        160,
-        181,
-        85,
-        114
-      ]
-    }
-  ],
-  "events": [
+      name: "EscrowVault";
+      discriminator: [54, 84, 41, 149, 160, 181, 85, 114];
+    },
+  ];
+  events: [
     {
-      "name": "depositCreated",
-      "discriminator": [
-        146,
-        225,
-        181,
-        133,
-        194,
-        173,
-        54,
-        71
-      ]
+      name: "DepositCreated";
+      discriminator: [146, 225, 181, 133, 194, 173, 54, 71];
     },
     {
-      "name": "feesWithdrawn",
-      "discriminator": [
-        234,
-        15,
-        0,
-        119,
-        148,
-        241,
-        40,
-        21
-      ]
+      name: "FeesWithdrawn";
+      discriminator: [234, 15, 0, 119, 148, 241, 40, 21];
     },
     {
-      "name": "minDurationUpdated",
-      "discriminator": [
-        164,
-        63,
-        86,
-        59,
-        254,
-        77,
-        38,
-        77
-      ]
+      name: "MinDurationUpdated";
+      discriminator: [164, 63, 86, 59, 254, 77, 38, 77];
     },
     {
-      "name": "rateUpdated",
-      "discriminator": [
-        215,
-        212,
-        25,
-        235,
-        152,
-        203,
-        38,
-        205
-      ]
+      name: "RateUpdated";
+      discriminator: [215, 212, 25, 235, 152, 203, 38, 205];
     },
     {
-      "name": "rewardsClaimed",
-      "discriminator": [
-        75,
-        98,
-        88,
-        18,
-        219,
-        112,
-        88,
-        121
-      ]
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "durationTooShort",
-      "msg": "Duration must be at least the minimum required days"
+      name: "RewardsClaimed";
+      discriminator: [75, 98, 88, 18, 219, 112, 88, 121];
     },
     {
-      "code": 6001,
-      "name": "insufficientDeposit",
-      "msg": "Deposit amount is insufficient for the storage cost (size × duration × rate)"
+      name: "StorageDurationExtended";
+      discriminator: [60, 98, 190, 27, 247, 190, 188, 6];
+    },
+  ];
+  errors: [
+    {
+      code: 6000;
+      name: "DurationTooShort";
+      msg: "Duration must be at least the minimum required days";
     },
     {
-      "code": 6002,
-      "name": "unauthorizedAdmin",
-      "msg": "Only the program admin can perform this action"
+      code: 6001;
+      name: "InsufficientDeposit";
+      msg: "Deposit amount is insufficient for the storage cost (size × duration × rate)";
     },
     {
-      "code": 6003,
-      "name": "nothingToClaim",
-      "msg": "No rewards are available to claim at this time"
+      code: 6002;
+      name: "UnauthorizedAdmin";
+      msg: "Only the program admin can perform this action";
     },
     {
-      "code": 6004,
-      "name": "storageExpired",
-      "msg": "Storage duration has expired"
+      code: 6003;
+      name: "NothingToClaim";
+      msg: "No rewards are available to claim at this time";
     },
     {
-      "code": 6005,
-      "name": "invalidFileSize",
-      "msg": "Invalid file size - must be greater than 0"
+      code: 6004;
+      name: "StorageExpired";
+      msg: "Storage duration has expired";
     },
     {
-      "code": 6006,
-      "name": "invalidDuration",
-      "msg": "Invalid duration - must be greater than 0"
+      code: 6005;
+      name: "InvalidFileSize";
+      msg: "Invalid file size - must be greater than 0";
     },
     {
-      "code": 6007,
-      "name": "arithmeticOverflow",
-      "msg": "Arithmetic overflow occurred"
+      code: 6006;
+      name: "InvalidDuration";
+      msg: "Invalid duration - must be greater than 0";
     },
     {
-      "code": 6008,
-      "name": "insufficientEscrowFunds",
-      "msg": "Insufficient funds in escrow vault"
+      code: 6007;
+      name: "ArithmeticOverflow";
+      msg: "Arithmetic overflow occurred";
     },
     {
-      "code": 6009,
-      "name": "invalidCid",
-      "msg": "Invalid CID format"
-    }
-  ],
-  "types": [
-    {
-      "name": "config",
-      "docs": [
-        "Global configuration account - stores system-wide parameters"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "adminKey",
-            "docs": [
-              "Public key of the admin who can update settings"
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "ratePerBytePerDay",
-            "docs": [
-              "Cost per byte per day in lamports (e.g., 1000 lamports per byte per day)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "minDurationDays",
-            "docs": [
-              "Minimum storage duration in days (e.g., 30 days minimum)"
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "withdrawalWallet",
-            "docs": [
-              "Wallet address where admin fees are withdrawn to"
-            ],
-            "type": "pubkey"
-          }
-        ]
-      }
+      code: 6008;
+      name: "InsufficientEscrowFunds";
+      msg: "Insufficient funds in escrow vault";
     },
     {
-      "name": "deposit",
-      "docs": [
-        "Individual deposit record - one per user per file"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "depositKey",
-            "docs": [
-              "Public key of the user who made the deposit"
-            ],
-            "type": "pubkey"
-          },
-          {
-            "name": "contentCid",
-            "docs": [
-              "Content Identifier (CID) of the stored file"
-            ],
-            "type": "string"
-          },
-          {
-            "name": "fileSize",
-            "docs": [
-              "Size of the file in bytes"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "durationDays",
-            "docs": [
-              "How many days the file should be stored"
-            ],
-            "type": "u32"
-          },
-          {
-            "name": "depositAmount",
-            "docs": [
-              "Total amount deposited in lamports"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "depositSlot",
-            "docs": [
-              "Solana slot when the deposit was made"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "lastClaimedSlot",
-            "docs": [
-              "Last slot when rewards were claimed (for linear release calculation)"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "totalClaimed",
-            "docs": [
-              "Total amount claimed so far in lamports"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
+      code: 6009;
+      name: "InvalidCid";
+      msg: "Invalid CID format";
     },
     {
-      "name": "depositCreated",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      code: 6010;
+      name: "UnauthorizedUser";
+      msg: "Only the original depositor can extend the duration for this upload";
+    },
+  ];
+  types: [
+    {
+      name: "Config";
+      docs: ["Global configuration account - stores system-wide parameters"];
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "user",
-            "type": "pubkey"
+            name: "admin_key";
+            docs: ["Public key of the admin who can update settings"];
+            type: "pubkey";
           },
           {
-            "name": "contentCid",
-            "type": "string"
+            name: "rate_per_byte_per_day";
+            docs: [
+              "Cost per byte per day in lamports (e.g., 1000 lamports per byte per day)",
+            ];
+            type: "u64";
           },
           {
-            "name": "fileSize",
-            "type": "u64"
+            name: "min_duration_days";
+            docs: ["Minimum storage duration in days (e.g., 30 days minimum)"];
+            type: "u32";
           },
           {
-            "name": "durationDays",
-            "type": "u32"
+            name: "withdrawal_wallet";
+            docs: ["Wallet address where admin fees are withdrawn to"];
+            type: "pubkey";
           },
-          {
-            "name": "depositAmount",
-            "type": "u64"
-          },
-          {
-            "name": "slot",
-            "type": "u64"
-          }
-        ]
-      }
+        ];
+      };
     },
     {
-      "name": "escrowVault",
-      "docs": [
-        "Central escrow vault that holds all user deposits"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "Deposit";
+      docs: ["Individual deposit record - one per user per file"];
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "totalDeposits",
-            "docs": [
-              "Total lamports deposited by all users"
-            ],
-            "type": "u64"
+            name: "deposit_key";
+            docs: ["Public key of the user who made the deposit"];
+            type: "pubkey";
           },
           {
-            "name": "totalClaimed",
-            "docs": [
-              "Total lamports claimed by service providers"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
+            name: "content_cid";
+            docs: ["Content Identifier (CID) of the stored file"];
+            type: "string";
+          },
+          {
+            name: "file_size";
+            docs: ["Size of the file in bytes"];
+            type: "u64";
+          },
+          {
+            name: "duration_days";
+            docs: ["How many days the file should be stored"];
+            type: "u32";
+          },
+          {
+            name: "deposit_amount";
+            docs: ["Total amount deposited in lamports"];
+            type: "u64";
+          },
+          {
+            name: "deposit_slot";
+            docs: ["Solana slot when the deposit was made"];
+            type: "u64";
+          },
+          {
+            name: "last_claimed_slot";
+            docs: [
+              "Last slot when rewards were claimed (for linear release calculation)",
+            ];
+            type: "u64";
+          },
+          {
+            name: "total_claimed";
+            docs: ["Total amount claimed so far in lamports"];
+            type: "u64";
+          },
+        ];
+      };
     },
     {
-      "name": "feesWithdrawn",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "DepositCreated";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "admin",
-            "type": "pubkey"
+            name: "user";
+            type: "pubkey";
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "content_cid";
+            type: "string";
           },
           {
-            "name": "slot",
-            "type": "u64"
-          }
-        ]
-      }
+            name: "file_size";
+            type: "u64";
+          },
+          {
+            name: "duration_days";
+            type: "u32";
+          },
+          {
+            name: "deposit_amount";
+            type: "u64";
+          },
+          {
+            name: "slot";
+            type: "u64";
+          },
+        ];
+      };
     },
     {
-      "name": "minDurationUpdated",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "EscrowVault";
+      docs: ["Central escrow vault that holds all user deposits"];
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "oldDuration",
-            "type": "u32"
+            name: "total_deposits";
+            docs: ["Total lamports deposited by all users"];
+            type: "u64";
           },
           {
-            "name": "newDuration",
-            "type": "u32"
-          }
-        ]
-      }
+            name: "total_claimed";
+            docs: ["Total lamports claimed by service providers"];
+            type: "u64";
+          },
+        ];
+      };
     },
     {
-      "name": "rateUpdated",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "FeesWithdrawn";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "oldRate",
-            "type": "u64"
+            name: "admin";
+            type: "pubkey";
           },
           {
-            "name": "newRate",
-            "type": "u64"
-          }
-        ]
-      }
+            name: "amount";
+            type: "u64";
+          },
+          {
+            name: "slot";
+            type: "u64";
+          },
+        ];
+      };
     },
     {
-      "name": "rewardsClaimed",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "MinDurationUpdated";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "depositKey",
-            "type": "pubkey"
+            name: "old_duration";
+            type: "u32";
           },
           {
-            "name": "serviceProvider",
-            "type": "pubkey"
+            name: "new_duration";
+            type: "u32";
+          },
+        ];
+      };
+    },
+    {
+      name: "RateUpdated";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "old_rate";
+            type: "u64";
           },
           {
-            "name": "amount",
-            "type": "u64"
+            name: "new_rate";
+            type: "u64";
+          },
+        ];
+      };
+    },
+    {
+      name: "RewardsClaimed";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "deposit_key";
+            type: "pubkey";
           },
           {
-            "name": "slot",
-            "type": "u64"
-          }
-        ]
-      }
-    }
-  ]
+            name: "service_provider";
+            type: "pubkey";
+          },
+          {
+            name: "amount";
+            type: "u64";
+          },
+          {
+            name: "slot";
+            type: "u64";
+          },
+        ];
+      };
+    },
+    {
+      name: "StorageDurationExtended";
+      docs: [
+        "Event emitted when storage duration is extended for an existing upload",
+      ];
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "user";
+            docs: ["Public key of the user extending storage"];
+            type: "pubkey";
+          },
+          {
+            name: "content_cid";
+            docs: ["CID of the file being extended"];
+            type: "string";
+          },
+          {
+            name: "duration";
+            docs: ["Additional days being added to storage duration"];
+            type: "u32";
+          },
+          {
+            name: "new_cost";
+            docs: ["Cost in lamports for the extension"];
+            type: "u64";
+          },
+          {
+            name: "extended_duration";
+            docs: ["New total duration after extension (in days)"];
+            type: "u32";
+          },
+          {
+            name: "total_amount";
+            docs: ["New total deposit amount in lamports"];
+            type: "u64";
+          },
+          {
+            name: "slot";
+            docs: ["Solana slot when the extension occurred"];
+            type: "u64";
+          },
+        ];
+      };
+    },
+  ];
 };

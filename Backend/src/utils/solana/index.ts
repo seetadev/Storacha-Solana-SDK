@@ -10,7 +10,7 @@ import fs from "fs/promises";
 import { sha256 } from "js-sha256";
 import path from "path";
 import { fileURLToPath } from "url";
-import { SolanaPrograms as StorachaSolProgram } from "./program.js";
+import { SolanaProgram as StorachaSolProgram } from "./program.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +24,7 @@ const connection = new Connection(
   "confirmed",
 );
 
-let PROGRAM_KEYPAIR: Keypair | null = null;
+let ADMIN_KEYPAIR: Keypair | null = null;
 let CACHED_IDL: any = null;
 let PROGRAM_ID: web3.PublicKey | null = null;
 
@@ -52,31 +52,28 @@ async function getIdlAndProgramId() {
 }
 
 /**
- * Loads the Program Signer Keypair from local file (once)
+ * Loads the admin keypair (used for program init)
  */
-async function loadProgramKeypair(): Promise<Keypair> {
-  if (PROGRAM_KEYPAIR) return PROGRAM_KEYPAIR;
+async function loadAdminKeypair(): Promise<Keypair> {
+  if (ADMIN_KEYPAIR) return ADMIN_KEYPAIR;
 
   if (process.env.NODE_ENV === "production") {
-    if (!process.env.PROGRAM_KEYPAIR) {
-      throw new Error("PROGRAM_KEYPAIR env var not set in production");
+    if (!process.env.ADMIN_KEYPAIR) {
+      throw new Error("ADMIN_KEYPAIR env var not set in production");
     }
-    const secretKey = Uint8Array.from(JSON.parse(process.env.PROGRAM_KEYPAIR));
-    PROGRAM_KEYPAIR = Keypair.fromSecretKey(secretKey);
+    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR));
+    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey);
   } else {
-    const keypairData = await fs.readFile(
-      path.resolve(
-        __dirname,
-        "../../../../solana-programs/target/deploy/solana_programs-keypair.json",
-      ),
-      "utf-8",
-    );
-    PROGRAM_KEYPAIR = Keypair.fromSecretKey(
-      Uint8Array.from(JSON.parse(keypairData)),
-    );
+    if (!process.env.ADMIN_KEYPAIR) {
+      throw new Error(
+        "ADMIN_KEYPAIR env var not set. Generate one with: solana-keygen new --outfile admin.json",
+      );
+    }
+    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR));
+    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey);
   }
 
-  return PROGRAM_KEYPAIR;
+  return ADMIN_KEYPAIR;
 }
 
 /**
@@ -149,7 +146,7 @@ export async function ensureConfigInitialized(): Promise<void> {
   if (!configAccount) {
     console.log("Config not found — initializing it now...");
 
-    const adminKeypair = await loadProgramKeypair();
+    const adminKeypair = await loadAdminKeypair();
 
     const initIx = await createInitializeConfigInstruction(
       adminKeypair.publicKey,
