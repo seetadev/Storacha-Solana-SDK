@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    name: Backend - Unused Dependencies
+    name: Backend - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         run: cd Backend && pnpm knip
 
   sdk:
-    name: SDK - Unused Dependencies
+    name: sdk - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
         run: cd sdk && pnpm knip
 
   frontend:
-    name: Frontend - Unused Dependencies
+    name: ui - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd frontend && pnpm install --no-frozen-lockfile
+        run: cd ui && pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd frontend && pnpm knip
