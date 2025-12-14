@@ -1,8 +1,7 @@
-import { URL, fileURLToPath } from 'node:url'
-import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { URL, fileURLToPath } from 'node:url'
+import { defineConfig } from 'vite'
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
@@ -15,11 +14,13 @@ export default defineConfig({
       autoCodeSplitting: true,
     }),
     viteReact(),
-    tailwindcss(),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  define: {
+    'process.env': {},
   },
 })

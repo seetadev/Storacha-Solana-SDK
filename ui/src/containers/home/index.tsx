@@ -18,6 +18,7 @@ import {
   LightningIcon,
 } from '@phosphor-icons/react'
 import { RocketLaunchIcon } from '@phosphor-icons/react/dist/ssr'
+import { Link } from '@tanstack/react-router'
 
 const styles = {
   beam: {
@@ -131,9 +132,11 @@ export const HomePage = () => {
             flexWrap="wrap"
           >
             <Button
+              as={Link}
+              to="/app"
+              disabled={!isAuthenticated}
               height="54px"
               px="2.5em"
-              disabled={!isAuthenticated}
               fontSize="var(--font-size-base)"
               background="var(--primary-600)"
               color="white"

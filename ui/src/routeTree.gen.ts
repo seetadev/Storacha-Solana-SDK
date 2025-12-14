@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LayoutAppIndexRouteImport } from './routes/_layout/app/index'
+import { Route as LayoutAppTransactionsRouteImport } from './routes/_layout/app/transactions'
+import { Route as LayoutAppMetricsRouteImport } from './routes/_layout/app/metrics'
+import { Route as LayoutAppHistoryRouteImport } from './routes/_layout/app/history'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -21,29 +25,73 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LayoutAppIndexRoute = LayoutAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAppTransactionsRoute = LayoutAppTransactionsRouteImport.update({
+  id: '/app/transactions',
+  path: '/app/transactions',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAppMetricsRoute = LayoutAppMetricsRouteImport.update({
+  id: '/app/metrics',
+  path: '/app/metrics',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAppHistoryRoute = LayoutAppHistoryRouteImport.update({
+  id: '/app/history',
+  path: '/app/history',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app/history': typeof LayoutAppHistoryRoute
+  '/app/metrics': typeof LayoutAppMetricsRoute
+  '/app/transactions': typeof LayoutAppTransactionsRoute
+  '/app': typeof LayoutAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/history': typeof LayoutAppHistoryRoute
+  '/app/metrics': typeof LayoutAppMetricsRoute
+  '/app/transactions': typeof LayoutAppTransactionsRoute
+  '/app': typeof LayoutAppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_layout': typeof LayoutRoute
+  '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/app/history': typeof LayoutAppHistoryRoute
+  '/_layout/app/metrics': typeof LayoutAppMetricsRoute
+  '/_layout/app/transactions': typeof LayoutAppTransactionsRoute
+  '/_layout/app/': typeof LayoutAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app/history'
+    | '/app/metrics'
+    | '/app/transactions'
+    | '/app'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/' | '/_layout'
+  to: '/' | '/app/history' | '/app/metrics' | '/app/transactions' | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/_layout'
+    | '/_layout/app/history'
+    | '/_layout/app/metrics'
+    | '/_layout/app/transactions'
+    | '/_layout/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LayoutRoute: typeof LayoutRoute
+  LayoutRoute: typeof LayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -62,12 +110,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_layout/app/': {
+      id: '/_layout/app/'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof LayoutAppIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/app/transactions': {
+      id: '/_layout/app/transactions'
+      path: '/app/transactions'
+      fullPath: '/app/transactions'
+      preLoaderRoute: typeof LayoutAppTransactionsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/app/metrics': {
+      id: '/_layout/app/metrics'
+      path: '/app/metrics'
+      fullPath: '/app/metrics'
+      preLoaderRoute: typeof LayoutAppMetricsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/app/history': {
+      id: '/_layout/app/history'
+      path: '/app/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof LayoutAppHistoryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
+interface LayoutRouteChildren {
+  LayoutAppHistoryRoute: typeof LayoutAppHistoryRoute
+  LayoutAppMetricsRoute: typeof LayoutAppMetricsRoute
+  LayoutAppTransactionsRoute: typeof LayoutAppTransactionsRoute
+  LayoutAppIndexRoute: typeof LayoutAppIndexRoute
+}
+
+const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutAppHistoryRoute: LayoutAppHistoryRoute,
+  LayoutAppMetricsRoute: LayoutAppMetricsRoute,
+  LayoutAppTransactionsRoute: LayoutAppTransactionsRoute,
+  LayoutAppIndexRoute: LayoutAppIndexRoute,
+}
+
+const LayoutRouteWithChildren =
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LayoutRoute: LayoutRoute,
+  LayoutRoute: LayoutRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

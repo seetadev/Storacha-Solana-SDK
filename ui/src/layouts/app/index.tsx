@@ -1,7 +1,7 @@
-import { Box, Stack, Text } from '@chakra-ui/react'
+import { Box, Container, Stack, useDisclosure } from '@chakra-ui/react'
+import type { ReactNode } from 'react'
 import { Header } from './header'
 import { Sidebar } from './sidebar'
-import type ReactNode from 'react'
 
 type AppLayoutProps = {
   children: ReactNode
@@ -9,14 +9,12 @@ type AppLayoutProps = {
   pageDescription?: string
 }
 
-export const AppLayout = ({
-  children,
-  pageTitle,
-  pageDescription,
-}: AppLayoutProps) => {
+export const AppLayout = ({ children }: AppLayoutProps) => {
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
   return (
     <Stack direction="row" gap="0" height="100vh" overflow="hidden">
-      <Sidebar />
+      <Sidebar isOpen={isOpen} onClose={onClose} />
       <Box
         display="flex"
         flexFlow="column"
@@ -25,37 +23,22 @@ export const AppLayout = ({
         marginLeft="auto"
         background="var(--bg-darker)"
       >
-        <Header />
+        <Header onMenuOpen={onOpen} />
         <Box
-          px={{ lg: '2em', md: '1.5em', base: '1em' }}
-          py="2em"
           flex="1"
           overflow="auto"
           marginTop="70px"
+          display="flex"
+          justifyContent="center"
         >
-          {(pageTitle || pageDescription) && (
-            <Stack gap=".6em" mb="2em">
-              {pageTitle && (
-                <Text
-                  fontSize="28px"
-                  color="var(--text-inverse)"
-                  fontWeight="var(--font-weight-semibold)"
-                >
-                  {pageTitle}
-                </Text>
-              )}
-              {pageDescription && (
-                <Text
-                  fontSize="var(--font-size-sm)"
-                  color="var(--text-muted)"
-                  lineHeight="var(--line-height-relaxed)"
-                >
-                  {pageDescription}
-                </Text>
-              )}
-            </Stack>
-          )}
-          {children}
+          <Container
+            maxW={{ xl: 'container.lg', lg: '100%', md: '100%', base: '100%' }}
+            px={{ lg: '2em', md: '1.5em', base: '1em' }}
+            py="2em"
+            width="100%"
+          >
+            {children}
+          </Container>
         </Box>
       </Box>
     </Stack>
