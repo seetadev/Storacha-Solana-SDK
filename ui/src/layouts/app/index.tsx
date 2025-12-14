@@ -36,6 +36,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             px={{ lg: '2em', md: '1.5em', base: '1em' }}
             py="2em"
             width="100%"
+            mb="2em"
           >
             {children}
           </Container>

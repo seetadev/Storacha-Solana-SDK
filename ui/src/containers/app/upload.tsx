@@ -1,0 +1,275 @@
+import { StorageDurationSelector } from '@/components/duration-selector'
+import { FileUpload } from '@/components/file-upload'
+import { useAuthContext } from '@/hooks/context'
+import type { State } from '@/lib/types'
+import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
+import {
+  CurrencyCircleDollarIcon,
+  WarningCircleIcon,
+} from '@phosphor-icons/react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import type { Transaction } from '@solana/web3.js'
+import { useEffect, useState } from 'react'
+import { useDeposit } from 'storacha-sol'
+
+const SOL_TO_USD_RATE = 25
+
+export const Upload = () => {
+  const { isAuthenticated, balance, refreshBalance, network } = useAuthContext()
+  const { publicKey, signTransaction } = useWallet()
+  const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
+  const [storageDuration, setStorageDuration] = useState(30)
+  const [email, setEmail] = useState('')
+  const [totalCost, setTotalCost] = useState(0)
+  const [state, setState] = useState<State>('idle')
+
+  const client = useDeposit(network)
+
+  useEffect(() => {
+    if (selectedFiles.length > 0) {
+      const cost = client.estimateStorageCost(selectedFiles, storageDuration)
+      setTotalCost(cost.sol)
+    } else {
+      setTotalCost(0)
+    }
+  }, [selectedFiles, storageDuration, client])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshBalance()
+    }
+  }, [isAuthenticated, selectedFiles.length])
+
+  const handleFilesSelected = (files: Array<File>) => {
+    setSelectedFiles(files)
+  }
+
+  const handleUpload = async () => {
+    if (!publicKey || !signTransaction || selectedFiles.length === 0) {
+      console.error('Wallet not properly connected or no files selected')
+      return
+    }
+
+    setState('uploading')
+
+    try {
+      const result = await client.createDeposit({
+        file: selectedFiles,
+        durationDays: storageDuration,
+        payer: publicKey,
+        signTransaction: async (tx: Transaction) => {
+          const signed = await signTransaction(tx)
+          return signed
+        },
+        userEmail: email || undefined,
+      })
+
+      if (result.success) {
+        await refreshBalance()
+      } else {
+        throw new Error(result.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Upload error', error)
+    } finally {
+      setState('idle')
+    }
+  }
+
+  const usdEquivalent = totalCost * SOL_TO_USD_RATE
+  const hasInsufficientBalance = balance !== null && totalCost > balance
+  const isUploadDisabled =
+    !isAuthenticated || state === 'uploading' || hasInsufficientBalance
+
+  const networkDisplay = network
+
+  return (
+    <VStack spacing="2em" align="stretch">
+      <FileUpload onFilesSelected={handleFilesSelected} />
+
+      {selectedFiles.length > 0 && (
+        <VStack spacing="1.5em" align="stretch">
+          <StorageDurationSelector
+            selectedDuration={storageDuration}
+            onDurationChange={setStorageDuration}
+            email={email}
+            onEmailChange={setEmail}
+          />
+
+          <Box
+            p="1.5em"
+            bg="var(--bg-dark)"
+            border="1px solid var(--border-hover)"
+            borderRadius="var(--radius-lg)"
+            transition="all 0.2s ease"
+          >
+            <HStack spacing=".75em" mb="1em">
+              <CurrencyCircleDollarIcon
+                size={24}
+                color="var(--primary-500)"
+                weight="duotone"
+              />
+              <Text
+                fontSize="var(--font-size-base)"
+                fontWeight="var(--font-weight-semibold)"
+                color="var(--text-inverse)"
+              >
+                Payment Summary
+              </Text>
+            </HStack>
+
+            <Stack spacing=".75em">
+              <HStack justify="space-between" align="center">
+                <Text
+                  fontSize="var(--font-size-sm)"
+                  color="var(--text-muted)"
+                  fontWeight="var(--font-weight-medium)"
+                >
+                  Current Balance:
+                </Text>
+                <VStack spacing="0" align="flex-end">
+                  <Text
+                    fontSize="var(--font-size-lg)"
+                    fontWeight="var(--font-weight-semibold)"
+                    color="var(--text-inverse)"
+                    lineHeight="var(--line-height-tight)"
+                  >
+                    {balance !== null ? balance.toFixed(4) : '-.----'} SOL
+                  </Text>
+                  <Text
+                    fontSize="var(--font-size-xs)"
+                    color="var(--text-tertiary)"
+                    lineHeight="var(--line-height-tight)"
+                  >
+                    ≈ $
+                    {balance !== null
+                      ? (balance * SOL_TO_USD_RATE).toFixed(2)
+                      : '--'}{' '}
+                    USD
+                  </Text>
+                </VStack>
+              </HStack>
+
+              <Box w="100%" h="1px" bg="var(--border-dark)" />
+
+              <HStack justify="space-between" align="baseline">
+                <Text
+                  fontSize="var(--font-size-sm)"
+                  color="var(--text-muted)"
+                  fontWeight="var(--font-weight-medium)"
+                >
+                  Storage Cost:
+                </Text>
+                <VStack spacing="0" align="flex-end">
+                  <Text
+                    fontSize="var(--font-size-2xl)"
+                    fontWeight="var(--font-weight-bold)"
+                    color={
+                      hasInsufficientBalance
+                        ? 'var(--error)'
+                        : 'var(--text-inverse)'
+                    }
+                    lineHeight="var(--line-height-tight)"
+                  >
+                    {totalCost.toFixed(6)} SOL
+                  </Text>
+                  <Text
+                    fontSize="var(--font-size-sm)"
+                    color="var(--text-muted)"
+                    lineHeight="var(--line-height-tight)"
+                  >
+                    ≈ ${usdEquivalent.toFixed(2)} USD
+                  </Text>
+                </VStack>
+              </HStack>
+
+              <Box w="100%" h="1px" bg="var(--border-dark)" />
+
+              <HStack justify="space-between" fontSize="var(--font-size-xs)">
+                <Text color="var(--text-tertiary)">
+                  {selectedFiles.length} file
+                  {selectedFiles.length > 1 ? 's' : ''} • {storageDuration} days
+                </Text>
+                <Text color="var(--text-tertiary)">
+                  Network:{' '}
+                  <Text as="span" textTransform="capitalize">
+                    {networkDisplay}
+                  </Text>
+                </Text>
+              </HStack>
+            </Stack>
+          </Box>
+
+          {hasInsufficientBalance && (
+            <HStack
+              p="1em"
+              bg="rgba(239, 68, 68, 0.08)"
+              border="1px solid rgba(239, 68, 68, 0.2)"
+              borderRadius="var(--radius-md)"
+              spacing=".75em"
+            >
+              <WarningCircleIcon size={20} color="var(--error)" weight="fill" />
+              <VStack spacing="0.25em" align="start" flex="1">
+                <Text
+                  fontSize="var(--font-size-sm)"
+                  fontWeight="var(--font-weight-medium)"
+                  color="var(--error)"
+                  lineHeight="var(--line-height-tight)"
+                >
+                  Insufficient Balance
+                </Text>
+                <Text
+                  fontSize="var(--font-size-xs)"
+                  color="var(--error)"
+                  lineHeight="var(--line-height-relaxed)"
+                  opacity="0.9"
+                >
+                  You need {(totalCost - (balance || 0)).toFixed(6)} SOL more to
+                  complete this upload. Please add funds to your wallet.
+                </Text>
+              </VStack>
+            </HStack>
+          )}
+
+          <Button
+            onClick={handleUpload}
+            isLoading={state === 'uploading'}
+            disabled={isUploadDisabled}
+            size="lg"
+            height="48px"
+            fontSize="var(--font-size-base)"
+            fontWeight="var(--font-weight-semibold)"
+            bg="var(--text-inverse)"
+            color="var(--eerie-black)"
+            borderRadius="var(--radius-lg)"
+            transition="all 0.2s ease"
+            _hover={{
+              bg: isUploadDisabled ? undefined : 'var(--primary-600)',
+              transform: isUploadDisabled ? 'none' : 'translateY(-1px)',
+              boxShadow: isUploadDisabled
+                ? undefined
+                : '0 4px 12px rgba(249, 115, 22, 0.4), 0 0 20px rgba(249, 115, 22, 0.2)',
+            }}
+            _active={{
+              transform: isUploadDisabled ? 'none' : 'translateY(0)',
+              bg: isUploadDisabled ? undefined : 'var(--primary-700)',
+            }}
+            _disabled={{
+              bg: 'var(--bg-dark)',
+              border: '1px solid var(--border-hover)',
+              color: 'var(--text-tertiary)',
+              cursor: 'not-allowed',
+              opacity: 0.6,
+            }}
+          >
+            {state === 'uploading'
+              ? 'Uploading...'
+              : hasInsufficientBalance
+                ? 'Insufficient Balance'
+                : 'Upload & Deposit'}
+          </Button>
+        </VStack>
+      )}
+    </VStack>
+  )
+}
