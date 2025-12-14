@@ -1,63 +1,183 @@
-import { Box, HStack, Text, VStack } from '@chakra-ui/react'
-import { GithubLogo, TwitterLogo } from 'phosphor-react'
+import {
+  Box,
+  Container,
+  Grid,
+  HStack,
+  Stack,
+  Text,
+  VStack,
+} from '@chakra-ui/react'
+import {
+  DiscordLogoIcon,
+  GithubLogoIcon,
+  TwitterLogoIcon,
+} from '@phosphor-icons/react'
+import type { ReactElement, ReactNode } from 'react'
 
 export const HomeFooter = () => {
   return (
     <Box
       as="footer"
-      width="100%"
-      background="var(--bg-dark)"
+      position="relative"
       borderTop="1px solid var(--border-dark)"
-      py="3em"
-      px={{ xl: '4em', md: '2em', lg: '3em', base: '1em' }}
+      bg="var(--bg-darker)"
+      overflow="hidden"
     >
-      <VStack spacing="2em">
-        <VStack spacing="0.5em">
-          <Text
-            fontSize="20px"
-            fontWeight="var(--font-weight-bold)"
-            className="gradient-text"
-          >
-            Keep
-          </Text>
-          <Text
-            fontSize="var(--font-size-sm)"
-            color="var(--text-muted)"
-            textAlign="center"
-          >
-            Store data on IPFS and pay with SOL
-          </Text>
-        </VStack>
+      <Box
+        position="absolute"
+        bottom="-20%"
+        left="50%"
+        transform="translateX(-50%)"
+        width="80%"
+        height="300px"
+        bg="radial-gradient(circle, rgba(249,115,22,0.15) 0%, rgba(0,0,0,0) 70%)"
+        filter="blur(60px)"
+        pointerEvents="none"
+      />
 
-        <HStack spacing="1.5em">
-          <Box
-            as="a"
-            href="https://github.com/yourusername/keep"
-            target="_blank"
-            rel="noopener noreferrer"
-            cursor="pointer"
-            transition="var(--transition-base)"
-            _hover={{ color: 'var(--primary-500)' }}
-          >
-            <GithubLogo size={24} />
-          </Box>
-          <Box
-            as="a"
-            href="https://twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            cursor="pointer"
-            transition="var(--transition-base)"
-            _hover={{ color: 'var(--primary-500)' }}
-          >
-            <TwitterLogo size={24} />
-          </Box>
-        </HStack>
+      <Container maxW="container.xl" py="6em" position="relative" zIndex="1">
+        <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr 1fr' }} gap="4em">
+          <VStack align="flex-start" spacing="2em">
+            <VStack align="flex-start" spacing="0.5em">
+              <Text
+                fontSize="28px"
+                fontWeight="bold"
+                letterSpacing="-0.03em"
+                bgGradient="linear(to-r, #fff, var(--gray-500))"
+                bgClip="text"
+              >
+                Keep.
+              </Text>
+              <Text color="var(--text-muted)" maxW="300px" lineHeight="1.6">
+                The decentralized storage layer for the Solana ecosystem.
+                Bank-free, permissionless, and permanent.
+              </Text>
+            </VStack>
 
-        <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
-          © {new Date().getFullYear()} Keep. All rights reserved.
-        </Text>
-      </VStack>
+            <Box
+              as="a"
+              p="1px"
+              bgGradient="linear(to-r, var(--gray-800), var(--primary-900), var(--gray-800))"
+              borderRadius="var(--radius-lg)"
+              href="https://plgd.xyz"
+              target="__blank"
+            >
+              <Box
+                bg="var(--bg-dark)"
+                borderRadius="var(--radius-lg)"
+                px="1em"
+                py="0.8em"
+              >
+                <Text
+                  fontSize="xs"
+                  color="var(--gray-400)"
+                  textTransform="uppercase"
+                  letterSpacing="0.05em"
+                  mb="2px"
+                >
+                  Borne out of
+                </Text>
+                <HStack>
+                  <Box
+                    w="8px"
+                    h="8px"
+                    bg="#0090FF"
+                    borderRadius="full"
+                    boxShadow="0 0 8px #0090FF"
+                  />
+                  <Text fontWeight="600" color="var(--text-inverse)">
+                    Protocol Labs
+                  </Text>
+                  <Text color="var(--gray-500)">Dev Guild</Text>
+                </HStack>
+              </Box>
+            </Box>
+          </VStack>
+
+          <VStack align="flex-start" spacing="1.5em">
+            <Text color="var(--text-inverse)" fontWeight="bold">
+              Resources
+            </Text>
+            <Stack spacing="0.8em">
+              <LinkItem href="/docs">Documentation</LinkItem>
+              <LinkItem href="/sdk">SDK Reference</LinkItem>
+              <LinkItem href="/status">Network Status</LinkItem>
+            </Stack>
+          </VStack>
+
+          <VStack align="flex-start" spacing="1.5em">
+            <Text color="var(--text-inverse)" fontWeight="bold">
+              Community
+            </Text>
+            <Stack spacing="0.8em">
+              <LinkItem href="#" icon={<GithubLogoIcon />}>
+                GitHub
+              </LinkItem>
+              <LinkItem href="#" icon={<TwitterLogoIcon />}>
+                Twitter
+              </LinkItem>
+              <LinkItem href="#" icon={<DiscordLogoIcon />}>
+                Discord
+              </LinkItem>
+            </Stack>
+          </VStack>
+        </Grid>
+
+        <Box
+          mt="6em"
+          pt="2em"
+          borderTop="1px solid var(--border-dark)"
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap="1em"
+        >
+          <Text fontSize="sm" color="var(--gray-600)">
+            &copy; {new Date().getFullYear()} Keep.
+          </Text>
+          <HStack spacing="2em">
+            <Text
+              fontSize="sm"
+              color="var(--gray-600)"
+              cursor="pointer"
+              _hover={{ color: 'var(--text-muted)' }}
+            >
+              Privacy
+            </Text>
+            <Text
+              fontSize="sm"
+              color="var(--gray-600)"
+              cursor="pointer"
+              _hover={{ color: 'var(--text-muted)' }}
+            >
+              Terms
+            </Text>
+          </HStack>
+        </Box>
+      </Container>
     </Box>
   )
 }
+
+type LinkItemProps = {
+  href: string
+  children: ReactNode
+  icon?: ReactElement
+}
+
+const LinkItem = ({ href, children, icon }: LinkItemProps) => (
+  <Box
+    as="a"
+    href={href}
+    color="var(--text-muted)"
+    display="flex"
+    alignItems="center"
+    gap="0.5em"
+    transition="0.2s"
+    _hover={{ color: 'var(--primary-400)', transform: 'translateX(2px)' }}
+  >
+    {icon}
+    <Text fontSize="sm">{children}</Text>
+  </Box>
+)

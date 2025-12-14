@@ -1,6 +1,6 @@
-import { Center, Stack, Text } from '@chakra-ui/react'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { HomePage } from '@/containers/home'
 import { HomeLayout } from '@/layouts/home'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -9,18 +9,7 @@ export const Route = createFileRoute('/')({
 function Home() {
   return (
     <HomeLayout>
-      <Center height="100vh">
-        <Stack gap="1em" textAlign="center">
-          <Text fontWeight="600" fontSize="24px">
-            Hello keep
-          </Text>
-          <Link to="/connect">
-            <Text cursor="pointer" fontSize="14px">
-              connect wallet
-            </Text>
-          </Link>
-        </Stack>
-      </Center>
+      <HomePage />
     </HomeLayout>
   )
 }

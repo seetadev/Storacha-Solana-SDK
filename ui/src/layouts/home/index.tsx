@@ -1,7 +1,7 @@
 import { Box } from '@chakra-ui/react'
-import { HomeHeader } from './header'
+import type { ReactNode } from 'react'
 import { HomeFooter } from './footer'
-import type ReactNode from 'react'
+import { HomeHeader } from './header'
 
 type HomeLayoutProps = {
   children: ReactNode

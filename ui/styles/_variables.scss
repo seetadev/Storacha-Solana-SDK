@@ -10,7 +10,7 @@
   --primary-800: #9a3412;
   --primary-900: #7c2d12;
   --primary-950: #431407;
-
+  
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -22,6 +22,57 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
   --gray-950: #030712;
+
+  --dark-primary: #06070e;
+  --lght-grey: #100f0f;
+  --lght-grey-dark: #0e0e0e;
+  --heavy-grey: #1a1a1b;
+  --grey: #161315;
+  --blue: #4862b4;
+  --alt-grey: #141414;
+  --alt-white: #2a2929;
+  --grey1: #111111;
+  --slate: #26282a;
+
+  --vampire-black: #080808;
+  --dark-charcoal: #333333;
+  --eerie-black: #1b1b1b;
+  --dark-charcoal__variant-1: #2f2f2f;
+
+  --vampire-black__variant-1: #070707;
+  --smoky-black__variant-1: #0d0d0d;
+  --chinese-black__variant-1: #111111;
+  --chinese-black__variant-2: #161616;
+  --eerie-black__variant-2: #191919;
+
+  --chinese-black: #141414;
+
+  --text-disabled: #949495;
+  --alt-text: rgba(243, 241, 241, 0.804);
+  --red-mead: #fb4b4e;
+  --text-primary: #fff;
+  --text-inverse: #fff;
+  --text-secondary: var(--alt-text);
+  --text-tertiary: var(--text-disabled);
+  --text-muted: var(--text-disabled);
+
+  --secondary: ghostwhite;
+  --alt-bg: #010105;
+  --code-block-bg: #01111e;
+  --skeleton-bg: #ffffff33;
+  --bg-primary: var(--dark-primary);
+  --bg-secondary: var(--lght-grey);
+  --bg-tertiary: var(--grey);
+  --bg-dark: var(--chinese-black);
+  --bg-darker: var(--vampire-black);
+
+  --border-light: var(--grey1);
+  --border-medium: var(--slate);
+  --border-dark: var(--alt-grey);
+
+  --method: #d2a8ff;
+  --identifier: #ff7b72;
+  --dom-method: #79c0ff;
 
   --success-light: #d1fae5;
   --success: #10b981;
@@ -39,22 +90,6 @@
   --info: #3b82f6;
   --info-dark: #1e3a8a;
 
-  --bg-primary: #ffffff;
-  --bg-secondary: var(--gray-50);
-  --bg-tertiary: var(--gray-100);
-  --bg-dark: var(--gray-900);
-  --bg-darker: var(--gray-950);
-
-  --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
-  --text-tertiary: var(--gray-500);
-  --text-inverse: #ffffff;
-  --text-muted: var(--gray-400);
-
-  --border-light: var(--gray-200);
-  --border-medium: var(--gray-300);
-  --border-dark: var(--gray-700);
-
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -70,13 +105,13 @@
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
   --radius-full: 9999px;
+  
+  --inter: "Inter", sans-serif;
+  --fira-mono: "Fira Mono", monospace;
+  --jetbrains-mono: "JetBrains Mono", monospace;
 
-  --font-family-sans:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-family-mono:
-    ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo,
-    monospace;
+  --font-family-sans: var(--inter);
+  --font-family-mono: var(--jetbrains-mono);
 
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
