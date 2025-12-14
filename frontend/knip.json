@@ -1,7 +1,0 @@
-{
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/app/**/*.{ts,tsx}", "eslint.config.mjs"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["src/**/*.test.{ts,tsx}", ".next/**", "node_modules/**"],
-  "ignoreDependencies": ["eslint", "eslint-config-next"]
-}

@@ -198,6 +198,28 @@ if (result.success) {
 - `renewStorageDuration()` creates a payment transaction (same flow as initial upload)
 - After payment confirms, your file's expiration date gets updated
 
+## Usage with Vite
+
+When using this SDK in a project built with Vite, you may encounter a `ReferenceError: process is not defined`. This is because Vite does not automatically polyfill the Node.js `process` global, which this library may use.
+
+To resolve this, you can define `process.env` as an empty object in your `vite.config.ts` file:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  // ... other config
+  define: {
+    'process.env': {},
+  },
+})
+```
+
+This will prevent the runtime error and allow the SDK to function correctly.
+
 ## Want to contribute?
 
 Read the [Contributing guide](CONTRIBUTING.md)

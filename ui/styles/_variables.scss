@@ -1,0 +1,161 @@
+:root {
+  --primary-50: #fff7ed;
+  --primary-100: #ffedd5;
+  --primary-200: #fed7aa;
+  --primary-300: #fdba74;
+  --primary-400: #fb923c;
+  --primary-500: #f97316;
+  --primary-600: #ea580c;
+  --primary-700: #c2410c;
+  --primary-800: #9a3412;
+  --primary-900: #7c2d12;
+  --primary-950: #431407;
+  
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  --dark-primary: #06070e;
+  --lght-grey: #100f0f;
+  --lght-grey-dark: #0e0e0e;
+  --heavy-grey: #1a1a1b;
+  --grey: #161315;
+  --blue: #4862b4;
+  --alt-grey: #141414;
+  --alt-white: #2a2929;
+  --grey1: #111111;
+  --slate: #26282a;
+
+  --vampire-black: #080808;
+  --dark-charcoal: #333333;
+  --eerie-black: #1b1b1b;
+  --dark-charcoal__variant-1: #2f2f2f;
+
+  --vampire-black__variant-1: #070707;
+  --smoky-black__variant-1: #0d0d0d;
+  --chinese-black__variant-1: #111111;
+  --chinese-black__variant-2: #161616;
+  --eerie-black__variant-2: #191919;
+
+  --chinese-black: #141414;
+
+  --text-disabled: #949495;
+  --alt-text: rgba(243, 241, 241, 0.804);
+  --red-mead: #fb4b4e;
+  --text-primary: #fff;
+  --text-inverse: #fff;
+  --text-secondary: var(--alt-text);
+  --text-tertiary: var(--text-disabled);
+  --text-muted: var(--text-disabled);
+
+  --secondary: ghostwhite;
+  --alt-bg: #010105;
+  --code-block-bg: #01111e;
+  --skeleton-bg: #ffffff33;
+  --bg-primary: var(--dark-primary);
+  --bg-secondary: var(--lght-grey);
+  --bg-tertiary: var(--grey);
+  --bg-dark: var(--chinese-black);
+  --bg-darker: var(--vampire-black);
+
+  --border-light: var(--grey1);
+  --border-medium: var(--slate);
+  --border-dark: var(--alt-grey);
+  --border-hover: rgba(255, 255, 255, 0.08);
+
+  --method: #d2a8ff;
+  --identifier: #ff7b72;
+  --dom-method: #79c0ff;
+
+  --success-light: #d1fae5;
+  --success: #10b981;
+  --success-dark: #065f46;
+
+  --warning-light: #fef3c7;
+  --warning: #f59e0b;
+  --warning-dark: #92400e;
+
+  --error-light: #fee2e2;
+  --error: #ef4444;
+  --error-dark: #991b1b;
+
+  --info-light: #dbeafe;
+  --info: #3b82f6;
+  --info-dark: #1e3a8a;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  --spacing-4xl: 5rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+  
+  --inter: "Inter", sans-serif;
+  --fira-mono: "Fira Mono", monospace;
+  --jetbrains-mono: "JetBrains Mono", monospace;
+
+  --font-family-sans: var(--inter);
+  --font-family-mono: var(--jetbrains-mono);
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
