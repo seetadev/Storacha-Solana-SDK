@@ -69,8 +69,8 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       storacha-sol:
-        specifier: file:../sdk/storacha-sol-0.0.4.tgz
-        version: file:../sdk/storacha-sol-0.0.4.tgz(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: ^0.0.5
+        version: 0.0.5(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       swr:
         specifier: ^2.2.5
         version: 2.3.7(react@19.2.3)
@@ -5684,9 +5684,8 @@ packages:
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
 
-  storacha-sol@file:../sdk/storacha-sol-0.0.4.tgz:
-    resolution: {integrity: sha512-t9YgFFa/z4OSu4r/N8UUNav3Si/eftDSE9rcAxyUPrvMlheC7ReDC87D2SzIDygZGbt9dCv9T/AykiGdVN6o/A==, tarball: file:../sdk/storacha-sol-0.0.4.tgz}
-    version: 0.0.4
+  storacha-sol@0.0.5:
+    resolution: {integrity: sha512-/Jh5wxr5GYTaNPmUATEc7gG0sF4mnLkSzpIK4RRYZ82Saj+sKYQ1w9q2INTbuAPrGSYx+brt0jpApkXBnwbecQ==}
 
   stream-browserify@3.0.0:
     resolution: {integrity: sha512-H73RAHsVBapbim0tU2JwwOiXUj+fikfiaoYAKHF3VJfA0pe2BCzkhAHBlLG6REzE+2WNZcxOXjK7lkso+9euLA==}
@@ -13791,7 +13790,7 @@ snapshots:
 
   std-env@3.10.0: {}
 
-  storacha-sol@file:../sdk/storacha-sol-0.0.4.tgz(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+  storacha-sol@0.0.5(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
       '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       '@solana/web3.js': 1.98.4(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)

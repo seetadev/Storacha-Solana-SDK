@@ -22,7 +22,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/seetadev/storacha-solana-sdk"
+    "url": "git+https://github.com/seetadev/storacha-solana-sdk.git"
   },
   "types": "./dist/index.d.ts",
   "type": "module",
