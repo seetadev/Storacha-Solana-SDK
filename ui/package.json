@@ -9,7 +9,9 @@
     "test": "vitest run",
     "lint": "eslint",
     "format": "prettier --write .",
-    "check": "prettier --write . && eslint --fix"
+    "check": "prettier --write . && eslint --fix",
+    "knip": "knip",
+    "knip:fix": "knip --fix"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",
@@ -26,7 +28,6 @@
     "@tanstack/react-router-devtools": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
     "framer-motion": "^11.11.17",
-    "phosphor-react": "^1.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
@@ -37,14 +38,14 @@
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "^0.3.11",
-    "@tanstack/eslint-config": "^0.3.0",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.2.0",
+    "@tanstack/eslint-config": "^0.3.4",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^9.39.2",
     "jsdom": "^27.0.0",
+    "knip": "^5.73.4",
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",

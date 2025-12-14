@@ -12,9 +12,9 @@ export function useUploadHistory() {
     async () => {
       if (!user) return null
 
-      const data = await client.getUserUploadHistory(user)
+      const historyData = await client.getUserUploadHistory(user)
 
-      if (!data.userHistory || data.userHistory.length === 0) {
+      if (!historyData.userHistory || historyData.userHistory.length === 0) {
         return {
           files: [],
           stats: {
@@ -26,7 +26,7 @@ export function useUploadHistory() {
         }
       }
 
-      const transformedFiles: UploadedFile[] = data.userHistory.map(
+      const transformedFiles: Array<UploadedFile> = historyData.userHistory.map(
         (deposit) => {
           let status: 'active' | 'expired' | 'pending' = 'active'
           if (deposit.deletionStatus === 'deleted') {

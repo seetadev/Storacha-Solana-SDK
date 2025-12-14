@@ -7,6 +7,7 @@ export default [
   {
     rules: {
       'import/order': 'off',
+      'sort-imports': 'off',
     },
   },
 ]

@@ -58,12 +58,12 @@ export const FileUpload = ({
   maxFiles = 10,
   maxSize = 100 * 1024 * 1024,
 }: FileUploadProps) => {
-  const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([])
-  const [errors, setErrors] = useState<string[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<Array<FileWithPreview>>([])
+  const [errors, setErrors] = useState<Array<string>>([])
 
   const onDrop = useCallback(
     (acceptedFiles: Array<File>, rejectedFiles: Array<any>) => {
-      const newErrors: string[] = []
+      const newErrors: Array<string> = []
 
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach(({ file, errors }) => {
@@ -85,15 +85,17 @@ export const FileUpload = ({
       }
 
       if (acceptedFiles.length > 0) {
-        const filesWithId: FileWithPreview[] = acceptedFiles.map((file) => {
-          const fileWithId = Object.assign(file, {
-            id: `${file.name}-${Date.now()}-${Math.random()}`,
-            preview: file.type.startsWith('image/')
-              ? URL.createObjectURL(file)
-              : undefined,
-          })
-          return fileWithId
-        })
+        const filesWithId: Array<FileWithPreview> = acceptedFiles.map(
+          (file) => {
+            const fileWithId = Object.assign(file, {
+              id: `${file.name}-${Date.now()}-${Math.random()}`,
+              preview: file.type.startsWith('image/')
+                ? URL.createObjectURL(file)
+                : undefined,
+            })
+            return fileWithId
+          },
+        )
 
         setSelectedFiles((prev) => {
           const combined = [...prev, ...filesWithId]

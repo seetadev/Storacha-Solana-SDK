@@ -16,11 +16,11 @@ import type { Environment } from 'storacha-sol'
 
 import '@solana/wallet-adapter-react-ui/styles.css'
 
-export interface AuthProviderProps {
+interface AuthProviderProps {
   children: React.ReactNode
 }
 
-export type AuthContextValues = {
+type AuthContextValues = {
   isAuthenticated: boolean
   logout: () => void
   user: string | null
@@ -55,7 +55,7 @@ const getEnvironment = (network: WalletAdapterNetwork): Environment => {
   }
 }
 
-export const initialState: AuthContextValues = {
+const initialState: AuthContextValues = {
   user: null,
   isAuthenticated: false,
   balance: null,
@@ -126,7 +126,7 @@ export function WalletProviders({ children }: WalletProvidersProps) {
   )
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+const AuthProvider = ({ children }: AuthProviderProps) => {
   const { connected, publicKey, disconnect } = useWallet()
   const [state, dispatch] = useReducer(authReducer, initialState)
 

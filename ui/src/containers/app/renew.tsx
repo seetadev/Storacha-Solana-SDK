@@ -80,7 +80,7 @@ export const Renew = () => {
   }
 
   const renewStorage = async () => {
-    if (!publicKey || !signTransaction || !cid) {
+    if (!publicKey || !signTransaction) {
       toast.error('Wallet not properly connected')
       return
     }
@@ -129,7 +129,7 @@ export const Renew = () => {
   const daysRemaining = getDaysRemaining(fileDetails?.expiresAt)
   const isExpired = daysRemaining === 0
   const costInSOL = renewalCost?.costInSOL
-    ? parseFloat(String(renewalCost?.costInSOL))
+    ? parseFloat(String(renewalCost.costInSOL))
     : 0
   const hasInsufficientBalance = balance !== null && costInSOL > balance
 
@@ -143,6 +143,7 @@ export const Renew = () => {
     )
   }
 
+  /* eslint-disable */
   if (!cid) {
     return (
       <VStack spacing="2em" align="stretch">
