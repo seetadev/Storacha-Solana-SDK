@@ -8,4 +8,4 @@ export const useUpload = (environment: ClientOptions['environment']) => {
 /**
  * @deprecated Use {@link useUpload} instead.
  */
-export const useDeposit = useUpload;
+export { useUpload as useDeposit };
