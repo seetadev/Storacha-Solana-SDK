@@ -1,3 +1,4 @@
+import { useAuthContext } from '@/hooks/context'
 import {
   Box,
   Button,
@@ -55,6 +56,7 @@ const styles = {
 
 export const HomePage = () => {
   const daysToMainnet = 14
+  const { isAuthenticated } = useAuthContext()
 
   return (
     <Box position="relative" overflow="hidden">
@@ -131,6 +133,7 @@ export const HomePage = () => {
             <Button
               height="54px"
               px="2.5em"
+              disabled={!isAuthenticated}
               fontSize="var(--font-size-base)"
               background="var(--primary-600)"
               color="white"
@@ -146,7 +149,7 @@ export const HomePage = () => {
               transition="all 0.2s"
               rightIcon={<ArrowRightIcon weight="bold" />}
             >
-              Get started
+              {isAuthenticated ? 'Get started' : 'Connect wallet'}
             </Button>
 
             <Box
@@ -156,7 +159,7 @@ export const HomePage = () => {
               alignItems="center"
               border="1px solid rgba(255,255,255,0.1)"
               cursor="pointer"
-              background="var(--bg-dark)"
+              background="rgba(255,255,255,0.05)"
               borderRadius="full"
               color="var(--text-muted)"
               width={{ base: '100%', lg: 'fit-content', md: 'fit-content' }}

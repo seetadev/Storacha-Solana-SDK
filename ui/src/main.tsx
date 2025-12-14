@@ -1,12 +1,13 @@
+import { ChakraProvider } from '@chakra-ui/react'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
-import { ChakraProvider } from '@chakra-ui/react'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
 import '../styles/_globals.scss'
+import { WalletProviders } from './context/auth-provider.tsx'
 import reportWebVitals from './reportWebVitals.ts'
 
 // Create a new router instance
@@ -32,9 +33,11 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <ChakraProvider>
-        <RouterProvider router={router} />
-      </ChakraProvider>
+      <WalletProviders>
+        <ChakraProvider>
+          <RouterProvider router={router} />
+        </ChakraProvider>
+      </WalletProviders>
     </StrictMode>,
   )
 }
