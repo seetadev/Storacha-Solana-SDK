@@ -37,6 +37,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             py="2em"
             width="100%"
             mb="2em"
+            height="fit-content"
           >
             {children}
           </Container>

@@ -7,6 +7,7 @@ import ReactDOM from 'react-dom/client'
 import { routeTree } from './routeTree.gen'
 
 import '../styles/_globals.scss'
+import { ToastProvider } from './components/toast.tsx'
 import { WalletProviders } from './context/auth-provider.tsx'
 import reportWebVitals from './reportWebVitals.ts'
 
@@ -36,6 +37,7 @@ if (rootElement && !rootElement.innerHTML) {
       <WalletProviders>
         <ChakraProvider>
           <RouterProvider router={router} />
+          <ToastProvider />
         </ChakraProvider>
       </WalletProviders>
     </StrictMode>,

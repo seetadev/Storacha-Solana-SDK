@@ -10,6 +10,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react'
 import type { Transaction } from '@solana/web3.js'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useDeposit } from 'storacha-sol'
 
 const SOL_TO_USD_RATE = 25
@@ -46,11 +47,12 @@ export const Upload = () => {
 
   const handleUpload = async () => {
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
-      console.error('Wallet not properly connected or no files selected')
+      toast.error('Wallet not properly connected or no files selected')
       return
     }
 
     setState('uploading')
+    const toastId = toast.loading('Uploading files to IPFS...')
 
     try {
       const result = await client.createDeposit({
@@ -58,20 +60,31 @@ export const Upload = () => {
         durationDays: storageDuration,
         payer: publicKey,
         signTransaction: async (tx: Transaction) => {
+          toast.loading('Please sign the transaction in your wallet...', {
+            id: toastId,
+          })
           const signed = await signTransaction(tx)
+          toast.loading('Processing transaction...', { id: toastId })
           return signed
         },
         userEmail: email || undefined,
       })
 
       if (result.success) {
+        toast.success(
+          `Upload successful! ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} stored for ${storageDuration} days`,
+          { id: toastId, duration: 5000 },
+        )
         await refreshBalance()
+        setSelectedFiles([])
+        setState('idle')
       } else {
         throw new Error(result.error || 'Upload failed')
       }
     } catch (error) {
-      console.error('Upload error', error)
-    } finally {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Upload failed'
+      toast.error(errorMessage, { id: toastId })
       setState('idle')
     }
   }
