@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.5](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.4...v0.0.5) (2025-12-14)
+
+
+### Features
+
+* add auth context and wallet providers ([bbf0e0f](https://github.com/seetadev/storacha-solana-sdk/commit/bbf0e0fa05c21110c3361131047fb2f7cc84f28c))
+* add extend_storage instruction to server and SDK ([#74](https://github.com/seetadev/storacha-solana-sdk/issues/74)) ([c9dacd7](https://github.com/seetadev/storacha-solana-sdk/commit/c9dacd78aef6d047f1c4ee199018ea176df7c939))
+* add extend_storage_duration instruction to contract  ([#72](https://github.com/seetadev/storacha-solana-sdk/issues/72)) ([9d94fa3](https://github.com/seetadev/storacha-solana-sdk/commit/9d94fa3f5fea1deefde0ec5633f5e163266fbcda))
+* add renewal page skeleton and deprecate deposit terminology ([e05718a](https://github.com/seetadev/storacha-solana-sdk/commit/e05718afe55a13fffeaf4a9617ef4308c5a13cf2))
+* add renewal page skeleton and deprecate deposit terminology  ([#69](https://github.com/seetadev/storacha-solana-sdk/issues/69)) ([867e8f5](https://github.com/seetadev/storacha-solana-sdk/commit/867e8f58a6e75072201c4388fcc157a66df2cb8a))
+* add SDK methods for storage renewal ([#61](https://github.com/seetadev/storacha-solana-sdk/issues/61)) ([59e3c7c](https://github.com/seetadev/storacha-solana-sdk/commit/59e3c7cc8a8bbfcb96dc5618469e517273ec03bf))
+* add storage renewal endpoints and database logic ([6e56bf3](https://github.com/seetadev/storacha-solana-sdk/commit/6e56bf3dce19b6abb2264c3127b59ee522ee1a3c))
+* add transaction history tracking + naming clarity improvements ([d071efa](https://github.com/seetadev/storacha-solana-sdk/commit/d071efa5b79955d80a3beaf2a16c3fcb760427bb))
+* add transaction history tracking + naming clarity improvements ([#66](https://github.com/seetadev/storacha-solana-sdk/issues/66)) ([10b5007](https://github.com/seetadev/storacha-solana-sdk/commit/10b5007290284a4799a86783c46550fe1c3417d7))
+* complete home layout ([0f8e3d8](https://github.com/seetadev/storacha-solana-sdk/commit/0f8e3d8f2e3008c34436213e44bfc1580a9a75b9))
+* complete upload UI with wallet integration ([aa2e146](https://github.com/seetadev/storacha-solana-sdk/commit/aa2e146f77bac8ea98da6b7ab9998d62137e202f))
+* new UI for keep ([3eec081](https://github.com/seetadev/storacha-solana-sdk/commit/3eec08167327a858c425c354aa130c595b476e55))
+* run deletion job for expired file uploads ([#58](https://github.com/seetadev/storacha-solana-sdk/issues/58)) ([8caf5b5](https://github.com/seetadev/storacha-solana-sdk/commit/8caf5b5998d559e462a72c112af9517453d59082))
+* **ui:** add toast component and storage renewal route ([b425cae](https://github.com/seetadev/storacha-solana-sdk/commit/b425cae184a1868a87c5296a9561cf174d689ef1))
+
+
+### Bug Fixes
+
+* **solana:** return user friendly error on duplicate file upload ([#71](https://github.com/seetadev/storacha-solana-sdk/issues/71)) ([e668f4b](https://github.com/seetadev/storacha-solana-sdk/commit/e668f4b81760a2487a4ef458a5b9c4c1291e01f1))
+* **solana:** return user friendly error on duplicate file upload ([#71](https://github.com/seetadev/storacha-solana-sdk/issues/71)) ([0239aa7](https://github.com/seetadev/storacha-solana-sdk/commit/0239aa70ce1a2ebe5243eb7e54a221fb8c0cb6fe))
+
 ### [0.0.4](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.3...v0.0.4) (2025-11-28)
 
 
