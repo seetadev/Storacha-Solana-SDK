@@ -237,3 +237,60 @@ export async function createDepositInstruction(
     })
     .instruction();
 }
+
+/**
+ * Creates a program instruction for renewing storage duration
+ */
+export async function extendStorageInstruction(
+  cid: string,
+  duration: number,
+  extensionCost: number,
+  userPubkey: web3.PublicKey,
+): Promise<TransactionInstruction> {
+  const { idl, programId } = await getIdlAndProgramId();
+  const wallet = {
+    publicKey: web3.Keypair.generate().publicKey,
+    signTransaction: async (tx: any) => tx,
+    signAllTransactions: async (txs: any[]) => txs,
+  };
+
+  const provider = new AnchorProvider(connection, wallet as any, {});
+  const program = new Program(idl as Idl, provider);
+
+  const [configPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED)],
+    programId,
+  );
+  const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow")],
+    programId,
+  );
+
+  const cidHash = Buffer.from(sha256.digest(cid));
+  const [depositPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
+    programId,
+  );
+
+  const durationNum = Number(duration);
+  if (!Number.isFinite(durationNum)) {
+    throw new Error("Invalid duration");
+  }
+
+  const storageRenewalCostBN = new BN(extensionCost.toString());
+
+  return await program.methods
+    .extendStorageDuration(
+      cid,
+      new BN(durationNum.toString()),
+      storageRenewalCostBN,
+    )
+    .accounts({
+      deposit: depositPda,
+      escrowVault: escrowVaultPda,
+      config: configPda,
+      user: userPubkey,
+      systemProgram: web3.SystemProgram.programId,
+    })
+    .instruction();
+}
