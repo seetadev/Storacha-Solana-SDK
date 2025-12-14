@@ -26,7 +26,10 @@ import {
   getQuoteForFileUpload,
   initStorachaClient,
 } from "../utils/Storacha.js";
-import { createDepositTransaction } from "./solana.controller.js";
+import {
+  createDepositTransaction,
+  createStorageRenewalTransaction,
+} from "./solana.controller.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -483,12 +486,11 @@ export const renewStorage = async (req: Request, res: Response) => {
       days,
     );
 
-    const storageRenewalIx = await createDepositTransaction({
+    const storageRenewalIx = await createStorageRenewalTransaction({
       publicKey,
       durationDays: days,
-      fileSize: Number(deposit.fileSize),
       contentCID: cid,
-      depositAmount: amountInLamports,
+      extensionCost: amountInLamports,
     });
 
     return res.status(200).json({

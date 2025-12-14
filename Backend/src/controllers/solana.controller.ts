@@ -2,9 +2,10 @@ import { PublicKey } from "@solana/web3.js";
 import {
   createDepositInstruction,
   ensureConfigInitialized,
+  extendStorageInstruction,
 } from "../utils/solana/index.js";
 
-type DepositItem = {
+type UploadItem = {
   depositAmount: number;
   durationDays: number;
   contentCID: string;
@@ -12,7 +13,14 @@ type DepositItem = {
   fileSize: number;
 };
 
-export const createDepositTransaction = async (payload: DepositItem) => {
+interface RenewalParams extends Omit<UploadItem, "depositAmount" | "fileSize"> {
+  /** the new storage cost calculated based on
+   * the new duration storage needs to be extended for
+   */
+  extensionCost: number;
+}
+
+export const createDepositTransaction = async (payload: UploadItem) => {
   const {
     publicKey: userPublicKey,
     contentCID,
@@ -49,6 +57,45 @@ export const createDepositTransaction = async (payload: DepositItem) => {
         isWritable: key.isWritable,
       })),
       data: depositIx.data.toString("base64"),
+    },
+  ];
+};
+
+export const createStorageRenewalTransaction = async (
+  payload: RenewalParams,
+) => {
+  const {
+    publicKey: userPublicKey,
+    durationDays,
+    extensionCost,
+    contentCID,
+  } = payload;
+
+  if (!userPublicKey || !contentCID || !extensionCost || !durationDays)
+    throw new Error("Missing required parameters");
+
+  const userPubkey = new PublicKey(userPublicKey);
+  const durationNum = Number(durationDays);
+
+  if (isNaN(durationNum)) throw new Error("Invalid duration");
+
+  await ensureConfigInitialized();
+  const storageRenewalIx = await extendStorageInstruction(
+    contentCID,
+    durationNum,
+    Number(extensionCost),
+    userPubkey,
+  );
+
+  return [
+    {
+      programId: storageRenewalIx.programId.toBase58(),
+      keys: storageRenewalIx.keys.map((key) => ({
+        pubkey: key.pubkey.toBase58(),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable,
+      })),
+      data: storageRenewalIx.data.toString("base64"),
     },
   ];
 };
