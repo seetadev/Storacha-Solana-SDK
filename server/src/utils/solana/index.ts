@@ -6,7 +6,6 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import BN from "bn.js";
-import fs from "fs/promises";
 import { sha256 } from "js-sha256";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -176,7 +175,7 @@ export async function ensureConfigInitialized(): Promise<void> {
       throw err;
     }
   } else {
-    console.log("✅ Config already exists — no backend init needed.");
+    console.log("✅ Config already exists — no server init needed.");
   }
 }
 

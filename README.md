@@ -20,7 +20,7 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 
 ```
 solana-programs/  # Solana payment contract (Anchor framework)
-backend/          # Node.js backend API with UCAN storage delegation
+server/           # Node.js server for communicating with the contract
 sdk/              # TypeScript SDK (@storacha/sol-sdk)
 ```
 
@@ -87,10 +87,10 @@ If it fails initially due to rate limits, retry after a few seconds. I'd recomme
 
 Check if you've started the test-validator before requesting for the airdrop
 
-### **6. Backend Server**
+### **6. Server**
 
 ```bash
-cd backend
+cd server
 pnpm dev
 ```
 
@@ -110,10 +110,10 @@ cd solana-programs
 anchor test
 ```
 
-### **Backend Tests**
+### **Server Tests**
 
 ```bash
-cd backend
+cd server
 pnpm test
 ```
 
@@ -124,12 +124,12 @@ cd sdk
 pnpm test
 ```
 
-## **Backend Database Migration Workflow**
+## **Database Migration Workflow**
 
-1. **Navigate to the Backend directory**
+1. **Navigate to the server directory**
 
    ```bash
-   cd Backend
+   cd server
    ```
 
 2. **Generate migration files**
@@ -150,10 +150,10 @@ pnpm test
 
 ### Environment Variables
 
-To set up your backend environment:
+To set up the server environment:
 
 ```bash
-cd Backend
+cd server
 cp .env.example .env
 
 ./scripts/generate-admin-key.sh
@@ -167,9 +167,7 @@ Install a Solana wallet like Phantom wallet in your browser. Go your settings an
 
 Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.com/) to airdrop SOL into your wallet. You'll need to copy your testnet address for this.
 
-When you're done, clone this [sample repo](https://github.com/kaf-lamed-beyt/sto-sol) to basically test that you can make a deposit. The backend server has to be running locally for this to work. Please ensure that is right.
-
-You can also test everything out on the playground [here](https://storacha-sol.vercel.app/)
+You can test everything out on the playground [here](https://storacha-sol.vercel.app/)
 
 ## Side Notes
 
