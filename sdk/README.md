@@ -123,6 +123,7 @@ console.log(history.userHistory); // Array of all deposits
 ```
 
 Each deposit in the history includes:
+
 - File details (name, size, type, CID)
 - Expiration date
 - Deletion status (`active`, `warned`, `deleted`)
@@ -149,6 +150,7 @@ const result = await client.createDeposit({
 If provided, you'll receive an email notification **7 days before your file expires**, giving you time to extend the storage duration (feature coming soon!).
 
 The warning email includes:
+
 - File name and CID
 - Exact expiration date
 - Number of days remaining
@@ -157,6 +159,7 @@ The warning email includes:
 ### Automatic Cleanup
 
 Files that have expired are automatically deleted from Storacha storage. This happens through a scheduled job that:
+
 1. Identifies expired deposits
 2. Removes the data from Storacha (including shards)
 3. Updates the deletion status in the database
@@ -194,6 +197,7 @@ if (result.success) {
 ```
 
 **How it works:**
+
 - `getStorageRenewalCost()` shows you the cost and new expiration date before committing
 - `renewStorageDuration()` creates a payment transaction (same flow as initial upload)
 - After payment confirms, your file's expiration date gets updated
@@ -202,20 +206,23 @@ if (result.success) {
 
 When using this SDK in a project built with Vite, you may encounter a `ReferenceError: process is not defined`. This is because Vite does not automatically polyfill the Node.js `process` global, which this library may use.
 
-To resolve this, you can define `process.env` as an empty object in your `vite.config.ts` file:
+To resolve this, you can define `process.env` to safely access `NODE_ENV` and additionally install `vite-plugin-node-polyfills` as a dev dependency and edit your `vite.config.ts` file:
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), nodePolyfills()],
   // ... other config
   define: {
-    'process.env': {},
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
+    },
   },
-})
+});
 ```
 
 This will prevent the runtime error and allow the SDK to function correctly.

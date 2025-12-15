@@ -4,10 +4,12 @@ import { URL, fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    nodePolyfills(),
     devtools(),
     tanstackRouter({
       target: 'react',

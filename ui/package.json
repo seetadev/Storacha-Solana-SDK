@@ -49,6 +49,7 @@
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
+    "vite-plugin-node-polyfills": "^0.24.0",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0"
   },
