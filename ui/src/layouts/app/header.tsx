@@ -1,6 +1,7 @@
 import { ConnectWallet } from '@/components/connect-wallet'
 import { useAuthContext } from '@/hooks/context/auth'
-import { Box, HStack, IconButton, Text } from '@chakra-ui/react'
+import { Box, HStack, IconButton, Text, useColorModeValue } from '@chakra-ui/react'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { LinkBreakIcon, ListIcon, WalletIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 
@@ -27,10 +28,10 @@ export const Header = ({ onMenuOpen }: HeaderProps) => {
         alignItems="center"
         position="fixed"
         width={{ xl: '85%', lg: '80%', md: '100%', base: '100%' }}
-        background="rgba(8, 8, 8, 0.6)"
+        background={useColorModeValue('rgba(255, 255, 255, 0.85)', 'rgba(8, 8, 8, 0.6)')}
         backdropFilter="blur(12px)"
         zIndex="10"
-        borderBottom="1px solid rgba(255,255,255,0.05)"
+        borderBottom={`1px solid ${useColorModeValue('rgba(0,0,0,0.08)', 'rgba(255,255,255,0.05)')}`}
       >
         <Box display={{ base: 'block', md: 'block', lg: 'none' }}>
           <IconButton
@@ -46,14 +47,16 @@ export const Header = ({ onMenuOpen }: HeaderProps) => {
           />
         </Box>
 
-        <Box ml="auto">
+        <HStack ml="auto" spacing="0.6em" alignItems="center">
+          <ThemeToggle />
+          <Box>
           {isAuthenticated && user ? (
             <HStack
               height="40px"
               width="fit-content"
               px="1em"
-              bg="rgba(255,255,255,0.05)"
-              border="1px solid rgba(255,255,255,0.1)"
+              bg={useColorModeValue('rgba(0,0,0,0.04)', 'rgba(255,255,255,0.05)')}
+              border={`1px solid ${useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)')}`}
               borderRadius="full"
               justifyContent="space-between"
               spacing="0.75em"
@@ -88,8 +91,8 @@ export const Header = ({ onMenuOpen }: HeaderProps) => {
               px="1.5em"
               fontSize="var(--font-size-sm)"
               fontWeight="var(--font-weight-medium)"
-              bg="rgba(255,255,255,0.05)"
-              border="1px solid rgba(255,255,255,0.1)"
+              bg={useColorModeValue('rgba(0,0,0,0.06)', 'rgba(255,255,255,0.05)')}
+              border={`1px solid ${useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)')}`}
               color="var(--text-inverse)"
               backdropFilter="blur(5px)"
               borderRadius="full"
@@ -109,7 +112,8 @@ export const Header = ({ onMenuOpen }: HeaderProps) => {
               <Text>Connect Wallet</Text>
             </Box>
           )}
-        </Box>
+          </Box>
+        </HStack>
       </Box>
 
       <ConnectWallet

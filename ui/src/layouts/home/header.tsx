@@ -1,5 +1,6 @@
 import { ConnectWallet } from '@/components/connect-wallet'
-import { Box, Button, Container, HStack, Text } from '@chakra-ui/react'
+import { Box, Button, Container, HStack, Text, useColorModeValue } from '@chakra-ui/react'
+import { ThemeToggle } from '@/components/theme-toggle'
 import {
   GithubLogoIcon,
   LinkBreakIcon,
@@ -28,9 +29,9 @@ export const HomeHeader = () => {
         right="0"
         height="80px"
         zIndex="100"
-        background="rgba(6, 7, 14, 0.6)"
+        background={useColorModeValue('rgba(255, 255, 255, 0.85)', 'rgba(8, 8, 8, 0.6)')}
         backdropFilter="blur(12px)"
-        borderBottom="1px solid rgba(255,255,255,0.05)"
+        borderBottom={`1px solid ${useColorModeValue('rgba(0,0,0,0.08)', 'rgba(255,255,255,0.05)')}`}
         transition="all 0.3s ease"
       >
         <Container maxW="container.xl" height="100%">
@@ -61,11 +62,12 @@ export const HomeHeader = () => {
             </Link>
 
             <HStack spacing="1.5em" alignItems="center">
+              <ThemeToggle />
               <Link to="/">
                 <Text
                   fontSize="var(--font-size-sm)"
                   fontWeight="500"
-                  color="var(--text-muted)"
+                  color={useColorModeValue('var(--gray-600)', 'var(--text-muted)')}
                   _hover={{ color: 'var(--text-inverse)' }}
                   transition="color 0.2s"
                   display={{ lg: 'block', md: 'block', base: 'none' }}
@@ -94,8 +96,8 @@ export const HomeHeader = () => {
                     height="40px"
                     width="fit-content"
                     px="1em"
-                    bg="rgba(255,255,255,0.05)"
-                    border="1px solid rgba(255,255,255,0.1)"
+                    bg={useColorModeValue('rgba(0,0,0,0.04)', 'rgba(255,255,255,0.05)')}
+                    border={`1px solid ${useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)')}`}
                     borderRadius="full"
                     justifyContent="space-between"
                   >
@@ -110,7 +112,7 @@ export const HomeHeader = () => {
                       as="span"
                       onClick={logout}
                       cursor="pointer"
-                      color="var(--text-muted)"
+                      color={useColorModeValue('var(--gray-600)', 'var(--text-muted)')}
                       _hover={{
                         color: 'var(--red-mead)',
                       }}
@@ -125,8 +127,8 @@ export const HomeHeader = () => {
                     px="1.5em"
                     fontSize="var(--font-size-sm)"
                     fontWeight="var(--font-weight-medium)"
-                    bg="rgba(255,255,255,0.05)"
-                    border="1px solid rgba(255,255,255,0.1)"
+                    bg={useColorModeValue('rgba(0,0,0,0.06)', 'rgba(255,255,255,0.05)')}
+                    border={`1px solid ${useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)')}`}
                     color="var(--text-inverse)"
                     backdropFilter="blur(5px)"
                     borderRadius="full"
