@@ -1,9 +1,9 @@
 import { Signature } from '@solana/kit';
 import {
   PublicKey,
+  SendTransactionError,
   Transaction,
   TransactionInstruction,
-  SendTransactionError,
 } from '@solana/web3.js';
 import { ENDPOINT } from './constants';
 import {
@@ -338,7 +338,7 @@ export async function renewStorageTxn({
   });
 
   if (!confirmRenewalTx.ok) {
-    console.error('Failed to confirm renewal on backend');
+    console.error('Failed to confirm renewal');
   }
 
   return {

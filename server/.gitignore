@@ -14,7 +14,6 @@ build/
 .env
 .env.*.local
 
-*.json
 *-keypair.json
 admin-keypair.json
 

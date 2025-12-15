@@ -6,7 +6,7 @@ import {
 } from '@solana/web3.js';
 
 export interface ServerOptions {
-  /** URL pointing to the backend (mostly Storacha's) */
+  /** URL pointing to the server (mostly Storacha's) */
   url?: string;
 }
 

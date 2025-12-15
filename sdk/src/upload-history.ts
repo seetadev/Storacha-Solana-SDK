@@ -2,7 +2,7 @@ import { ENDPOINT } from './constants';
 import { ServerOptions, UploadHistoryResponse } from './types';
 
 /**
- * Get the upload history for a given user address from the backend
+ * Get the upload history for a given user address from the server
  *
  * @param userAddress - The wallet address of the user to fetch upload history for
  * @param options - Optional server configuration

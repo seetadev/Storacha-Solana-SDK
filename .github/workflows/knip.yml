@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    name: Backend - knip!
+    name: server - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,13 +20,13 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: 'Backend/pnpm-lock.yaml'
+          cache-dependency-path: 'server/pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd Backend && pnpm install --no-frozen-lockfile
+        run: cd server && pnpm install --no-frozen-lockfile
       
       - name: Run knip
-        run: cd Backend && pnpm knip
+        run: cd server && pnpm knip
 
   sdk:
     name: sdk - knip!
