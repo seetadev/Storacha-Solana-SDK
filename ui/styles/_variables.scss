@@ -159,3 +159,17 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
 }
+
+html[data-theme='light'] {
+  --text-inverse: #111827;
+  --text-muted: #6b7280;
+
+  --bg-dark: #ffffff;
+  --bg-darker: #f9fafb;
+
+  --border-dark: #e5e7eb;
+  --border-hover: rgba(0, 0, 0, 0.08);
+
+  --code-block-bg: #f3f4f6;
+  --skeleton-bg: #0000001a;
+}

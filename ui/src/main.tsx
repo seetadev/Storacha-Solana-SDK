@@ -1,4 +1,4 @@
-import { ChakraProvider } from '@chakra-ui/react'
+import { ChakraProvider, ColorModeScript } from '@chakra-ui/react'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
@@ -10,6 +10,7 @@ import '../styles/_globals.scss'
 import { ToastProvider } from './components/toast.tsx'
 import { WalletProviders } from './context/auth-provider.tsx'
 import reportWebVitals from './reportWebVitals.ts'
+import { theme } from './theme'
 
 // Create a new router instance
 const router = createRouter({
@@ -35,7 +36,8 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <WalletProviders>
-        <ChakraProvider>
+        <ChakraProvider theme={theme}>
+          <ColorModeScript initialColorMode={theme.config.initialColorMode} />
           <RouterProvider router={router} />
           <ToastProvider />
         </ChakraProvider>
