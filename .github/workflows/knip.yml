@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    name: Server - knip!
+    name: server - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
