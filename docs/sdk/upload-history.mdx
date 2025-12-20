@@ -1,0 +1,276 @@
+---
+title: 'Upload History'
+description: 'Fetch and display user upload history'
+---
+
+## Overview
+
+The `getUserUploadHistory` method retrieves all uploads associated with a Solana wallet address, including file metadata, expiration dates, and deletion status.
+
+## Basic Usage
+
+```typescript
+const history = await client.getUserUploadHistory(publicKey.toString());
+
+console.log('Total files:', history.userHistory.length);
+console.log('Total spent:', history.totalSpent, 'SOL');
+```
+
+### Parameters
+
+<ParamField path="userAddress" type="string" required>
+  Solana wallet address (as a string)
+</ParamField>
+
+<ParamField path="options" type="ServerOptions">
+  Optional server configuration
+  
+  ```typescript
+  {
+    url?: string;  // Custom server URL
+  }
+  ```
+</ParamField>
+
+## Response Structure
+
+```typescript
+{
+  userHistory: UploadedFile[];
+  totalFiles: number;
+  totalStorage: string;      // e.g., "150.5 MB"
+  totalSpent: number;        // Total SOL spent
+  activeFiles: number;       // Non-deleted files
+}
+```
+
+### UploadedFile Type
+
+Each file in the history includes:
+
+```typescript
+{
+  id: string;                // Database ID
+  cid: string;               // IPFS content identifier
+  fileName: string;          // Original filename
+  fileSize: number;          // Size in bytes
+  fileType: string;          // MIME type
+  duration: number;          // Storage duration in days
+  cost: number;              // Payment in SOL
+  createdAt: string;         // Upload timestamp
+  expirationDate: string;    // When file expires
+  deletionStatus: 'active' | 'warned' | 'deleted';
+  transactionHash: string;   // Solana transaction signature
+  url: string;               // IPFS gateway URL
+  daysRemaining: number;     // Days until expiration (negative if expired)
+}
+```
+
+## Complete Example
+
+```typescript
+import { useDeposit } from 'storacha-sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useEffect, useState } from 'react';
+
+function UploadHistoryComponent() {
+  const client = useDeposit('testnet');
+  const { publicKey } = useWallet();
+  const [history, setHistory] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!publicKey) return;
+
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        const data = await client.getUserUploadHistory(
+          publicKey.toString()
+        );
+        setHistory(data);
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [publicKey]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!history) return <div>No uploads found</div>;
+
+  return (
+    <div>
+      <h2>Your Uploads</h2>
+      <p>Total Files: {history.totalFiles}</p>
+      <p>Total Storage: {history.totalStorage}</p>
+      <p>Total Spent: {history.totalSpent} SOL</p>
+      <p>Active Files: {history.activeFiles}</p>
+
+      <div>
+        {history.userHistory.map((file) => (
+          <div key={file.id}>
+            <h3>{file.fileName}</h3>
+            <p>CID: {file.cid}</p>
+            <p>Size: {(file.fileSize / 1024 / 1024).toFixed(2)} MB</p>
+            <p>Expires: {new Date(file.expirationDate).toLocaleDateString()}</p>
+            <p>Status: {file.deletionStatus}</p>
+            <a href={file.url} target="_blank">View File</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## With SWR (Auto-Refresh)
+
+Use SWR for automatic refreshing:
+
+```typescript
+import useSWR from 'swr';
+
+function UploadHistoryComponent() {
+  const client = useDeposit('testnet');
+  const { publicKey } = useWallet();
+
+  const { data, error, isLoading, mutate } = useSWR(
+    publicKey ? ['upload-history', publicKey.toString()] : null,
+    async ([_, address]) => client.getUserUploadHistory(address),
+    {
+      refreshInterval: 30000,     // Refresh every 30s
+      revalidateOnFocus: true,    // Refresh on window focus
+    }
+  );
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading history</div>;
+  if (!data) return <div>No uploads found</div>;
+
+  return (
+    <div>
+      {/* Render history */}
+      <button onClick={() => mutate()}>Refresh</button>
+    </div>
+  );
+}
+```
+
+<Tip>
+  SWR automatically handles caching, deduplication, and background revalidation.
+</Tip>
+
+## Filtering & Searching
+
+Filter uploads by status or search by filename:
+
+```typescript
+const { userHistory } = await client.getUserUploadHistory(address);
+
+// Filter by status
+const activeFiles = userHistory.filter(
+  file => file.deletionStatus === 'active'
+);
+
+const expiredFiles = userHistory.filter(
+  file => file.deletionStatus === 'deleted'
+);
+
+// Search by filename
+const searchResults = userHistory.filter(
+  file => file.fileName.toLowerCase().includes(query.toLowerCase())
+);
+
+// Sort by expiration date
+const sortedByExpiration = [...userHistory].sort((a, b) =>
+  new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime()
+);
+```
+
+## Deletion Status
+
+Files go through three deletion statuses:
+
+<Steps>
+  <Step title="active">
+    File is within storage duration and accessible
+  </Step>
+  
+  <Step title="warned">
+    File will expire in 7 days or less (warning email sent)
+  </Step>
+  
+  <Step title="deleted">
+    File has expired and been removed from storage
+  </Step>
+</Steps>
+
+## Days Remaining
+
+The `daysRemaining` field shows time until expiration:
+
+## Statistics
+
+The response includes helpful statistics:
+
+```typescript
+const { totalFiles, totalStorage, totalSpent, activeFiles } = history;
+
+// Calculate average cost per file
+const avgCostPerFile = totalSpent / totalFiles;
+
+// Calculate expired files
+const expiredFiles = totalFiles - activeFiles;
+
+// Parse total storage
+const storageMB = parseFloat(totalStorage); // "150.5 MB" → 150.5
+```
+
+## Viewing Files
+
+Each file has a `url` property for accessing content:
+
+```typescript
+// IPFS gateway URL
+const url = file.url; // https://w3s.link/ipfs/{cid}
+
+// Open in new tab
+window.open(url, '_blank');
+
+// Copy CID to clipboard
+await navigator.clipboard.writeText(file.cid);
+```
+
+## Transaction History
+
+View blockchain transaction:
+
+```typescript
+// Solana Explorer link
+const explorerUrl = `https://explorer.solana.com/tx/${file.transactionHash}?cluster=testnet`;
+
+<a href={explorerUrl} target="_blank">
+  View on Solana Explorer
+</a>
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create Deposit" icon="upload" href="/sdk/deposit">
+    Upload new files
+  </Card>
+  <Card title="Renew Storage" icon="rotate" href="/sdk/renewal">
+    Extend file expiration
+  </Card>
+  <Card title="Storage Payments" icon="coins" href="/concepts/storage-payments">
+    Understanding costs
+  </Card>
+  <Card title="Renewal Concept" icon="calendar" href="/concepts/renewal">
+    When to renew
+  </Card>
+</CardGroup>

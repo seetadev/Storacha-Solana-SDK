@@ -1,0 +1,79 @@
+---
+title: 'Quickstart'
+description: 'Get started with Keep in 5 minutes'
+---
+
+## Using the Web App
+
+The fastest way to use Keep is through the web interface:
+
+<Steps>
+  <Step title="Connect Wallet">
+    Visit [storacha-sol.vercel.app](https://storacha-sol.vercel.app) and connect your Solana wallet (Phantom, Solflare, etc.)
+  </Step>
+  
+  <Step title="Get Testnet SOL">
+    If using testnet, get free SOL from the [Solana Faucet](https://faucet.solana.com/)
+  </Step>
+  
+  <Step title="Upload Files">
+    - Select files to upload (single or multiple)
+    - Choose storage duration (7, 30, 90, or custom days)
+    - Optionally add your email for expiration reminders
+  </Step>
+  
+  <Step title="Pay & Confirm">
+    Review the cost estimate and sign the transaction with your wallet
+  </Step>
+</Steps>
+
+<Check>
+  Your files are now stored on decentralized storage! You can view them in the Upload History page.
+</Check>
+
+## Using the SDK
+
+Install the SDK in your React app:
+
+```bash
+pnpm add storacha-sol
+```
+
+Basic usage example:
+
+```tsx
+import { useUpload, Environment } from 'storacha-sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+function UploadComponent() {
+  const client = useUpload('testnet' as Environment);
+  const { publicKey, signTransaction } = useWallet();
+  
+  const handleUpload = async (file, duration) => {
+    const result = await client.createDeposit({
+      file,
+      durationDays: duration,
+      payer: publicKey,
+      signTransaction: async (tx) => {
+        return await signTransaction(tx);
+      },
+    });
+    
+    if (result.success) {
+      console.log('Upload successful!', result.cid);
+    }
+  };
+  
+  return (
+    // Your upload UI
+  );
+}
+```
+
+<Card title="SDK Documentation" icon="book" href="/sdk/overview">
+  Learn more about SDK features and API reference
+</Card>
+
+## Contributing
+
+Want to contribute to Keep? Check out the [Local Development Guide](/local-development) to set up the project on your machine.

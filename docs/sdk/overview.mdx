@@ -1,0 +1,251 @@
+---
+title: 'Overview'
+description: 'Getting started with the storacha-sol SDK'
+---
+
+## Installation
+
+Install the SDK in your React project:
+
+<CodeGroup>
+
+```bash pnpm
+pnpm add storacha-sol
+```
+
+```bash npm
+npm install storacha-sol
+```
+
+```bash yarn
+yarn add storacha-sol
+```
+
+</CodeGroup>
+
+## Peer Dependencies
+
+The SDK requires Solana wallet adapters:
+
+```bash
+pnpm add @solana/wallet-adapter-react @solana/web3.js
+```
+
+<Info>
+  The SDK is designed to work with any Solana wallet adapter (Phantom, Solflare, Ledger, etc.)
+</Info>
+
+## Basic Usage
+
+Import and use the SDK in your React component:
+
+```typescript
+import { useUpload } from 'storacha-sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Environment } from 'storacha-sol';
+
+function MyComponent() {
+  const client = useUpload(Environment.testnet);
+  const { publicKey, signTransaction } = useWallet();
+  
+  // Use client methods
+  const handleUpload = async (files: File[]) => {
+    const result = await client.createDeposit({
+      payer: publicKey,
+      file: files,
+      durationDays: 30,
+      signTransaction,
+    });
+  };
+}
+```
+
+## Environment Types
+
+The SDK supports three environments:
+
+<CodeGroup>
+
+```typescript Testnet
+const client = useUpload(Environment.testnet);
+```
+
+```typescript Devnet
+const client = useUpload(Environment.devnet);
+```
+
+```typescript Mainnet
+const client = useUpload(Environment.mainnet);
+```
+
+</CodeGroup>
+
+<Warning>
+  Always use `testnet` or `devnet` for development. Only use `mainnet` for production with real SOL.
+</Warning>
+
+## Core Methods
+
+The SDK provides four main methods:
+
+<CardGroup cols={2}>
+  <Card title="estimateStorageCost" icon="calculator" href="/sdk/deposit#estimate-cost">
+    Calculate upload costs before committing
+  </Card>
+  <Card title="createDeposit" icon="upload" href="/sdk/deposit#create-deposit">
+    Upload files and create onchain deposit
+  </Card>
+  <Card title="getUserUploadHistory" icon="clock-rotate-left" href="/sdk/upload-history">
+    Fetch all uploads for a wallet address
+  </Card>
+  <Card title="renewStorageDuration" icon="rotate" href="/sdk/renewal">
+    Extend storage duration for existing uploads
+  </Card>
+</CardGroup>
+
+## Type Safety
+
+The SDK is type-safe. Import types as needed:
+
+```typescript
+import type {
+  Environment,
+  UploadResult,
+  UploadHistoryResponse,
+  DepositFile,
+  RenewalResult,
+} from 'storacha-sol';
+```
+
+## Configuration
+
+### Network Selection
+
+The environment parameter determines which Solana network to use:
+
+- `devnet`: Local development
+- `testnet`: Public testing with test SOL
+- `mainnet`: Production with real SOL
+
+## Common Patterns
+
+### Checking Balance Before Upload
+
+```typescript
+import { useUpload } from 'storacha-sol';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+const client = useUpload(Environment.testnet);
+const { publicKey } = useWallet();
+const { connection } = useConnection();
+
+// Get cost estimate
+const estimate = client.estimateStorageCost(files, durationInSeconds);
+
+// Get wallet balance
+const balance = await connection.getBalance(publicKey);
+const balanceInSOL = balance / LAMPORTS_PER_SOL;
+
+// Check if user has enough SOL
+if (balanceInSOL < estimate.sol) {
+  alert('Insufficient balance!');
+  return;
+}
+
+// Proceed with upload
+const result = await client.createDeposit({...});
+```
+
+### Toast Notifications
+
+```typescript
+import { toast } from 'sonner';
+
+const handleUpload = async () => {
+  const toastId = toast.loading('Uploading files...');
+  
+  try {
+    const result = await client.createDeposit({...});
+    
+    if (result.success) {
+      toast.success('Upload successful!', { id: toastId });
+    } else {
+      toast.error(result.error, { id: toastId });
+    }
+  } catch (error) {
+    toast.error('Upload failed', { id: toastId });
+  }
+};
+```
+
+### Email Notifications (Optional)
+
+```typescript
+const result = await client.createDeposit({
+  file,
+  durationDays: 30,
+  payer: publicKey,
+  userEmail: 'user@example.com', // Optional: for expiration warnings
+  signTransaction,
+});
+```
+
+## Vite Configuration
+
+If using Vite, you'll need Node.js polyfills for the browser:
+
+```bash
+pnpm add -D vite-plugin-node-polyfills
+```
+
+Then update your `vite.config.ts`:
+
+```typescript
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    nodePolyfills(),
+    // ...other plugins
+  ],
+  define: {
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
+    },
+  },
+})
+```
+
+<Info>
+  This prevents `ReferenceError: process is not defined` and provides necessary Node.js polyfills for Solana Web3.js to work in the browser.
+</Info>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Upload Files" icon="cloud-arrow-up" href="/sdk/deposit">
+    Learn how to upload files and create deposits
+  </Card>
+  <Card title="View History" icon="list" href="/sdk/upload-history">
+    Fetch and display upload history
+  </Card>
+  <Card title="Renew Storage" icon="arrows-rotate" href="/sdk/renewal">
+    Extend storage duration
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/storage-payments">
+    Understand how Keep works
+  </Card>
+</CardGroup>
+
+## Support
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/seetadev/Storacha-Solana-SDK/issues">
+    Report bugs or request features
+  </Card>
+  <Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/storacha-sol">
+    View on npm
+  </Card>
+</CardGroup>

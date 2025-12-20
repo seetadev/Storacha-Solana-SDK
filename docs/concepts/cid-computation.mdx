@@ -1,0 +1,262 @@
+---
+title: 'Content Identifiers'
+description: 'How Keep uses CIDs to bind payments to specific content'
+---
+
+<Tip>
+  **TL;DR**: Keep computes your file's CID (content hash) before you pay. This prevents uploading without payment or substituting different content after paying. Think of it as a cryptographic receipt - you're committing to pay for *this specific content*, not just "some files."
+</Tip>
+
+## What is a CID?
+
+A **Content Identifier (CID)** is a cryptographic hash that uniquely identifies content in IPFS. The same content always produces the same CID, enabling verifiable, immutable storage.
+
+Example: `bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi`
+
+## Why CID Matters in Keep
+
+In traditional cloud storage, you pay for space regardless of what you store. With Keep, **you pay for specific content** identified by its CID. This creates a binding between your payment and your data.
+
+### The Problem We're Solving
+
+Without CID pre-computation, we run into a couple of issues:
+- **Upload without paying**: Store files on IPFS first, then never actually pay
+- **Pay once, upload many**: Reuse a single payment for multiple different files
+- **Content substitution**: Pay for one file, upload something completely different
+- **No verification**: Server can't prove the payment matches the content stored
+
+Solving this required implementing CID pre-computation, which is particularly complex for multi-file uploads.
+
+### How we hacked this
+
+We compute the CID **before** creating the blockchain deposit, making it a **cryptographic commitment**:
+
+```
+User selects files
+     ↓
+Server receives files
+     ↓
+Server computes CID
+     ↓
+CID is included in blockchain deposit transaction
+     ↓
+User pays SOL (locked to this specific CID)
+     ↓
+Files uploaded to Storacha
+     ↓
+Server verifies uploaded CID matches committed CID
+```
+
+If the CID doesn't match, the upload is rejected.
+
+## How It Works
+
+### 1. CID Computation
+
+When you upload files, the server:
+
+```typescript
+// Creates a map of filename → file bytes
+const fileMap: Record<string, Uint8Array> = {
+  'file1.jpg': Uint8Array.from(file1Buffer),
+  'file2.pdf': Uint8Array.from(file2Buffer),
+};
+
+// Computes IPFS-compatible CID
+const cid = await computeCID(fileMap);
+// Returns: "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+```
+
+This uses the same algorithm as IPFS:
+- **SHA-256** hashing
+- **dagPB** codec (IPFS directory structure)
+- **CAR** (Content Addressable aRchive) format
+
+### 2. CID in Blockchain Deposit
+
+The CID becomes part of your on-chain deposit:
+
+```typescript
+// Create deposit instruction with CID
+const instruction = createDepositInstruction({
+  publicKey: userWallet,
+  contentCID: cid,  // ← Locked to this CID
+  fileSize: totalBytes,
+  durationDays: 30,
+  depositAmount: costInSOL,
+});
+
+// Creates a unique deposit account derived from:
+// - User's wallet address
+// - SHA-256 hash of the CID
+// - Deposit seed constant
+```
+
+This means:
+- Same user + same CID = same deposit account
+- Different CID = different deposit account
+- Can't reuse deposits for different content
+
+### 3. Verification on Upload
+
+When files are actually stored on Storacha:
+
+```typescript
+// Upload file to IPFS
+const uploadedCID = await client.uploadFile(files);
+
+// Verify it matches
+if (uploadedCID !== precomputedCID) {
+  throw new Error('CID mismatch! Upload rejected.');
+}
+```
+
+This double-check ensures:
+- You uploaded the exact content you paid for
+- No tampering occurred
+- Payment is bound to verified content
+
+## Benefits
+
+<CardGroup cols={2}>
+  <Card title="Payment Integrity" icon="shield-check">
+    Deposits are locked to specific content, preventing fraud
+  </Card>
+  <Card title="Content Verification" icon="fingerprint">
+    Server verifies uploaded content matches committed CID
+  </Card>
+  <Card title="Deterministic Accounts" icon="key">
+    Same content produces same on-chain deposit account
+  </Card>
+  <Card title="Renewal Capability" icon="rotate">
+    CID serves as stable identifier for storage renewals
+  </Card>
+</CardGroup>
+
+## Multi-File Uploads
+
+For directories with multiple files, Keep generates a **root CID** that represents all files:
+
+```
+Root CID (bafybei...)
+├── file1.jpg (bafybei...)
+├── file2.pdf (bafybei...)
+└── file3.txt (bafybei...)
+```
+
+Each file has its own CID, but the directory has a **root CID** that cryptographically links to all files. This is what gets stored in the blockchain deposit.
+
+You can access:
+- Whole directory: `ipfs://{rootCID}/`
+- Individual file: `ipfs://{rootCID}/file1.jpg`
+- File by its own CID: `ipfs://{fileCID}`
+
+## Security Properties
+
+### Prevents Double-Spending
+
+```typescript
+// First deposit for CID "bafyabc..."
+const deposit1 = createDeposit({ cid: "bafyabc..." }); // ✅ Success
+
+// Try to create another deposit for same CID
+const deposit2 = createDeposit({ cid: "bafyabc..." }); // ❌ Fails
+// Same user + same CID = same PDA = already exists
+```
+
+### Prevents Content Substitution
+
+```typescript
+// User commits to uploading cat.jpg (CID: bafyabc...)
+await createDeposit({ cid: "bafyabc..." });
+
+// User tries to upload dog.jpg instead
+await uploadToStoracha(dogFile);
+// Server computes CID: bafyxyz...
+// Verification fails: bafyxyz !== bafyabc
+// Upload rejected ❌
+```
+
+### Enables Renewals
+
+```typescript
+// Original upload: CID "bafyabc...", expires in 30 days
+
+// Later, renew storage for same CID
+await renewStorageDuration({
+  cid: "bafyabc...",  // Find deposit by CID
+  additionalDays: 30,
+});
+
+// Database lookup: WHERE contentCid = "bafyabc..."
+// Extends expiration date ✅
+```
+
+## Advanced Details
+
+<AccordionGroup>
+  <Accordion title="CID Format & Structure">
+    Keep uses **CIDv1** with base32 encoding:
+
+    ```
+    bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
+    │   │                                                      │
+    │   └─ base32 encoded hash                                │
+    └─ multibase prefix (b = base32)
+    ```
+
+    Breaking it down:
+    - **b**: base32 encoding
+    - **afy**: CID version 1
+    - **bei...**: SHA-256 hash of content
+  </Accordion>
+
+  <Accordion title="On-Chain Account Derivation">
+    Deposit accounts are deterministically derived using:
+
+    ```typescript
+    const cidHash = sha256(cid);  // Hash the CID string
+    const seeds = [
+      "deposit",           // Constant seed
+      userPublicKey,       // User's wallet
+      cidHash              // Hash of CID
+    ];
+
+    const [depositPDA] = PublicKey.findProgramAddressSync(seeds, programId);
+    ```
+
+    This creates an address that:
+    - Is unique per user per content
+    - Can be found without storing addresses
+    - Prevents duplicate deposits
+  </Accordion>
+
+  <Accordion title="Why Server-Side Computation?">
+    You might wonder: why not compute CID in the browser?
+
+    **Reasons for server-side:**
+    1. **File Size**: Large files could exhaust browser memory
+    2. **Consistency**: Server ensures correct IPFS compatibility
+    3. **Performance**: Server has more resources for hashing
+    4. **Immediate Verification**: Server validates before blockchain transaction
+
+    **Tradeoff**: This requires trusting the server's CID computation. Future versions could add browser-side verification for transparency.
+  </Accordion>
+</AccordionGroup>
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="IPFS CID Spec" icon="book" href="https://docs.ipfs.tech/concepts/content-addressing/">
+    Deep dive into content addressing
+  </Card>
+  <Card title="CAR Format" icon="file-archive" href="https://ipld.io/specs/transport/car/">
+    Content Addressable aRchive format
+  </Card>
+  <Card title="dagPB Codec" icon="diagram-project" href="https://ipld.io/specs/codecs/dag-pb/">
+    IPFS directory structure
+  </Card>
+  <Card title="Solana PDAs" icon="key" href="https://solana.com/docs/core/pda">
+    Program Derived Addresses
+  </Card>
+</CardGroup>

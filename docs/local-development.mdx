@@ -1,0 +1,138 @@
+---
+title: 'Local Development'
+description: 'Set up Keep locally for contributing'
+---
+
+<Info>
+  This guide is for contributors who want to run Keep locally for development. If you just want to use Keep, check out the [Quickstart](/quickstart) guide.
+</Info>
+
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- [Rust & Cargo](https://www.rust-lang.org/tools/install)
+- [Solana CLI](https://solana.com/docs/intro/installation) (use Anza installer)
+- [Anchor Framework](https://www.anchor-lang.com/docs/installation)
+- [Node.js >= 20](https://nodejs.org/en/)
+- [pnpm](https://pnpm.io/installation)
+
+<Warning>
+  Install Solana CLI using the Anza installer to avoid SSL/archive issues:
+  ```bash
+  sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+  ```
+</Warning>
+
+## Clone Repository
+
+```bash
+git clone https://github.com/seetadev/Storacha-Solana-SDK.git
+cd Storacha-Solana-SDK
+pnpm install
+```
+
+## Start Local Validator
+
+```bash
+cd solana-programs
+
+# On macOS, prevent resource fork issues
+export COPYFILE_DISABLE=true
+
+# Remove old ledgers if needed
+rm -rf test-ledger
+
+# Start validator
+solana-test-validator
+```
+
+## Deploy Solana Program
+
+In a new terminal:
+
+```bash
+cd solana-programs
+anchor build
+anchor deploy
+```
+
+## Configure Server
+
+```bash
+cd server
+cp .env.example .env
+
+# Generate admin keypair
+./scripts/generate-admin-key.sh
+```
+
+Edit `.env` and fill in:
+- Resend API key ([get one here](https://resend.com))
+- Database credentials
+- Storacha keys
+- Admin keypair from script output
+
+## Start Development Servers
+
+<CodeGroup>
+
+```bash Server
+cd server
+pnpm dev
+```
+
+```bash UI
+cd ui
+pnpm dev
+```
+
+```bash SDK
+cd sdk
+pnpm build
+```
+
+</CodeGroup>
+
+## Get Test SOL
+
+```bash
+solana airdrop 2
+```
+
+<Info>
+  If the airdrop fails due to rate limits, wait a few seconds and retry.
+</Info>
+
+## Verify Installation
+
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Connect your wallet (make sure it's on testnet)
+3. Try uploading a test file
+
+<Check>
+  If you can successfully upload a file, your local setup is complete!
+</Check>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Solana test validator fails to start">
+    - Ensure you used the Anza installer
+    - Remove old ledgers: `rm -rf test-ledger`
+    - Set `COPYFILE_DISABLE=true` on macOS
+  </Accordion>
+  
+  <Accordion title="Cannot connect wallet">
+    - Make sure your wallet is set to testnet/devnet
+    - Check that the test validator is running
+    - Verify you have SOL in your wallet
+  </Accordion>
+  
+  <Accordion title="Transaction fails">
+    - Ensure you have enough SOL for the transaction
+    - Check that the Solana program is deployed
+    - Verify the server is running
+  </Accordion>
+</AccordionGroup>
