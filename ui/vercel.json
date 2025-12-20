@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/docs/:path*",
-      "destination": "https://keep-docs.vercel.app/docs/:path*"
+      "destination": "https://meje.mintlify.app/docs/:path*"
     },
     {
       "source": "/((?!assets/|.*\\..*).*)",
