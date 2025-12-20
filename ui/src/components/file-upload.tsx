@@ -66,7 +66,7 @@ export const FileUpload = ({
       const newErrors: Array<string> = []
 
       if (rejectedFiles.length > 0) {
-        rejectedFiles.forEach(({ file, errors }) => {
+        rejectedFiles.forEach(({ file }) => {
           errors.forEach((error: any) => {
             if (error.code === 'file-too-large') {
               newErrors.push(
