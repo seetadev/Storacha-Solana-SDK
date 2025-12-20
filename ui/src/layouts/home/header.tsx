@@ -1,5 +1,12 @@
 import { ConnectWallet } from '@/components/connect-wallet'
-import { Box, Button, Container, HStack, Text } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  Link as ChakraLink,
+  Container,
+  HStack,
+  Text,
+} from '@chakra-ui/react'
 import {
   GithubLogoIcon,
   LinkBreakIcon,
@@ -61,7 +68,7 @@ export const HomeHeader = () => {
             </Link>
 
             <HStack spacing="1.5em" alignItems="center">
-              <Link to="/">
+              <ChakraLink href="https://meje.mintlify.app" target="__blank">
                 <Text
                   fontSize="var(--font-size-sm)"
                   fontWeight="500"
@@ -72,7 +79,7 @@ export const HomeHeader = () => {
                 >
                   Documentation
                 </Text>
-              </Link>
+              </ChakraLink>
 
               <HStack spacing="0.8em">
                 <Button

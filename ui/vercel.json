@@ -1,12 +1,3 @@
 {
-  "rewrites": [
-    {
-      "source": "/docs/:path*",
-      "destination": "https://meje.mintlify.app/docs/:path*"
-    },
-    {
-      "source": "/((?!assets/|.*\\..*).*)",
-      "destination": "/index.html"
-    }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
