@@ -1,0 +1,380 @@
+---
+title: 'Create Deposit'
+description: 'Upload files and create onchain deposits'
+---
+
+## Overview
+
+The `createDeposit` method uploads files to decentralized storage and creates a payment record on the Solana blockchain.
+
+## Estimate Cost First
+
+Before uploading, get a cost estimate:
+
+```typescript
+const estimate = await client.estimateStorageCost(files, durationDays);
+
+console.log(`Cost: ${estimate.costInSOL} SOL (~$${estimate.costInUSD})`);
+console.log(`Total size: ${estimate.totalSizeInMB} MB`);
+```
+
+### Response
+
+```typescript
+{
+  costInSOL: number;      // Cost in SOL
+  costInUSD: number;      // Approximate USD value
+  totalSizeInMB: number;  // Total file size
+  durationDays: number;   // Storage duration
+}
+```
+
+<Info>
+  Always estimate costs before uploading to avoid transaction failures due to insufficient balance.
+</Info>
+
+## Create Deposit
+
+Upload files and create a deposit on-chain:
+
+```typescript
+const result = await client.createDeposit({
+  file,                    // File or File[]
+  durationDays: 30,        // Storage duration
+  payer: publicKey,        // Wallet public key
+  userEmail: 'user@example.com', // Optional: for expiration warnings
+  signTransaction: async (tx) => {
+    return await signTransaction(tx);
+  },
+});
+```
+
+### Parameters
+
+<ParamField path="file" type="File | File[]" required>
+  Single file or array of files to upload
+</ParamField>
+
+<ParamField path="durationDays" type="number" required>
+  Storage duration in days (minimum: 7)
+</ParamField>
+
+<ParamField path="payer" type="PublicKey" required>
+  Solana wallet public key for payment
+</ParamField>
+
+<ParamField path="signTransaction" type="Function" required>
+  Async function to sign the transaction
+  
+  ```typescript
+  async (tx: Transaction) => Promise<Transaction>
+  ```
+</ParamField>
+
+<ParamField path="userEmail" type="string">
+  Optional email for expiration reminders (sent 7 days before)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the upload succeeded
+</ResponseField>
+
+<ResponseField name="cid" type="string">
+  Content identifier for the uploaded file(s)
+</ResponseField>
+
+<ResponseField name="signature" type="string">
+  Solana transaction signature
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  IPFS gateway URL to access the file
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable success message
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (only if success is false)
+</ResponseField>
+
+## Complete Example
+
+```typescript
+import { useDeposit } from 'storacha-sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+function UploadComponent() {
+  const client = useDeposit('testnet');
+  const { publicKey, signTransaction } = useWallet();
+  const [files, setFiles] = useState<File[]>([]);
+  const [duration, setDuration] = useState(30);
+  const [email, setEmail] = useState('');
+
+  const handleUpload = async () => {
+    if (!publicKey || !signTransaction) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    // 1. Estimate cost
+    const estimate = await client.estimateStorageCost(files, duration);
+    console.log(`Estimated cost: ${estimate.costInSOL} SOL`);
+
+    // 2. Check balance
+    const balance = await connection.getBalance(publicKey);
+    if (balance < estimate.costInSOL * LAMPORTS_PER_SOL) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    // 3. Create deposit
+    const toastId = toast.loading('Uploading to IPFS...');
+
+    try {
+      const result = await client.createDeposit({
+        file: files.length === 1 ? files[0] : files,
+        durationDays: duration,
+        payer: publicKey,
+        userEmail: email || undefined,
+        signTransaction: async (tx) => {
+          toast.loading('Please sign the transaction...', { id: toastId });
+          return await signTransaction(tx);
+        },
+      });
+
+      if (result.success) {
+        toast.success(
+          `Upload successful! CID: ${result.cid}`,
+          { id: toastId, duration: 5000 }
+        );
+        
+        console.log('View file:', result.url);
+        console.log('Transaction:', result.signature);
+      } else {
+        toast.error(result.error, { id: toastId });
+      }
+    } catch (error) {
+      toast.error('Upload failed', { id: toastId });
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <input 
+        type="file" 
+        multiple 
+        onChange={(e) => setFiles(Array.from(e.target.files || []))} 
+      />
+      <input
+        type="number"
+        value={duration}
+        onChange={(e) => setDuration(Number(e.target.value))}
+        min={7}
+      />
+      <input
+        type="email"
+        placeholder="Email (optional)"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <button onClick={handleUpload}>
+        Upload
+      </button>
+    </div>
+  );
+}
+```
+
+## Single vs Multiple Files
+
+### Single File
+
+```typescript
+const file = new File(['content'], 'document.pdf');
+
+const result = await client.createDeposit({
+  file,  // Single File object
+  durationDays: 30,
+  payer: publicKey,
+  signTransaction,
+});
+
+// Access at: result.url (direct file link)
+```
+
+### Multiple Files
+
+```typescript
+const files = [
+  new File(['content1'], 'file1.txt'),
+  new File(['content2'], 'file2.txt'),
+];
+
+const result = await client.createDeposit({
+  file: files,  // File array
+  durationDays: 30,
+  payer: publicKey,
+  signTransaction,
+});
+
+// Access at:
+// result.url             → Directory listing
+// result.url/file1.txt   → Individual file
+```
+
+<Note>
+  Multiple files are packaged as a directory with a single root CID. See [CID Computation](/concepts/cid-computation) for details.
+</Note>
+
+## Error Handling
+
+Common errors and solutions:
+
+<AccordionGroup>
+  <Accordion title="Insufficient Balance">
+    **Error:** Transaction fails due to insufficient SOL
+    
+    **Solution:** Check balance before uploading using `estimateStorageCost`
+    
+    ```typescript
+    const estimate = await client.estimateStorageCost(files, duration);
+    const balance = await connection.getBalance(publicKey);
+    
+    if (balance / LAMPORTS_PER_SOL < estimate.costInSOL) {
+      alert('You need more SOL');
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="User Rejected Transaction">
+    **Error:** User cancels the wallet signature request
+    
+    **Solution:** Catch the error and show appropriate message
+    
+    ```typescript
+    try {
+      const result = await client.createDeposit({...});
+    } catch (error) {
+      if (error.message.includes('User rejected')) {
+        toast.info('Transaction cancelled');
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Network Error">
+    **Error:** Failed to upload to IPFS or confirm transaction
+    
+    **Solution:** Implement retry logic or ask user to try again
+    
+    ```typescript
+    const maxRetries = 3;
+    let attempt = 0;
+    
+    while (attempt < maxRetries) {
+      try {
+        const result = await client.createDeposit({...});
+        if (result.success) break;
+      } catch (error) {
+        attempt++;
+        if (attempt === maxRetries) throw error;
+        await new Promise(r => setTimeout(r, 2000)); // Wait 2s
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="File Too Large">
+    **Error:** Browser runs out of memory processing large files
+    
+    **Solution:** Limit file size or implement chunked uploads
+    
+    ```typescript
+    const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
+    
+    if (file.size > MAX_SIZE) {
+      toast.error('File too large. Max 100 MB');
+      return;
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Transaction Flow
+
+What happens when you call `createDeposit`:
+
+<Steps>
+  <Step title="Client-Side CID Computation">
+    Files are processed in the browser to compute the CID
+  </Step>
+  
+  <Step title="Upload to IPFS">
+    Files are uploaded to Storacha's IPFS nodes
+  </Step>
+  
+  <Step title="Create Transaction">
+    A Solana transaction is built with payment details
+  </Step>
+  
+  <Step title="Sign Transaction">
+    Your `signTransaction` callback is invoked
+  </Step>
+  
+  <Step title="Submit to Network">
+    Transaction is submitted to Solana blockchain
+  </Step>
+  
+  <Step title="Wait for Confirmation">
+    SDK waits for transaction confirmation
+  </Step>
+  
+  <Step title="Server Processing">
+    Server receives deposit event and records it in the database
+  </Step>
+  
+  <Step title="Return Result">
+    CID, signature, and URL are returned to your app
+  </Step>
+</Steps>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Always Estimate First" icon="calculator">
+    Check costs before uploading to avoid failed transactions
+  </Card>
+  <Card title="Show Progress" icon="spinner">
+    Use loading states and toasts for better UX
+  </Card>
+  <Card title="Handle Errors Gracefully" icon="triangle-exclamation">
+    Provide clear error messages to users
+  </Card>
+  <Card title="Verify Balance" icon="wallet">
+    Ensure sufficient SOL before initiating upload
+  </Card>
+</CardGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Upload History" icon="clock" href="/sdk/upload-history">
+    View past uploads
+  </Card>
+  <Card title="Storage Renewal" icon="rotate" href="/sdk/renewal">
+    Extend storage duration
+  </Card>
+  <Card title="CID Computation" icon="hashtag" href="/concepts/cid-computation">
+    How CIDs are computed
+  </Card>
+  <Card title="Storage Payments" icon="coins" href="/concepts/storage-payments">
+    Payment mechanics
+  </Card>
+</CardGroup>

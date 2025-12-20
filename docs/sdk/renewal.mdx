@@ -1,0 +1,416 @@
+---
+title: 'Renew Storage'
+description: 'Extend storage duration for existing uploads'
+---
+
+## Overview
+
+The renewal methods allow you to extend the storage duration of existing uploads before they expire, maintaining the same CID and file accessibility.
+
+## Get Renewal Cost
+
+Before renewing, get a cost quote:
+
+```typescript
+const quote = await client.getStorageRenewalCost(cid, additionalDays);
+
+console.log('Current expiration:', quote.currentExpirationDate);
+console.log('New expiration:', quote.newExpirationDate);
+console.log('Cost:', quote.costInSOL, 'SOL');
+console.log('USD estimate:', quote.costInUSD);
+```
+
+### Parameters
+
+<ParamField path="cid" type="string" required>
+  Content identifier of the file to renew
+</ParamField>
+
+<ParamField path="additionalDays" type="number" required>
+  Number of days to add to current expiration (minimum: 7)
+</ParamField>
+
+### Response
+
+```typescript
+{
+  cid: string;
+  currentExpirationDate: string;    // ISO 8601 date
+  newExpirationDate: string;        // ISO 8601 date
+  additionalDays: number;
+  costInSOL: number;
+  costInUSD: number;
+  fileSize: number;                 // Size in bytes
+}
+```
+
+## Renew Storage Duration
+
+Execute the renewal and pay for the extension:
+
+```typescript
+const result = await client.renewStorageDuration({
+  cid,
+  additionalDays: 30,
+  payer: publicKey,
+  signTransaction: async (tx) => {
+    return await signTransaction(tx);
+  },
+});
+```
+
+### Parameters
+
+<ParamField path="cid" type="string" required>
+  Content identifier of the file to renew
+</ParamField>
+
+<ParamField path="additionalDays" type="number" required>
+  Number of days to add (minimum: 7)
+</ParamField>
+
+<ParamField path="payer" type="PublicKey" required>
+  Solana wallet public key for payment
+</ParamField>
+
+<ParamField path="signTransaction" type="Function" required>
+  Async function to sign the renewal transaction
+  
+  ```typescript
+  async (tx: Transaction) => Promise<Transaction>
+  ```
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the renewal succeeded
+</ResponseField>
+
+<ResponseField name="cid" type="string">
+  Content identifier (unchanged)
+</ResponseField>
+
+<ResponseField name="signature" type="string">
+  Solana transaction signature
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  IPFS gateway URL (same as before)
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable success message
+</ResponseField>
+
+<ResponseField name="newExpirationDate" type="string">
+  Updated expiration date (ISO 8601)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (only if success is false)
+</ResponseField>
+
+## Complete Example
+
+```typescript
+import { useDeposit } from 'storacha-sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+function RenewalComponent({ cid }: { cid: string }) {
+  const client = useDeposit('testnet');
+  const { publicKey, signTransaction } = useWallet();
+  const [additionalDays, setAdditionalDays] = useState(30);
+  const [quote, setQuote] = useState(null);
+
+  const getQuote = async () => {
+    try {
+      const cost = await client.getStorageRenewalCost(cid, additionalDays);
+      setQuote(cost);
+    } catch (error) {
+      toast.error('Failed to get quote');
+      console.error(error);
+    }
+  };
+
+  const handleRenewal = async () => {
+    if (!publicKey || !signTransaction) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    const toastId = toast.loading('Processing renewal...');
+
+    try {
+      const result = await client.renewStorageDuration({
+        cid,
+        additionalDays,
+        payer: publicKey,
+        signTransaction: async (tx) => {
+          toast.loading('Please sign the transaction...', { id: toastId });
+          return await signTransaction(tx);
+        },
+      });
+
+      if (result.success) {
+        toast.success(
+          `Storage renewed! New expiration: ${new Date(result.newExpirationDate).toLocaleDateString()}`,
+          { id: toastId, duration: 5000 }
+        );
+      } else {
+        toast.error(result.error, { id: toastId });
+      }
+    } catch (error) {
+      toast.error('Renewal failed', { id: toastId });
+      console.error(error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Renew Storage</h2>
+      <p>CID: {cid}</p>
+
+      <label>
+        Additional Days:
+        <input
+          type="number"
+          value={additionalDays}
+          onChange={(e) => setAdditionalDays(Number(e.target.value))}
+          min={7}
+        />
+      </label>
+
+      <button onClick={getQuote}>Get Quote</button>
+
+      {quote && (
+        <div>
+          <p>Current expiration: {new Date(quote.currentExpirationDate).toLocaleDateString()}</p>
+          <p>New expiration: {new Date(quote.newExpirationDate).toLocaleDateString()}</p>
+          <p>Cost: {quote.costInSOL.toFixed(4)} SOL (~${quote.costInUSD.toFixed(2)})</p>
+          <button onClick={handleRenewal}>Renew Storage</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## With Duration Presets
+
+Offer common renewal durations:
+
+```typescript
+const PRESET_DURATIONS = [
+  { label: '7 days', days: 7 },
+  { label: '30 days', days: 30 },
+  { label: '90 days', days: 90 },
+  { label: '180 days', days: 180 },
+];
+
+function DurationSelector({ onSelect }: { onSelect: (days: number) => void }) {
+  return (
+    <div>
+      {PRESET_DURATIONS.map((preset) => (
+        <button
+          key={preset.days}
+          onClick={() => onSelect(preset.days)}
+        >
+          {preset.label}
+        </button>
+      ))}
+      <input
+        type="number"
+        placeholder="Custom days"
+        onChange={(e) => onSelect(Number(e.target.value))}
+        min={7}
+      />
+    </div>
+  );
+}
+```
+
+## Balance Verification
+
+Check if user has enough SOL before renewing:
+
+```typescript
+const quote = await client.getStorageRenewalCost(cid, days);
+
+// Get wallet balance
+const balance = await connection.getBalance(publicKey);
+const balanceInSOL = balance / LAMPORTS_PER_SOL;
+
+// Check if sufficient
+if (balanceInSOL < quote.costInSOL) {
+  toast.error(
+    `Insufficient balance. Need ${quote.costInSOL.toFixed(4)} SOL, have ${balanceInSOL.toFixed(4)} SOL`
+  );
+  return;
+}
+
+// Proceed with renewal
+const result = await client.renewStorageDuration({...});
+```
+
+## Error Handling
+
+Common errors and solutions:
+
+<AccordionGroup>
+  <Accordion title="File Not Found">
+    **Error:** CID doesn't exist in the database
+    
+    **Solution:** Verify the CID is correct and belongs to the connected wallet
+    
+    ```typescript
+    try {
+      const quote = await client.getStorageRenewalCost(cid, days);
+    } catch (error) {
+      if (error.message.includes('not found')) {
+        toast.error('File not found. Please check the CID.');
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Already Deleted">
+    **Error:** Cannot renew a file that's already been deleted
+    
+    **Solution:** Check deletion status before attempting renewal
+    
+    ```typescript
+    const history = await client.getUserUploadHistory(address);
+    const file = history.userHistory.find(f => f.cid === cid);
+    
+    if (file.deletionStatus === 'deleted') {
+      toast.error('This file has already been deleted and cannot be renewed');
+      return;
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Insufficient Balance">
+    **Error:** Not enough SOL to pay for renewal
+    
+    **Solution:** Verify balance before renewal (see Balance Verification above)
+  </Accordion>
+
+  <Accordion title="Transaction Failed">
+    **Error:** Blockchain transaction failed or was rejected
+    
+    **Solution:** Check network status and retry
+    
+    ```typescript
+    try {
+      const result = await client.renewStorageDuration({...});
+    } catch (error) {
+      if (error.message.includes('rejected')) {
+        toast.info('Transaction cancelled');
+      } else {
+        toast.error('Transaction failed. Please try again.');
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Multiple Renewals
+
+Renew multiple files in sequence:
+
+```typescript
+async function renewMultipleFiles(cids: string[], days: number) {
+  const results = [];
+
+  for (const cid of cids) {
+    try {
+      const result = await client.renewStorageDuration({
+        cid,
+        additionalDays: days,
+        payer: publicKey,
+        signTransaction,
+      });
+
+      results.push({ cid, success: result.success });
+    } catch (error) {
+      results.push({ cid, success: false, error });
+    }
+  }
+
+  return results;
+}
+
+// Usage
+const cids = ['bafy...', 'bafy...', 'bafy...'];
+const results = await renewMultipleFiles(cids, 30);
+
+console.log(`Renewed ${results.filter(r => r.success).length} of ${cids.length} files`);
+```
+
+<Warning>
+  Each renewal is a separate blockchain transaction. Renewing multiple files will require multiple wallet signatures and transaction fees.
+</Warning>
+
+## Renewal History
+
+Track renewal transactions:
+
+```typescript
+// After renewal
+const result = await client.renewStorageDuration({...});
+
+if (result.success) {
+  // Save renewal record
+  const renewalRecord = {
+    cid: result.cid,
+    transactionSignature: result.signature,
+    additionalDays,
+    newExpirationDate: result.newExpirationDate,
+    cost: quote.costInSOL,
+    timestamp: new Date().toISOString(),
+  };
+
+  // Store in local state or database
+  localStorage.setItem(
+    `renewal-${cid}-${Date.now()}`,
+    JSON.stringify(renewalRecord)
+  );
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Get Quote First" icon="calculator">
+    Always show cost estimate before renewal
+  </Card>
+  <Card title="Verify Balance" icon="wallet">
+    Check sufficient SOL before proceeding
+  </Card>
+  <Card title="Show Expiration Dates" icon="calendar">
+    Display both current and new expiration clearly
+  </Card>
+  <Card title="Handle Errors" icon="triangle-exclamation">
+    Provide clear feedback for all error cases
+  </Card>
+</CardGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Renewal Concept" icon="book" href="/concepts/renewal">
+    Understand renewal mechanics
+  </Card>
+  <Card title="Upload History" icon="clock" href="/sdk/upload-history">
+    Find files to renew
+  </Card>
+  <Card title="Create Deposit" icon="upload" href="/sdk/deposit">
+    Initial file uploads
+  </Card>
+  <Card title="Storage Payments" icon="coins" href="/concepts/storage-payments">
+    Payment flow
+  </Card>
+</CardGroup>
