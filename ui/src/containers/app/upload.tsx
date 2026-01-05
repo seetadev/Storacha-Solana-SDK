@@ -89,7 +89,7 @@ export const Upload = () => {
     }
   }
 
-  const usdEquivalent = solPrice ? totalCost * solPrice : 0
+  const usdEquivalent = solPrice ? totalCost * Number(solPrice) : 0
   const hasInsufficientBalance = balance !== null && totalCost > balance
   const isUploadDisabled =
     !isAuthenticated || state === 'uploading' || hasInsufficientBalance
@@ -156,7 +156,7 @@ export const Upload = () => {
                   >
                     ≈ $
                     {balance !== null && solPrice
-                      ? (balance * solPrice).toFixed(2)
+                      ? (balance * Number(solPrice)).toFixed(2)
                       : '--'}{' '}
                     USD
                   </Text>

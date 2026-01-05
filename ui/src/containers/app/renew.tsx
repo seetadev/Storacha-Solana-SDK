@@ -144,7 +144,6 @@ export const Renew = () => {
     )
   }
 
-  /* eslint-disable */
   if (!cid) {
     return (
       <VStack spacing="2em" align="stretch">
@@ -492,7 +491,7 @@ export const Renew = () => {
                 </Text>
                 <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
                   {solPrice
-                    ? `≈ $${(costInSOL * solPrice).toFixed(2)} USD`
+                    ? `≈ $${(costInSOL * Number(solPrice)).toFixed(2)} USD`
                     : ''}
                 </Text>
               </VStack>
