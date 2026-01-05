@@ -27,4 +27,16 @@ export default defineConfig({
       NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
     },
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+  },
 })
