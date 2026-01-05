@@ -17,16 +17,17 @@ import { QuoteOutput } from "../types/StorachaTypes.js";
 import { computeCID } from "../utils/compute-cid.js";
 import {
   DAY_TIME_IN_SECONDS,
-  getAmountInLamports,
+  getAmountInLamportsFromUSD,
   getAmountInSOL,
   getNewStorageExpirationDate,
   ONE_BILLION_LAMPORTS,
 } from "../utils/constant.js";
 import { getExpiryDate } from "../utils/functions.js";
 import {
+  getPricingConfig,
   getQuoteForFileUpload,
   initStorachaClient,
-} from "../utils/Storacha.js";
+} from "../utils/storacha.js";
 import {
   createDepositTransaction,
   createStorageRenewalTransaction,
@@ -216,9 +217,23 @@ export const deposit = async (req: Request, res: Response) => {
 
     const { publicKey, duration, userEmail } = req.body;
     const durationInSeconds = parseInt(duration as string, 10);
-    const ratePerBytePerDay = 1000;
+    const { ratePerBytePerDay } = await getPricingConfig();
+    const solPrice = await getSolPrice();
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS);
-    const amountInLamports = totalSize * duration_days * ratePerBytePerDay;
+    const amountInLamports = getAmountInLamportsFromUSD(
+      totalSize,
+      ratePerBytePerDay,
+      duration_days,
+      solPrice,
+    );
+
+    console.log("Deposit calculation:", {
+      totalSize,
+      ratePerBytePerDay,
+      duration_days,
+      solPrice,
+      amountInLamports,
+    });
 
     const computedCID = await computeCID(fileMap);
 
@@ -295,7 +310,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       sizeInBytes: size,
     });
     return res.status(200).json({
-      quoteObject: QuoteObject,
+      quote: QuoteObject,
       success: true,
     });
   } catch (err) {
@@ -410,13 +425,13 @@ export const getStorageRenewalCost = async (req: Request, res: Response) => {
     const fileSizeInBytes = deposit.fileSize || 0;
     const days = parseInt(duration as string, 10);
 
-    // once we have our config table for the contract updated, we won't have to keep doing
-    // this. i've just been really lazy
-    const ratePerBytePerDay = 1000;
-    const totalLamports = getAmountInLamports(
+    const { ratePerBytePerDay } = await getPricingConfig();
+    const solPrice = await getSolPrice();
+    const totalLamports = getAmountInLamportsFromUSD(
       fileSizeInBytes,
       ratePerBytePerDay,
-      Number(duration),
+      days,
+      solPrice,
     );
 
     const newExpirationDate = getNewStorageExpirationDate(
@@ -480,11 +495,13 @@ export const renewStorage = async (req: Request, res: Response) => {
     }
 
     const days = parseInt(duration, 10);
-    const ratePerBytePerDay = 1000;
-    const amountInLamports = getAmountInLamports(
+    const { ratePerBytePerDay } = await getPricingConfig();
+    const solPrice = await getSolPrice();
+    const amountInLamports = getAmountInLamportsFromUSD(
       Number(deposit.fileSize),
       ratePerBytePerDay,
       days,
+      solPrice,
     );
 
     const storageRenewalIx = await createStorageRenewalTransaction({
@@ -532,11 +549,13 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
       });
 
     const days = parseInt(duration, 10);
-    const ratePerBytePerDay = 1000;
-    const amountInLamports = getAmountInLamports(
+    const { ratePerBytePerDay } = await getPricingConfig();
+    const solPrice = await getSolPrice();
+    const amountInLamports = getAmountInLamportsFromUSD(
       Number(updated.fileSize),
       ratePerBytePerDay,
       days,
+      solPrice,
     );
 
     // Add renewal transaction to audit trail

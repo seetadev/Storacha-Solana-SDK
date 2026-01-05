@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 pub mod types;
 pub use types::*;
 
-declare_id!("3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n");
+declare_id!("3GNYYpxNhXLZTgNUpnvGng294XUmYLtJQrLSmbriJiVj");
 
 #[program]
 pub mod solana_programs {

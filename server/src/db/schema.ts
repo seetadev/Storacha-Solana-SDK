@@ -3,6 +3,7 @@ import {
   date,
   integer,
   pgTable,
+  real,
   text,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -12,7 +13,7 @@ export const configTable = pgTable("config", {
     .primaryKey()
     .$default(() => 1), // we'd only ever have one config for the program
   adminKey: varchar("admin_key", { length: 44 }).notNull(),
-  ratePerBytePerDay: integer("rate_per_byte_per_day").notNull(),
+  ratePerBytePerDay: real("rate_per_byte_per_day").notNull(),
   minDurationDays: integer("min_duration_days").notNull(),
   withdrawalWallet: varchar("withdrawal_wallet", { length: 255 }).notNull(),
 });

@@ -7,7 +7,7 @@ import {
   updateWarningSentAt,
 } from "../db/uploads-table.js";
 import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
-import { initStorachaClient } from "../utils/Storacha.js";
+import { initStorachaClient } from "../utils/storacha.js";
 
 /**
  * Checks for deposits needing expiration warnings

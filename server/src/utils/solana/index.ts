@@ -7,12 +7,9 @@ import {
 } from "@solana/web3.js";
 import BN from "bn.js";
 import { sha256 } from "js-sha256";
-import path from "path";
-import { fileURLToPath } from "url";
+import { db } from "../../db/db.js";
+import { configTable } from "../../db/schema.js";
 import { SolanaProgram as StorachaSolProgram } from "./program.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const CONFIG_SEED = "config";
 const DEPOSIT_SEED = "deposit";
@@ -147,11 +144,34 @@ export async function ensureConfigInitialized(): Promise<void> {
 
     const adminKeypair = await loadAdminKeypair();
 
+    const { getSolPrice } =
+      await import("../../services/price/sol-price.service.js");
+    const { getAmountInLamportsFromUSD } = await import("../constant.js");
+
+    const dbConfig = await db.select().from(configTable).limit(1);
+
+    if (!dbConfig || dbConfig.length === 0) {
+      throw new Error(
+        "Database config not found. Please seed the config table first.",
+      );
+    }
+
+    const config = dbConfig[0];
+
+    // Set on-chain rate to 0 to disable validation
+    // we should let the server calculate the actual cost dynamically based on:
+    // - USD rate from database (3e-12 USD/byte/day)
+    // - Current SOL price from Pyth
+    // - File size and duration
+    // We can't store fractional lamports on-chain, and the rate changes with SOL price,
+    // so the on-chain program trusts the backend's calculation.
+    const rateInLamports = 0;
+
     const initIx = await createInitializeConfigInstruction(
-      adminKeypair.publicKey,
-      1000,
-      1,
-      adminKeypair.publicKey,
+      new web3.PublicKey(config.adminKey),
+      rateInLamports,
+      config.minDurationDays,
+      new web3.PublicKey(config.withdrawalWallet),
     );
 
     const { blockhash } = await connection.getLatestBlockhash();
@@ -175,7 +195,10 @@ export async function ensureConfigInitialized(): Promise<void> {
       throw err;
     }
   } else {
-    console.log("✅ Config already exists — no server init needed.");
+    console.log("✅ Config already exists — no update needed.");
+    // NOTE: We don't update the on-chain rate because our pricing is in USD (3e-12)
+    // and the backend calculates lamports dynamically based on current SOL price.
+    // The on-chain program only validates that the deposit amount is sufficient.
   }
 }
 

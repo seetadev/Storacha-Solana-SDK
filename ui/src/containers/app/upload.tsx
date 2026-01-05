@@ -1,8 +1,11 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
 import { FileUpload } from '@/components/file-upload'
+import { StorageCostSkeleton } from '@/components/skeletons'
 import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
+import { useStorageCost } from '@/hooks/storage-cost'
 import type { State } from '@/lib/types'
+import { formatSOL, formatUSD } from '@/lib/utils'
 import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import {
   CurrencyCircleDollarIcon,
@@ -21,19 +24,13 @@ export const Upload = () => {
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
   const [storageDuration, setStorageDuration] = useState(30)
   const [email, setEmail] = useState('')
-  const [totalCost, setTotalCost] = useState(0)
   const [state, setState] = useState<State>('idle')
 
   const client = useDeposit(network)
-
-  useEffect(() => {
-    if (selectedFiles.length > 0) {
-      const cost = client.estimateStorageCost(selectedFiles, storageDuration)
-      setTotalCost(cost.sol)
-    } else {
-      setTotalCost(0)
-    }
-  }, [selectedFiles, storageDuration, client])
+  const { totalCost, isLoading: isCostLoading } = useStorageCost(
+    selectedFiles,
+    storageDuration,
+  )
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -174,25 +171,31 @@ export const Upload = () => {
                   Storage Cost:
                 </Text>
                 <VStack spacing="0" align="flex-end">
-                  <Text
-                    fontSize="var(--font-size-2xl)"
-                    fontWeight="var(--font-weight-bold)"
-                    color={
-                      hasInsufficientBalance
-                        ? 'var(--error)'
-                        : 'var(--text-inverse)'
-                    }
-                    lineHeight="var(--line-height-tight)"
-                  >
-                    {totalCost.toFixed(6)} SOL
-                  </Text>
-                  <Text
-                    fontSize="var(--font-size-sm)"
-                    color="var(--text-muted)"
-                    lineHeight="var(--line-height-tight)"
-                  >
-                    ≈ ${usdEquivalent.toFixed(2)} USD
-                  </Text>
+                  {isCostLoading ? (
+                    <StorageCostSkeleton />
+                  ) : (
+                    <>
+                      <Text
+                        fontSize="var(--font-size-2xl)"
+                        fontWeight="var(--font-weight-bold)"
+                        color={
+                          hasInsufficientBalance
+                            ? 'var(--error)'
+                            : 'var(--text-inverse)'
+                        }
+                        lineHeight="var(--line-height-tight)"
+                      >
+                        {formatSOL(totalCost)}
+                      </Text>
+                      <Text
+                        fontSize="var(--font-size-sm)"
+                        color="var(--text-muted)"
+                        lineHeight="var(--line-height-tight)"
+                      >
+                        ≈ {formatUSD(usdEquivalent)}
+                      </Text>
+                    </>
+                  )}
                 </VStack>
               </HStack>
 
