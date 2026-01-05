@@ -63,18 +63,3 @@ export async function getSolPrice(): Promise<number> {
     throw new Error("Unable to get SOL price");
   }
 }
-
-/**
- * Converts USD amount to SOL
- */
-export function usdToSol(usdAmount: number, solPrice: number): number {
-  if (solPrice <= 0) throw new Error("Invalid SOL price");
-  return usdAmount / solPrice;
-}
-
-/**
- * Converts SOL amount to USD
- */
-export function solToUsd(solAmount: number, solPrice: number): number {
-  return solAmount * solPrice;
-}
