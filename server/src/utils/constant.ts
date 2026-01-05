@@ -29,9 +29,9 @@ export const getNewStorageExpirationDate = (
 /**
  *
  * @param fileSize - size of the file
- * @param rate - rate per byte of a file per day
+ * @param rate - rate per byte of a file per day (in lamports)
  * @param duration - storage duration
- * @returns
+ * @returns amount in lamports
  */
 export const getAmountInLamports = (
   fileSize: number,
@@ -40,6 +40,29 @@ export const getAmountInLamports = (
 ): number => {
   const amountInLamports = fileSize * duration * rate;
   return amountInLamports;
+};
+
+/**
+ * Calculates storage cost in lamports from USD rate
+ *
+ * @param fileSize - size of the file in bytes
+ * @param rateInUSD - rate per byte per day in USD
+ * @param duration - storage duration in days
+ * @param solPriceUSD - current SOL price in USD
+ * @returns amount in lamports
+ */
+export const getAmountInLamportsFromUSD = (
+  fileSize: number,
+  rateInUSD: number,
+  duration: number,
+  solPriceUSD: number,
+): number => {
+  const costInUSD = fileSize * duration * rateInUSD;
+
+  const costInSOL = costInUSD / solPriceUSD;
+  const amountInLamports = costInSOL * ONE_BILLION_LAMPORTS;
+
+  return Math.ceil(amountInLamports);
 };
 
 /**

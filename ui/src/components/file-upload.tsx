@@ -1,3 +1,4 @@
+import { formatFileSize } from '@/lib/utils'
 import {
   Box,
   Center,
@@ -31,14 +32,6 @@ type FileWithPreview = File & {
   id: string
 }
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
-}
-
 const getFileIcon = (file: File) => {
   const type = file.type.split('/')[0]
 
@@ -55,8 +48,8 @@ const getFileIcon = (file: File) => {
 
 export const FileUpload = ({
   onFilesSelected,
-  maxFiles = 10,
-  maxSize = 100 * 1024 * 1024,
+  maxFiles = 100,
+  maxSize = 1024 * 1024 * 1024,
 }: FileUploadProps) => {
   const [selectedFiles, setSelectedFiles] = useState<Array<FileWithPreview>>([])
   const [errors, setErrors] = useState<Array<string>>([])
@@ -254,7 +247,7 @@ export const FileUpload = ({
             >
               <Text>Max {maxFiles} files</Text>
               <Text>•</Text>
-              <Text>Up to {maxSize / (1024 * 1024)}MB each</Text>
+              <Text>Up to {formatFileSize(maxSize)} each</Text>
             </HStack>
           </VStack>
         </VStack>

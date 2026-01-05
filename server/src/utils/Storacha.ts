@@ -5,7 +5,9 @@ import * as Proof from "@storacha/client/proof";
 import { StoreMemory } from "@storacha/client/stores/memory";
 import { db } from "../db/db.js";
 import { configTable } from "../db/schema.js";
+import { getSolPrice } from "../services/price/sol-price.service.js";
 import { QuoteInput } from "../types/StorachaTypes.js";
+import { getAmountInLamportsFromUSD } from "./constant.js";
 
 /**
  * Initializes a Storacha client using user-provided key and proof.
@@ -37,10 +39,17 @@ export const getQuoteForFileUpload = async ({
       MINIMUM_DURATION_UNIT: configTable.minDurationDays,
       RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
     })
-    .from(configTable); // e.g. in SOL; or use lamports: 1000 lamports/byte/day
+    .from(configTable);
   const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT);
-  const totalCost = sizeInBytes * effectiveDuration * RATE_PER_BYTE_PER_UNIT;
+
+  const solPrice = await getSolPrice();
+  const totalCost = getAmountInLamportsFromUSD(
+    sizeInBytes,
+    RATE_PER_BYTE_PER_UNIT,
+    effectiveDuration,
+    solPrice,
+  );
 
   return {
     effectiveDuration,
@@ -49,22 +58,29 @@ export const getQuoteForFileUpload = async ({
   };
 };
 
-// we'll have a need for this once the PR to update teh config table is up
-// /**
-//  * Returns Admin Data for Solana
-//  * @returns
-//  */
-// export const getAdminDataForSolana = async () => {
-//   try {
-//     const data = await db
-//       .select({
-//         MINIMUM_DURATION_UNIT: configTable.minDurationDays,
-//         RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
-//       })
-//       .from(configTable);
-//     const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0];
-//     return { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT };
-//   } catch (error) {
-//     console.log("Error fetching admin info from the databse", error);
-//   }
-// };
+/**
+ * Returns pricing config from database
+ * @returns Rate per byte per day and minimum duration
+ */
+export const getPricingConfig = async () => {
+  try {
+    const data = await db
+      .select({
+        minDurationDays: configTable.minDurationDays,
+        ratePerBytePerDay: configTable.ratePerBytePerDay,
+      })
+      .from(configTable)
+      .limit(1);
+
+    if (!data || data.length === 0)
+      throw new Error("Pricing config not found in database");
+
+    return {
+      minDurationDays: data[0].minDurationDays,
+      ratePerBytePerDay: data[0].ratePerBytePerDay,
+    };
+  } catch (error) {
+    console.error("Error fetching pricing config from database:", error);
+    throw error;
+  }
+};

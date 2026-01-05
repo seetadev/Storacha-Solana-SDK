@@ -1,7 +1,5 @@
-const { NODE_ENV } = process.env;
-
 export const ENDPOINT =
-  NODE_ENV === 'development'
+  typeof window !== 'undefined' && window.location.hostname === 'localhost'
     ? 'http://localhost:5040'
     : 'https://storacha-solana-sdk-bshc.onrender.com';
 

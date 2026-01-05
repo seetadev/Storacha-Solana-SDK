@@ -2,7 +2,6 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import {
   DAY_TIME_IN_SECONDS,
   ENDPOINT,
-  getAmountInLamports,
   ONE_BILLION_LAMPORTS,
 } from './constants';
 import {
@@ -115,21 +114,25 @@ export class Client {
    * @param {File} file - a file to be uploaded
    * @param {number} duration - how long (in seconds) the file should be stored for
    */
-  estimateStorageCost = (file: File[], duration: number) => {
-    const ratePerBytePerDay = 1000; // this would be obtained from the program config later
+  async estimateStorageCost(file: File[], duration: number) {
     const fileSizeInBytes = file.reduce((acc, f) => acc + f.size, 0);
-    const totalLamports = getAmountInLamports(
-      fileSizeInBytes,
-      ratePerBytePerDay,
-      duration
+    const durationInDays = Math.floor(duration / 86400); // convert seconds to day
+
+    const response = await fetch(
+      `${ENDPOINT}/api/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
     );
+
+    if (!response.ok) throw new Error('Failed to get storage cost estimate');
+
+    const { quote } = await response.json();
+    const totalLamports = quote.totalCost;
     const totalSOL = totalLamports / ONE_BILLION_LAMPORTS;
 
     return {
       sol: totalSOL,
       lamports: totalLamports,
     };
-  };
+  }
 
   async getUserUploadHistory(userAddress: string) {
     const response = await getUserUploadHistory(userAddress);
