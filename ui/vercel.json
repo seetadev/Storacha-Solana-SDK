@@ -1,4 +1,4 @@
 {
-  "buildCommand": "cd ../sdk && pnpm install && pnpm build && cd ../ui && pnpm install && pnpm build",
+  "buildCommand": "cd .. && pnpm install && cd sdk && pnpm build && cd ../ui && pnpm build",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
