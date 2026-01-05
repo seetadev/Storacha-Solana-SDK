@@ -25,14 +25,6 @@ export const formatUSD = (amount: number): string => {
 }
 
 /**
- * Format price display with SOL and USD
- */
-export const formatPrice = (solAmount: number, solPrice: number): string => {
-  const usdAmount = solAmount * solPrice
-  return `${formatSOL(solAmount)} (≈ ${formatUSD(usdAmount)})`
-}
-
-/**
  * Format file size in binary units (KiB, MiB, GiB, TiB, PiB)
  */
 export const formatFileSize = (bytes: number): string => {

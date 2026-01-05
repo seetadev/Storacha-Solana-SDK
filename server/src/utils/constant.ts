@@ -27,22 +27,6 @@ export const getNewStorageExpirationDate = (
 };
 
 /**
- *
- * @param fileSize - size of the file
- * @param rate - rate per byte of a file per day (in lamports)
- * @param duration - storage duration
- * @returns amount in lamports
- */
-export const getAmountInLamports = (
-  fileSize: number,
-  rate: number,
-  duration: number,
-): number => {
-  const amountInLamports = fileSize * duration * rate;
-  return amountInLamports;
-};
-
-/**
  * Calculates storage cost in lamports from USD rate
  *
  * @param fileSize - size of the file in bytes

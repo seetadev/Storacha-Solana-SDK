@@ -1,6 +1,6 @@
 import { useUploadHistory } from '@/hooks/upload-history'
-import { formatFileSize } from '@/lib/constants'
 import type { Filter } from '@/lib/types'
+import { formatFileSize } from '@/lib/utils'
 import {
   Box,
   Button,

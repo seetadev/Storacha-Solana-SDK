@@ -11,6 +11,9 @@
   "ignore": [
     "src/routeTree.gen.ts"
   ],
+  "ignoreDependencies": [
+    "storacha-sol"
+  ],
   "vite": {
     "config": "vite.config.ts"
   },
