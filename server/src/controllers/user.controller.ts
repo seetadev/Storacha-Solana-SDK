@@ -12,6 +12,7 @@ import {
   renewStorageDuration,
   saveTransaction,
 } from "../db/uploads-table.js";
+import { getSolPrice } from "../services/price/sol-price.service.js";
 import { QuoteOutput } from "../types/StorachaTypes.js";
 import { computeCID } from "../utils/compute-cid.js";
 import {
@@ -579,5 +580,18 @@ export const getUploadTransactions = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching transaction history:", error);
     return res.status(500).json({ message: "Failed to fetch transactions" });
+  }
+};
+
+export const getSolUsdPrice = async (_req: Request, res: Response) => {
+  try {
+    const price = await getSolPrice();
+    return res.status(200).json({
+      price,
+      timestamp: Date.now,
+    });
+  } catch (error) {
+    console.error("Error getting SOL/USD price:", error);
+    return res.status(500).json({ message: "Failed to get SOL/USD price" });
   }
 };

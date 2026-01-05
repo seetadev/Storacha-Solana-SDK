@@ -1,6 +1,7 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
 import { FileUpload } from '@/components/file-upload'
 import { useAuthContext } from '@/hooks/context'
+import { useSolPrice } from '@/hooks/sol-price'
 import type { State } from '@/lib/types'
 import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import {
@@ -13,11 +14,10 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useDeposit } from 'storacha-sol'
 
-const SOL_TO_USD_RATE = 25
-
 export const Upload = () => {
   const { isAuthenticated, balance, refreshBalance, network } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
+  const { price: solPrice } = useSolPrice()
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
   const [storageDuration, setStorageDuration] = useState(30)
   const [email, setEmail] = useState('')
@@ -89,7 +89,7 @@ export const Upload = () => {
     }
   }
 
-  const usdEquivalent = totalCost * SOL_TO_USD_RATE
+  const usdEquivalent = solPrice ? totalCost * solPrice : 0
   const hasInsufficientBalance = balance !== null && totalCost > balance
   const isUploadDisabled =
     !isAuthenticated || state === 'uploading' || hasInsufficientBalance
@@ -155,8 +155,8 @@ export const Upload = () => {
                     lineHeight="var(--line-height-tight)"
                   >
                     ≈ $
-                    {balance !== null
-                      ? (balance * SOL_TO_USD_RATE).toFixed(2)
+                    {balance !== null && solPrice
+                      ? (balance * solPrice).toFixed(2)
                       : '--'}{' '}
                     USD
                   </Text>

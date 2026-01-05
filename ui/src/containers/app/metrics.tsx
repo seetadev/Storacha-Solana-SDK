@@ -1,4 +1,5 @@
 import { useAuthContext } from '@/hooks/context'
+import { useSolPrice } from '@/hooks/sol-price'
 import { useUploadHistory } from '@/hooks/upload-history'
 import { Box, SimpleGrid, Text, VStack } from '@chakra-ui/react'
 import {
@@ -10,11 +11,9 @@ import {
   WalletIcon,
 } from '@phosphor-icons/react'
 
-// we need to find a way around getting this as live data
-const SOL_TO_USD_RATE = 25
-
 export const Metrics = () => {
   const { balance } = useAuthContext()
+  const { price: solPrice } = useSolPrice()
   const { stats, files, isLoading } = useUploadHistory()
 
   const formatFileSize = (bytes: number): string => {
@@ -58,7 +57,9 @@ export const Metrics = () => {
       icon: CurrencyCircleDollarIcon,
       label: 'Total Spent',
       value: `${stats.totalSpent.toFixed(4)} SOL`,
-      subValue: `≈ $${(stats.totalSpent * SOL_TO_USD_RATE).toFixed(2)}`,
+      subValue: solPrice
+        ? `≈ $${(stats.totalSpent * solPrice).toFixed(2)}`
+        : '',
       color: 'var(--info)',
       bgColor: 'rgba(59, 130, 246, 0.1)',
     },
@@ -83,7 +84,9 @@ export const Metrics = () => {
       label: 'Current Balance',
       value: balance !== null ? `${balance.toFixed(4)} SOL` : '-.----',
       subValue:
-        balance !== null ? `≈ $${(balance * SOL_TO_USD_RATE).toFixed(2)}` : '',
+        balance !== null && solPrice
+          ? `≈ $${(balance * solPrice).toFixed(2)}`
+          : '',
       color: 'var(--success)',
       bgColor: 'rgba(16, 185, 129, 0.1)',
     },
@@ -286,7 +289,9 @@ export const Metrics = () => {
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--text-inverse)"
               >
-                ${(stats.totalSpent * SOL_TO_USD_RATE).toFixed(2)}
+                {solPrice
+                  ? `$${(stats.totalSpent * solPrice).toFixed(2)}`
+                  : '--'}
               </Text>
             </Box>
 

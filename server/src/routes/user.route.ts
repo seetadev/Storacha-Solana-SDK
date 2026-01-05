@@ -26,3 +26,4 @@ userRouter.get("/renewal-cost", userController.getStorageRenewalCost);
 userRouter.post("/renew-storage", userController.renewStorage);
 userRouter.post("/confirm-renewal", userController.confirmStorageRenewal);
 userRouter.get("/transactions", userController.getUploadTransactions);
+userRouter.get("/sol-price", userController.getSolUsdPrice);
