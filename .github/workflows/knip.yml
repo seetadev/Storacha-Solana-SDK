@@ -14,16 +14,16 @@ jobs:
       
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
       
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: 'server/pnpm-lock.yaml'
+          cache-dependency-path: 'pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd server && pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd server && pnpm knip
@@ -36,16 +36,16 @@ jobs:
       
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
       
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: 'sdk/pnpm-lock.yaml'
+          cache-dependency-path: 'pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd sdk && pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd sdk && pnpm knip
@@ -64,10 +64,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: 'ui/pnpm-lock.yaml'
+          cache-dependency-path: 'pnpm-lock.yaml'
       
       - name: Install dependencies
-        run: cd ui && pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
         run: cd ui && pnpm knip
