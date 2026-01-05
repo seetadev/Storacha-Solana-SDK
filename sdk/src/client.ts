@@ -1,6 +1,7 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   DAY_TIME_IN_SECONDS,
+  ENDPOINT,
   getAmountInLamports,
   ONE_BILLION_LAMPORTS,
 } from './constants';
@@ -41,8 +42,10 @@ export interface ClientOptions {
   environment: Environment;
 }
 
-export interface UploadParams
-  extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail'> {
+export interface UploadParams extends Pick<
+  CreateDepositArgs,
+  'signTransaction' | 'userEmail'
+> {
   /** Wallet public key of the payer */
   payer: PublicKey;
   /** File(s) to be stored */
@@ -187,5 +190,21 @@ export class Client {
       connection,
       signTransaction,
     });
+  }
+
+  /**
+   * Gets the current SOL/USD price
+   *
+   * @example
+   * const { price } = await client.getSolPrice();
+   * console.log(`SOL price: $${price}`);
+   *
+   * @returns {Promise<{ price: number }>} Current SOL price in USD
+   */
+  async getSolPrice(): Promise<{ price: number }> {
+    const request = await fetch(`${ENDPOINT}/api/user/sol-price`);
+    if (!request.ok) throw new Error("Couldn't fetch SOL price");
+    const data = await request.json();
+    return data.price;
   }
 }

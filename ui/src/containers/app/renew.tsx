@@ -1,5 +1,6 @@
 import { useAuthContext } from '@/hooks/context'
-import { useFileDetails, useRenewalCost } from '@/hooks/use-renewal'
+import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
+import { useSolPrice } from '@/hooks/sol-price'
 import type { State } from '@/lib/types'
 import {
   Box,
@@ -24,13 +25,13 @@ import { toast } from 'sonner'
 import { useUpload } from 'storacha-sol'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
-const SOL_TO_USD_RATE = 25
 
 export const Renew = () => {
   const { cid } = useSearch({ from: '/renew' })
   const navigate = useNavigate()
   const { user, network, balance } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
+  const { price: solPrice } = useSolPrice()
   const client = useUpload(network)
 
   const [selectedDuration, setSelectedDuration] = useState(30)
@@ -143,7 +144,6 @@ export const Renew = () => {
     )
   }
 
-  /* eslint-disable */
   if (!cid) {
     return (
       <VStack spacing="2em" align="stretch">
@@ -490,7 +490,9 @@ export const Renew = () => {
                   {renewalCost.costInSOL} SOL
                 </Text>
                 <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
-                  ≈ ${(costInSOL * SOL_TO_USD_RATE).toFixed(2)} USD
+                  {solPrice
+                    ? `≈ $${(costInSOL * Number(solPrice)).toFixed(2)} USD`
+                    : ''}
                 </Text>
               </VStack>
             </HStack>
