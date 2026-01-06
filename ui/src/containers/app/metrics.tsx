@@ -57,9 +57,8 @@ export const Metrics = () => {
       icon: CurrencyCircleDollarIcon,
       label: 'Total Spent',
       value: `${stats.totalSpent.toFixed(4)} SOL`,
-      subValue: solPrice
-        ? `≈ $${(stats.totalSpent * solPrice).toFixed(2)}`
-        : '',
+      subValue:
+        solPrice !== null ? `≈ $${stats.totalSpent * Number(solPrice)}` : '',
       color: 'var(--info)',
       bgColor: 'rgba(59, 130, 246, 0.1)',
     },
@@ -84,8 +83,8 @@ export const Metrics = () => {
       label: 'Current Balance',
       value: balance !== null ? `${balance.toFixed(4)} SOL` : '-.----',
       subValue:
-        balance !== null && solPrice
-          ? `≈ $${(balance * solPrice).toFixed(2)}`
+        balance !== null && solPrice !== null
+          ? `≈ $${balance * Number(solPrice)}`
           : '',
       color: 'var(--success)',
       bgColor: 'rgba(16, 185, 129, 0.1)',
@@ -289,8 +288,8 @@ export const Metrics = () => {
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--text-inverse)"
               >
-                {solPrice
-                  ? `$${(stats.totalSpent * solPrice).toFixed(2)}`
+                {solPrice !== null
+                  ? `$${stats.totalSpent * Number(solPrice)}`
                   : '--'}
               </Text>
             </Box>
