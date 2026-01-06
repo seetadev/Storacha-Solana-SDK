@@ -1,13 +1,9 @@
 {
   "name": "storacha-sol",
-  "version": "0.0.7",
-  "main": "./dist/index.js",
-  "scripts": {
-    "build": "tsup src/index.ts --minify",
-    "dev": "pnpm build --watch",
-    "pack:local": "pnpm build && pnpm pack",
-    "knip": "knip"
-  },
+  "version": "0.0.8",
+  "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,13 +15,16 @@
     "dist",
     "!dist/**/*.js.map"
   ],
+  "scripts": {
+    "build": "tsup src/index.ts --minify",
+    "dev": "pnpm build --watch",
+    "pack:local": "pnpm build && pnpm pack",
+    "knip": "knip"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/seetadev/storacha-solana-sdk.git"
   },
-  "types": "./dist/index.d.ts",
-  "type": "module",
-  "module": "./dist/index.js",
   "keywords": [
     "solana",
     "storacha",
