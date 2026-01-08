@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.9...v0.1.0) (2026-01-08)
+
+
+### Features
+
+* sdk should automatically detect server endpoint based on solana network ([0e9a491](https://github.com/seetadev/storacha-solana-sdk/commit/0e9a491646658d7c86782a208b34aa0fde341d7a))
+
 ### [0.0.9](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.4...v0.0.9) (2026-01-08)
 
 
