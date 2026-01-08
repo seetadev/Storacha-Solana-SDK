@@ -102,28 +102,17 @@ cd sdk
 pnpm build
 ```
 
-## Testing
+### Working on the SDK and testing
 
-### **Anchor Program Tests**
+Go into the `ui/` directory, update the `storacha-sol` dependency version to this: `"workspace:*"`, this is so that we can benefit from pnpm's workspace protocol that'll allow you see changes you make after building the sdk successfully. 
 
-```bash
-cd solana-programs
-anchor test
-```
-
-### **Server Tests**
+When you're done with that, go back to the root of the project and do: 
 
 ```bash
-cd server
-pnpm test
+pnpm install
 ```
+So we get a symlink of the built package.
 
-### **SDK Tests**
-
-```bash
-cd sdk
-pnpm test
-```
 
 ## **Database Migration Workflow**
 
@@ -137,14 +126,14 @@ pnpm test
    Creates a migration script based on the differences between the current database schema and your updated schema definitions.
 
    ```bash
-   pnpm migrations-generate
+   pnpm db:generate
    ```
 
 3. **Apply migrations to the database**
    Runs the generated migration scripts to update the database schema.
 
    ```bash
-   pnpm migrations-apply
+   pnpm db:migrate
    ```
 
 ---
