@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "dev": "tsc -b && node dist/index.js",
+    "start": "tsc -b && node dist/index.js",
     "migrations-generate": "npx drizzle-kit generate",
     "migrations-apply": "npx drizzle-kit migrate",
     "migrations-sync": "node scripts/sync-migrations.js",

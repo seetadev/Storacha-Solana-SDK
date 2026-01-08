@@ -1,6 +1,6 @@
 # Storacha Onchain Payments (Solana)
 
-**Storacha Onchain Payments** is a proof-of-concept system enabling **per-upload, pay-as-you-go decentralized storage payments on Solana**.
+**Storacha Onchain Payments** is a **per-upload, pay-as-you-go decentralized storage payments on Solana**.
 Users pay with **native SOL**, while a fiat-subscribed reseller account underwrites the storage service.
 This monorepo contains the **Solana Payment Program**, **Backend API**, and **TypeScript SDK**.
 
@@ -19,6 +19,7 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 ## Monorepo Structure
 
 ```
+ui/               # Our user interface for you to upload data to IPFS without using the SDK
 solana-programs/  # Solana payment contract (Anchor framework)
 server/           # Node.js server for communicating with the contract
 sdk/              # TypeScript SDK (@storacha/sol-sdk)
@@ -91,7 +92,7 @@ Check if you've started the test-validator before requesting for the airdrop
 
 ```bash
 cd server
-pnpm dev
+pnpm start
 ```
 
 ### **7. SDK**
