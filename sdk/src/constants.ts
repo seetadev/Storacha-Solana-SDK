@@ -4,16 +4,26 @@ const ENDPOINTS = {
   production: 'https://keep-sdk-prod.onrender.com',
 } as const;
 
-function getEndpoint(): string {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+/**
+ * Determines the appropriate backend endpoint based on Solana RPC URL
+ */
+export function getEndpointForRpc(rpcUrl: string): string {
+  const url = rpcUrl.toLowerCase();
+
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
     return ENDPOINTS.local;
-  if (typeof window === 'undefined' && process.env.NODE_ENV === 'development')
-    return ENDPOINTS.local;
+  }
+
+  if (url.includes('mainnet')) {
+    return ENDPOINTS.production;
+  }
+
+  if (url.includes('testnet') || url.includes('devnet')) {
+    return ENDPOINTS.staging;
+  }
 
   return ENDPOINTS.production;
 }
-
-export const ENDPOINT = getEndpoint();
 
 export const DAY_TIME_IN_SECONDS = 86400;
 

@@ -5,7 +5,6 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { ENDPOINT } from './constants';
 import {
   CreateDepositArgs,
   DepositResult,
@@ -28,14 +27,12 @@ import {
  * }
  * @returns Transaction
  */
-export async function createDepositTxn({
-  file,
-  duration,
-  payer,
-  connection,
-  signTransaction,
-  userEmail,
-}: CreateDepositArgs): Promise<UploadResult> {
+export async function createDepositTxn(
+  args: CreateDepositArgs,
+  apiEndpoint: string
+): Promise<UploadResult> {
+  const { file, duration, payer, connection, signTransaction, userEmail } =
+    args;
   try {
     const formData = new FormData();
     file.forEach((f) => formData.append('file', f));
@@ -49,7 +46,7 @@ export async function createDepositTxn({
 
     let uploadErr;
 
-    const depositReq = await fetch(`${ENDPOINT}/api/solana/deposit`, {
+    const depositReq = await fetch(`${apiEndpoint}/api/solana/deposit`, {
       method: 'POST',
       body: formData,
     });
@@ -126,7 +123,7 @@ export async function createDepositTxn({
     }
 
     try {
-      await fetch(`${ENDPOINT}/api/user/update-transaction-hash`, {
+      await fetch(`${apiEndpoint}/api/user/update-transaction-hash`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +148,7 @@ export async function createDepositTxn({
     // calls the upload functionality on our server with the file when deposit is successful
     if (isMultipleFiles) {
       fileUploadReq = await fetch(
-        `${ENDPOINT}/api/user/upload-files?cid=${encodeURIComponent(
+        `${apiEndpoint}/api/user/upload-files?cid=${encodeURIComponent(
           depositRes.cid
         )}`,
         {
@@ -161,7 +158,7 @@ export async function createDepositTxn({
       );
     } else {
       fileUploadReq = await fetch(
-        `${ENDPOINT}/api/user/upload-file?cid=${encodeURIComponent(
+        `${apiEndpoint}/api/user/upload-file?cid=${encodeURIComponent(
           depositRes.cid
         )}`,
         {
@@ -232,11 +229,12 @@ export async function createDepositTxn({
  */
 export async function getStorageRenewalCost(
   cid: string,
-  duration: number
+  duration: number,
+  apiEndpoint: string
 ): Promise<StorageRenewalCost | null> {
   try {
     const request = await fetch(
-      `${ENDPOINT}/api/user/renewal-cost?cid=${encodeURIComponent(
+      `${apiEndpoint}/api/user/renewal-cost?cid=${encodeURIComponent(
         cid
       )}&duration=${duration}`,
       {
@@ -277,15 +275,13 @@ export async function getStorageRenewalCost(
  *
  * @returns {Promise<UploadResult>} Result of the renewal transaction
  */
-export async function renewStorageTxn({
-  cid,
-  duration,
-  payer,
-  connection,
-  signTransaction,
-}: RenewStorageDurationArgs): Promise<UploadResult> {
+export async function renewStorageTxn(
+  args: RenewStorageDurationArgs,
+  apiEndpoint: string
+): Promise<UploadResult> {
+  const { cid, duration, payer, connection, signTransaction } = args;
   const renewalTransactionIx = await fetch(
-    `${ENDPOINT}/api/user/renew-storage`,
+    `${apiEndpoint}/api/user/renew-storage`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -327,15 +323,18 @@ export async function renewStorageTxn({
   const signature = await connection.sendRawTransaction(signed.serialize());
   await connection.confirmTransaction(signature, 'confirmed');
 
-  const confirmRenewalTx = await fetch(`${ENDPOINT}/api/user/confirm-renewal`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      cid,
-      duration,
-      transactionHash: signature,
-    }),
-  });
+  const confirmRenewalTx = await fetch(
+    `${apiEndpoint}/api/user/confirm-renewal`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cid,
+        duration,
+        transactionHash: signature,
+      }),
+    }
+  );
 
   if (!confirmRenewalTx.ok) {
     console.error('Failed to confirm renewal');

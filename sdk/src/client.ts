@@ -1,7 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
   DAY_TIME_IN_SECONDS,
-  ENDPOINT,
+  getEndpointForRpc,
   ONE_BILLION_LAMPORTS,
 } from './constants';
 import {
@@ -63,9 +63,11 @@ export type DepositParams = UploadParams;
  */
 export class Client {
   private rpcUrl: string;
+  private apiEndpoint: string;
 
   constructor(options: ClientOptions) {
     this.rpcUrl = getRpcUrl(options.environment);
+    this.apiEndpoint = getEndpointForRpc(this.rpcUrl);
   }
 
   /**
@@ -99,14 +101,17 @@ export class Client {
     console.log('Creating deposit transaction with environment:', this.rpcUrl);
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
-    return await createDepositTxn({
-      file,
-      duration: durationDays * DAY_TIME_IN_SECONDS,
-      payer,
-      connection,
-      signTransaction,
-      userEmail,
-    });
+    return await createDepositTxn(
+      {
+        file,
+        duration: durationDays * DAY_TIME_IN_SECONDS,
+        payer,
+        connection,
+        signTransaction,
+        userEmail,
+      },
+      this.apiEndpoint
+    );
   }
 
   /**
@@ -119,7 +124,7 @@ export class Client {
     const durationInDays = Math.floor(duration / 86400); // convert seconds to day
 
     const response = await fetch(
-      `${ENDPOINT}/api/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
+      `${this.apiEndpoint}/api/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
     );
 
     if (!response.ok) throw new Error('Failed to get storage cost estimate');
@@ -135,7 +140,7 @@ export class Client {
   }
 
   async getUserUploadHistory(userAddress: string) {
-    const response = await getUserUploadHistory(userAddress);
+    const response = await getUserUploadHistory(userAddress, this.apiEndpoint);
     return response;
   }
 
@@ -155,7 +160,7 @@ export class Client {
     cid: string,
     duration: number
   ): Promise<StorageRenewalCost | null> {
-    return await getStorageRenewalCost(cid, duration);
+    return await getStorageRenewalCost(cid, duration, this.apiEndpoint);
   }
 
   /**
@@ -186,13 +191,16 @@ export class Client {
   }: StorageRenewalParams): Promise<UploadResult> {
     const connection = new Connection(this.rpcUrl, 'confirmed');
 
-    return await renewStorageTxn({
-      cid,
-      duration,
-      payer,
-      connection,
-      signTransaction,
-    });
+    return await renewStorageTxn(
+      {
+        cid,
+        duration,
+        payer,
+        connection,
+        signTransaction,
+      },
+      this.apiEndpoint
+    );
   }
 
   /**
@@ -204,8 +212,8 @@ export class Client {
    *
    * @returns {Promise<{ price: number }>} Current SOL price in USD
    */
-  async getSolPrice(): Promise<{ price: number }> {
-    const request = await fetch(`${ENDPOINT}/api/user/sol-price`);
+  async getSolPrice(): Promise<number> {
+    const request = await fetch(`${this.apiEndpoint}/api/user/sol-price`);
     if (!request.ok) throw new Error("Couldn't fetch SOL price");
     const data = await request.json();
     return data.price;

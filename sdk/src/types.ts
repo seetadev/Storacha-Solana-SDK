@@ -116,11 +116,10 @@ export interface DepositResult extends Pick<UploadResult, 'message' | 'error'> {
   object: UploadResult;
 }
 
-export interface CreateDepositArgs
-  extends Omit<
-    OnChainDeposit,
-    'depositAmount' | 'depositor' | 'depositSlot' | 'lastClaimedSlot'
-  > {
+export interface CreateDepositArgs extends Omit<
+  OnChainDeposit,
+  'depositAmount' | 'depositor' | 'depositSlot' | 'lastClaimedSlot'
+> {
   /** Public key of the user paying for the upload */
   payer: PublicKey;
   /** Wallet connection used to query chain state or recent blockhash */
@@ -137,8 +136,10 @@ export interface CreateDepositArgs
 }
 
 /** Arguments for renewing storage duration */
-export interface StorageRenewalParams
-  extends Pick<CreateDepositArgs, 'payer' | 'signTransaction'> {
+export interface StorageRenewalParams extends Pick<
+  CreateDepositArgs,
+  'payer' | 'signTransaction'
+> {
   /** Content identifier of the uploaded data to be renewed */
   cid: string;
   /** Duration in days to extend storage */
@@ -146,8 +147,10 @@ export interface StorageRenewalParams
 }
 
 /** Internal arguments for renewStorageTxn */
-export interface RenewStorageDurationArgs
-  extends Pick<CreateDepositArgs, 'payer' | 'signTransaction' | 'connection'> {
+export interface RenewStorageDurationArgs extends Pick<
+  CreateDepositArgs,
+  'payer' | 'signTransaction' | 'connection'
+> {
   /** Content identifier of the uploaded data to be renewed */
   cid: string;
   /** Duration in days to extend storage */
