@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Update storacha-sol to latest published version in UI
+echo "updating sdk to latest version..."
+cd ui && pnpm add storacha-sol@latest
+
+# Stage the updated package.json and lockfile
+git add package.json ../pnpm-lock.yaml
+
+echo "sdk updated to latest version"
