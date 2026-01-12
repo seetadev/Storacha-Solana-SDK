@@ -1,0 +1,216 @@
+---
+title: "SOL Price"
+description: "Get real-time SOL/USD exchange rate"
+---
+
+## Overview
+
+The `getSolPrice()` method fetches the current SOL/USD exchange rate from Pyth Network's Hermes API. This is useful for displaying storage costs in fiat currency or showing wallet balances in USD.
+
+## Basic Usage
+
+```typescript
+import { useUpload } from 'storacha-sol';
+import { Environment } from 'storacha-sol';
+
+function PriceDisplay() {
+  const client = useUpload(Environment.testnet);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      const price = await client.getSolPrice();
+      setSolPrice(price);
+    };
+
+    fetchPrice();
+  }, [client]);
+
+  return (
+    <div>
+      <p>Current SOL price: ${solPrice}</p>
+    </div>
+  );
+}
+```
+
+## Return Value
+
+The method returns a `Promise<number>` representing the current SOL price in USD.
+
+```typescript
+const solPrice = await client.getSolPrice();
+console.log(`1 SOL = $${solPrice}`);
+// Output: 1 SOL = $136.50
+```
+
+## Use Cases
+
+### Display Storage Costs in USD
+
+Show users how much storage will cost in both SOL and USD:
+
+```typescript
+import { useUpload } from 'storacha-sol';
+
+type Cost = {
+ sol: number
+ usd: number
+}
+
+const CostEstimator = ({ files, durationDays }: Props) =>  {
+  const client = useUpload(Environment.testnet);
+  const [costs, setCosts] = useState<Cost | null>(null);
+
+  const calculateCosts = async () => {
+    const durationInSeconds = durationDays * 86400;
+    const estimate = await client.estimateStorageCost(files, durationInSeconds);
+    const solPrice = await client.getSolPrice();
+
+    setCosts({
+      sol: estimate.sol,
+      usd: estimate.sol * solPrice,
+    });
+  };
+
+  return (
+    <div>
+      {costs && (
+        <>
+          <p>Storage cost: {costs.sol} SOL</p>
+          <p>≈ ${costs.usd.toFixed(2)} USD</p>
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+### Display Wallet Balance in USD
+
+Convert SOL balance to fiat currency:
+
+```typescript
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+type Cost = {
+ sol: number
+ usd: number
+}
+
+const WalletBalance = () => {
+  const client = useUpload(Environment.testnet);
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const [balance, setBalance] = useState<Cost | null>(null);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!publicKey) return;
+
+      const lamports = await connection.getBalance(publicKey);
+      const sol = lamports / LAMPORTS_PER_SOL;
+      const solPrice = await client.getSolPrice();
+
+      setBalance({
+        sol,
+        usd: sol * solPrice,
+      });
+    };
+
+    fetchBalance();
+  }, [publicKey, connection, client]);
+
+  return (
+    <div>
+      {balance && (
+        <>
+          <p>Balance: {balance.sol} SOL</p>
+          <p>≈ ${balance.usd.toFixed(2)} USD</p>
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+### Check Affordability
+
+Verify if a user has enough balance before uploading:
+
+```typescript
+const estimate = await client.estimateStorageCost(files, durationInSeconds);
+const solPrice = await client.getSolPrice();
+const costInUSD = estimate.sol * solPrice;
+
+const balance = await connection.getBalance(publicKey);
+const balanceInSOL = balance / LAMPORTS_PER_SOL;
+const balanceInUSD = balanceInSOL * solPrice;
+
+if (balanceInSOL < estimate.sol) {
+  const shortfall = (estimate.sol - balanceInSOL) * solPrice;
+  alert(`Insufficient balance! You need $${shortfall.toFixed(2)} more USD.`);
+  return;
+}
+```
+
+## Using with SWR (Recommended)
+
+For automatic caching and revalidation in React, use [SWR](https://swr.vercel.app/) or a similar library like [TanStack Query](https://tanstack.com/query/latest).
+
+```typescript
+import useSWR from 'swr';
+import { useUpload } from 'storacha-sol';
+
+const useSolPrice = ()=> {
+  const client = useUpload(Environment.testnet);
+
+  const { data, error, isLoading } = useSWR(
+    'sol-price',
+    () => client.getSolPrice(),
+    {
+      refreshInterval: 60000, // Refresh every 60 seconds
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    price: data ?? null,
+    error,
+    isLoading,
+  };
+}
+
+// Usage in component
+function PriceDisplay() {
+  const { price, isLoading } = useSolPrice();
+
+  if (isLoading) return <p>Loading price...</p>;
+  if (!price) return <p>Price unavailable</p>;
+
+  return <p>SOL: ${price.toFixed(2)}</p>;
+}
+```
+
+## Data Source
+
+The price is fetched from **Pyth Network's Hermes API**, which provides high-frequency, tamper-proof price feeds for cryptocurrencies.
+
+- **Feed ID**: `0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d`
+- **Update Frequency**: Real-time (sub-second)
+
+## Related Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="estimateStorageCost"
+    icon="calculator"
+    href="/sdk/deposit#estimate-cost"
+  >
+    Calculate storage costs in SOL
+  </Card>
+  <Card title="createDeposit" icon="upload" href="/sdk/deposit#create-deposit">
+    Upload files with SOL payment
+  </Card>
+</CardGroup>

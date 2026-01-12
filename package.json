@@ -2,7 +2,9 @@
 	"name": "keep",
 	"private": false,
 	"scripts": {
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"docs:dev": "cd docs && npx mintlify dev",
+		"docs:install": "npm install -g mintlify"
 	},
 	"devDependencies": {
 		"husky": "^9.1.7",
