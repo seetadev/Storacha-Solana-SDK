@@ -159,6 +159,35 @@ Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.
 
 You can test everything out on the playground [here](https://storacha-sol.vercel.app/)
 
+## Contributing to Documentation
+
+We use [Mintlify](https://mintlify.com) for our documentation. To contribute:
+
+### Run docs dev server
+
+```bash
+pnpm docs:dev
+```
+
+This starts the docs server at `http://localhost:3000` with hot-reload for any changes to `.mdx` files.
+
+If you don't have the `mintlify` CLI installed, you'll be prompted to install it. Please do so.
+
+### Adding new pages
+
+1. Create a new `.mdx` file in the `docs/` directory (e.g., `docs/sdk/new-feature.mdx`)
+2. Add frontmatter at the top:
+   ```mdx
+   ---
+   title: 'Your Page Title'
+   description: 'Brief description'
+   ---
+   ```
+3. Add the page to `docs/mint.json` navigation array
+4. Write your content using MDX (Markdown + React components)
+
+See existing docs in `docs/sdk/` for examples and patterns.
+
 ## Side Notes
 
 - **Program IDL:**

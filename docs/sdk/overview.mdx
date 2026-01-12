@@ -86,7 +86,7 @@ const client = useUpload(Environment.mainnet);
 
 ## Core Methods
 
-The SDK provides four main methods:
+The SDK provides a couple of methods (we'll add more as we see fit, in the future):
 
 <CardGroup cols={2}>
   <Card title="estimateStorageCost" icon="calculator" href="/sdk/deposit#estimate-cost">
@@ -94,6 +94,9 @@ The SDK provides four main methods:
   </Card>
   <Card title="createDeposit" icon="upload" href="/sdk/deposit#create-deposit">
     Upload files and create onchain deposit
+  </Card>
+  <Card title="getSolPrice" icon="dollar-sign" href="/sdk/sol-price">
+    Get real-time SOL/USD exchange rate
   </Card>
   <Card title="getUserUploadHistory" icon="clock-rotate-left" href="/sdk/upload-history">
     Fetch all uploads for a wallet address
