@@ -1,11 +1,11 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
-import { FileUpload } from '@/components/file-upload'
 import { StorageCostSkeleton } from '@/components/skeletons'
+import { FileUpload } from '@/components/upload'
 import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
 import { useStorageCost } from '@/hooks/storage-cost'
 import type { State } from '@/lib/types'
-import { formatSOL, formatUSD } from '@/lib/utils'
+import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import {
   CurrencyCircleDollarIcon,
@@ -92,6 +92,8 @@ export const Upload = () => {
     !isAuthenticated || state === 'uploading' || hasInsufficientBalance
 
   const networkDisplay = network
+
+  const totalFilesSize = selectedFiles.reduce((acc, curr) => acc + curr.size, 0)
 
   return (
     <VStack spacing="2em" align="stretch">
@@ -204,7 +206,8 @@ export const Upload = () => {
               <HStack justify="space-between" fontSize="var(--font-size-xs)">
                 <Text color="var(--text-tertiary)">
                   {selectedFiles.length} file
-                  {selectedFiles.length > 1 ? 's' : ''} • {storageDuration} days
+                  {selectedFiles.length > 1 ? 's' : ''} •{' '}
+                  {formatFileSize(totalFilesSize)} • {storageDuration} days
                 </Text>
                 <Text color="var(--text-tertiary)">
                   Network:{' '}
