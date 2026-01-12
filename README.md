@@ -92,7 +92,7 @@ Check if you've started the test-validator before requesting for the airdrop
 
 ```bash
 cd server
-pnpm start
+pnpm dev
 ```
 
 ### **7. SDK**

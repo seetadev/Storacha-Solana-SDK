@@ -72,10 +72,7 @@ export const FileUpload = ({
       onFilesSelected(updated)
 
       const fileToRemove = prev.find((f) => f.id === fileId)
-      if (fileToRemove?.preview) {
-        URL.revokeObjectURL(fileToRemove.preview)
-      }
-
+      if (fileToRemove?.preview) URL.revokeObjectURL(fileToRemove.preview)
       return updated
     })
   }
