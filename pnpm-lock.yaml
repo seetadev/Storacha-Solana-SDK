@@ -194,8 +194,8 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       storacha-sol:
-        specifier: ^0.0.7
-        version: 0.0.7(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        specifier: ^0.1.0
+        version: 0.1.0(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       swr:
         specifier: ^2.2.5
         version: 2.3.8(react@19.2.3)
@@ -7350,8 +7350,8 @@ packages:
   std-env@3.10.0:
     resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
 
-  storacha-sol@0.0.7:
-    resolution: {integrity: sha512-4GWMAPo5Jg/ZYwaoQtLJ3iR1MC3LtnYXaPjFL/AUekQkbPi/HaBTUDZQgiptZ5xSiTudb+F64jpb/TM0d6pupQ==}
+  storacha-sol@0.1.0:
+    resolution: {integrity: sha512-zlxG1aMUgu2h32Mlw6TLZa+7SsypbC/OtGzVR3j6lUfHr2CSW2IVNNYcNcFVlKy/jzj9OaO710sTXZePeOX6eg==}
 
   stream-browserify@3.0.0:
     resolution: {integrity: sha512-H73RAHsVBapbim0tU2JwwOiXUj+fikfiaoYAKHF3VJfA0pe2BCzkhAHBlLG6REzE+2WNZcxOXjK7lkso+9euLA==}
@@ -17631,7 +17631,7 @@ snapshots:
 
   std-env@3.10.0: {}
 
-  storacha-sol@0.0.7(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
+  storacha-sol@0.1.0(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
     dependencies:
       '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
