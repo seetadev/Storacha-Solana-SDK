@@ -17,11 +17,11 @@ export const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  // 20 per 15 minutes
-  max: 20,
-  message: "Too many authentication attempts, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// export const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   // 20 per 15 minutes
+//   max: 20,
+//   message: "Too many authentication attempts, please try again later",
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
