@@ -3,5 +3,5 @@
   "entry": ["src/index.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["src/**/*.test.ts", "dist/**"],
-  "ignoreDependencies": []
+  "ignoreBinaries": ["tsx"]
 }

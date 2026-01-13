@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+# Check if UI package.json has workspace:* for storacha-sol
+if grep -q '"storacha-sol": "workspace:\*"' ui/package.json; then
+  echo "Found workspace:* - updating sdk dependency in ui/ to latest version..."
+  cd ui && pnpm add storacha-sol@latest
+  
+  # Stage the updated package.json and lockfile
+  git add package.json ../pnpm-lock.yaml
+  
+  echo "storacha-sol updated to latest version"
+else
+  echo "storacha-sol already using published version, skipping update"
+fi

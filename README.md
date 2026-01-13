@@ -92,7 +92,7 @@ Check if you've started the test-validator before requesting for the airdrop
 
 ```bash
 cd server
-pnpm start
+pnpm dev
 ```
 
 ### **7. SDK**
@@ -102,28 +102,17 @@ cd sdk
 pnpm build
 ```
 
-## Testing
+### Working on the SDK and testing
 
-### **Anchor Program Tests**
+Go into the `ui/` directory, update the `storacha-sol` dependency version to this: `"workspace:*"`, this is so that we can benefit from pnpm's workspace protocol that'll allow you see changes you make after building the sdk successfully. 
 
-```bash
-cd solana-programs
-anchor test
-```
-
-### **Server Tests**
+When you're done with that, go back to the root of the project and do: 
 
 ```bash
-cd server
-pnpm test
+pnpm install
 ```
+So we get a symlink of the built package.
 
-### **SDK Tests**
-
-```bash
-cd sdk
-pnpm test
-```
 
 ## **Database Migration Workflow**
 
@@ -137,14 +126,14 @@ pnpm test
    Creates a migration script based on the differences between the current database schema and your updated schema definitions.
 
    ```bash
-   pnpm migrations-generate
+   pnpm db:generate
    ```
 
 3. **Apply migrations to the database**
    Runs the generated migration scripts to update the database schema.
 
    ```bash
-   pnpm migrations-apply
+   pnpm db:migrate
    ```
 
 ---
@@ -169,6 +158,35 @@ Install a Solana wallet like Phantom wallet in your browser. Go your settings an
 Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.com/) to airdrop SOL into your wallet. You'll need to copy your testnet address for this.
 
 You can test everything out on the playground [here](https://storacha-sol.vercel.app/)
+
+## Contributing to Documentation
+
+We use [Mintlify](https://mintlify.com) for our documentation. To contribute:
+
+### Run docs dev server
+
+```bash
+pnpm docs:dev
+```
+
+This starts the docs server at `http://localhost:3000` with hot-reload for any changes to `.mdx` files.
+
+If you don't have the `mintlify` CLI installed, you'll be prompted to install it. Please do so.
+
+### Adding new pages
+
+1. Create a new `.mdx` file in the `docs/` directory (e.g., `docs/sdk/new-feature.mdx`)
+2. Add frontmatter at the top:
+   ```mdx
+   ---
+   title: 'Your Page Title'
+   description: 'Brief description'
+   ---
+   ```
+3. Add the page to `docs/mint.json` navigation array
+4. Write your content using MDX (Markdown + React components)
+
+See existing docs in `docs/sdk/` for examples and patterns.
 
 ## Side Notes
 

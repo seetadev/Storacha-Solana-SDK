@@ -1,15 +1,16 @@
 {
-  "name": "storacha-solana-sdk",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "start": "tsc -b && node dist/index.js",
-    "migrations-generate": "npx drizzle-kit generate",
-    "migrations-apply": "npx drizzle-kit migrate",
-    "migrations-sync": "node scripts/sync-migrations.js",
-    "knip": "knip"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:prod": "tsx scripts/migrate.ts production",
+    "knip": "knip",
+    "dev": "nodemon --watch src --exec 'tsc -b && node dist/index.js' -e ts"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +28,7 @@
     "drizzle-kit": "^0.31.4",
     "jest": "^30.0.4",
     "knip": "^5.72.0",
+    "nodemon": "^3.1.11",
     "typescript": "^5.8.3"
   },
   "dependencies": {

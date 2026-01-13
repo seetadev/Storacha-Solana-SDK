@@ -1,4 +1,3 @@
-import { ENDPOINT } from './constants';
 import { ServerOptions, UploadHistoryResponse } from './types';
 
 /**
@@ -18,6 +17,7 @@ import { ServerOptions, UploadHistoryResponse } from './types';
  */
 export async function getUserUploadHistory(
   userAddress: string,
+  apiEndpoint: string,
   options: ServerOptions = {}
 ): Promise<UploadHistoryResponse> {
   // Validate user address
@@ -25,8 +25,8 @@ export async function getUserUploadHistory(
     throw new Error('User address is required and must be a string');
   }
 
-  // Use ENDPOINT constant, or allow override via options
-  const baseUrl = options.url || ENDPOINT;
+  // Use provided apiEndpoint, or allow override via options
+  const baseUrl = options.url || apiEndpoint;
 
   try {
     const response = await fetch(
