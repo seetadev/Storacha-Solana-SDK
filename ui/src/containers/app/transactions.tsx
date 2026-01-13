@@ -2,12 +2,14 @@ import { useUploadHistory } from '@/hooks/upload-history'
 import type { UploadedFile } from '@/lib/types'
 import { Box, HStack, IconButton, Stack, Text, VStack } from '@chakra-ui/react'
 import { ArrowSquareOutIcon, CopyIcon } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
 export const Transactions = () => {
   const { files, isLoading, stats } = useUploadHistory()
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+    toast.success('Transaction hash copied to clipboard')
   }
 
   const openExplorer = (signature: string, network: string) => {
@@ -181,7 +183,7 @@ export const Transactions = () => {
                         bg: 'var(--lght-grey)',
                         color: 'var(--primary-500)',
                       }}
-                      onClick={() => openExplorer(file.signature, 'devnet')}
+                      onClick={() => openExplorer(file.signature, 'testnet')}
                     />
                   </HStack>
                 </VStack>

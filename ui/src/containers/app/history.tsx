@@ -21,6 +21,7 @@ import {
   VideoIcon,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export const UploadHistory = () => {
   const { files, isLoading } = useUploadHistory()
@@ -49,6 +50,7 @@ export const UploadHistory = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+    toast.success('CID copied to clipboard')
   }
 
   const filteredFiles = files.filter((file) => {
