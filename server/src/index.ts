@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
 import { adminRouter } from "./routes/admin.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
@@ -35,6 +36,7 @@ validateEnv();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(apiLimiter);
 
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
