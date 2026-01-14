@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { Capabilities } from "@storacha/client/types";
 import { DID } from "@ucanto/core";
 import * as Delegation from "@ucanto/core/delegation";
@@ -114,6 +115,13 @@ export const uploadFile = async (req: Request, res: Response) => {
       uploadedAt: new Date().toISOString(),
     };
 
+    Sentry.setContext("file-upload", {
+      cid,
+      fileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+    });
+
     res.status(200).json({
       message: "Upload successful",
       cid: uploadedCID,
@@ -154,6 +162,14 @@ export const uploadFiles = async (req: Request, res: Response) => {
         `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`,
       );
 
+    Sentry.setContext("multi-file-upload", {
+      cid,
+      fileSize: files?.reduce((acc, curr) => acc + curr.size, 0),
+      fileNames: files.map((f) => f.originalname),
+      mimeTypes: files.map((f) => f.mimetype),
+    });
+    Sentry.setTag("operation", "multi-file-upload");
+
     const uploadObject = {
       cid: uploadedCID,
       directoryName: `Upload-${crypto.randomUUID()}`,
@@ -174,6 +190,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
       object: uploadObject,
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("Error uploading files:", error);
     res.status(400).json({ message: "Error uploading files" });
   }
@@ -227,6 +244,11 @@ export const deposit = async (req: Request, res: Response) => {
       solPrice,
     );
 
+    Sentry.setUser({
+      id: publicKey,
+      email: userEmail || undefined,
+    });
+
     console.log("Deposit calculation:", {
       totalSize,
       ratePerBytePerDay,
@@ -236,6 +258,16 @@ export const deposit = async (req: Request, res: Response) => {
     });
 
     const computedCID = await computeCID(fileMap);
+
+    Sentry.setContext("upload", {
+      totalSize,
+      fileCount: fileArray.length,
+      duration: duration_days,
+      cid: computedCID,
+    });
+
+    Sentry.setTag("operation", "deposit");
+    Sentry.setTag("file_count", fileArray.length);
 
     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`);
@@ -288,6 +320,7 @@ export const deposit = async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error(error);
     res.status(400).json({
       message: "Error making a deposit",
@@ -511,6 +544,14 @@ export const renewStorage = async (req: Request, res: Response) => {
       extensionCost: amountInLamports,
     });
 
+    Sentry.setUser({ id: publicKey });
+    Sentry.setContext("storage-renewal", {
+      cid,
+      duration,
+      fileSize: deposit.fileSize,
+    });
+    Sentry.setTag("operation", "storage-renewal");
+
     return res.status(200).json({
       cid,
       message: "Storage renewal instruction is ready. Sign it",
@@ -522,6 +563,7 @@ export const renewStorage = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    Sentry.captureException(error);
     console.error("Error making storage renewal:", error);
     return res.status(500).json({
       message: "Failed to renew storage duration",

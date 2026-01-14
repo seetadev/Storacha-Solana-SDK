@@ -53,6 +53,30 @@ cd storacha-solana-sdk
 pnpm install
 ```
 
+#### **Installing Dependencies in Workspace Packages**
+
+This is a pnpm workspace monorepo. To install dependencies in a specific workspace package (server, ui, sdk, docs), use the `-F` (or `--filter`) flag:
+
+```bash
+# Install in server workspace
+pnpm add <package-name> -F server
+
+# Install in UI workspace
+pnpm add <package-name> -F ui
+
+# Install in SDK workspace
+pnpm add <package-name> -F sdk
+
+# Install dev dependencies
+pnpm add -D <package-name> -F server
+
+# Examples:
+pnpm add @sentry/node -F server
+pnpm add react-query -F ui
+```
+
+**Don't install at root** unless it's a shared dev tool (like TypeScript or ESLint).
+
 ### **3. Solana Localnet Setup**
 
 ```bash
