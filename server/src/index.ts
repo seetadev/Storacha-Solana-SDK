@@ -1,3 +1,7 @@
+// sentry requires us to have the instrument file as the topmost import
+import "./instrument.js";
+
+import * as Sentry from "@sentry/node";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -43,10 +47,12 @@ app.use("/api/user", userRouter);
 app.use("/api/solana", solanaRouter);
 app.use("/api/jobs", jobsRouter);
 
+Sentry.setupExpressErrorHandler(app);
+
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   try {
-    const result = await ensureConfigInitialized();
+    await ensureConfigInitialized();
     console.log("Solana config initialized successfully");
   } catch (error) {
     console.error("Failed to initialize Solana config:", error);

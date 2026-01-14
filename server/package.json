@@ -35,6 +35,8 @@
     "@coral-xyz/anchor": "^0.31.1",
     "@neondatabase/serverless": "^1.0.1",
     "@pythnetwork/hermes-client": "^2.1.0",
+    "@sentry/node": "^10.33.0",
+    "@sentry/profiling-node": "^10.33.0",
     "@solana/web3.js": "^1.98.4",
     "@storacha/client": "^1.6.0",
     "@types/bn.js": "^5.2.0",
