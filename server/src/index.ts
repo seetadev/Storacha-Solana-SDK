@@ -8,6 +8,7 @@ import express from "express";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
 import { adminRouter } from "./routes/admin.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
+import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
@@ -46,6 +47,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
 app.use("/api/solana", solanaRouter);
 app.use("/api/jobs", jobsRouter);
+app.use("/api/health", serverRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
