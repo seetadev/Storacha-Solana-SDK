@@ -25,7 +25,6 @@ export const getUserHistory = async (wallet: string) => {
       .where(eq(uploads.depositKey, userAddres))
       .orderBy(desc(uploads.createdAt));
 
-      console.log(userFiles)
     return userFiles;
   } catch (err) {
     console.log("Error getting user history", err);
