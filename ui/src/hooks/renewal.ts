@@ -46,3 +46,55 @@ export const useFileDetails = (walletAddress: string, cid: string) => {
     isLoading,
   }
 }
+
+export const useExpiringUploads = (
+  walletAddress: string,
+  cids?: string[],
+) => {
+  const { network } = useAuthContext()
+  const client = useUpload(network)
+  const key = walletAddress ? ['expiring-uploads', walletAddress, network] : null
+
+  const { data, error, isLoading } = useSWR(key, async () => {
+    const response = await client.getUserUploadHistory(walletAddress)
+    const history = response.userHistory || []
+    const now = new Date()
+    const cidSet = new Set(cids?.filter(Boolean))
+
+    return history
+      .filter((file: any) => {
+        if (!file.expiresAt || file.deletionStatus === 'deleted') return false
+        if (cidSet.size > 0 && !cidSet.has(file.contentCid)) return false
+        const expiresAt = new Date(file.expiresAt)
+        const daysRemaining = Math.ceil(
+          (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        )
+        return daysRemaining >= 0 && daysRemaining <= 7
+      })
+      .map((file: any) => {
+        const expiresAt = new Date(file.expiresAt)
+        const daysRemaining = Math.ceil(
+          (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        )
+        return {
+          id: file.id,
+          contentCid: file.contentCid,
+          fileName: file.fileName || 'Unknown File',
+          fileSize: file.fileSize,
+          expiresAt: file.expiresAt,
+          daysRemaining,
+          deletionStatus: file.deletionStatus,
+        }
+      })
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime(),
+      )
+  })
+
+  return {
+    data: data || [],
+    error,
+    isLoading,
+  }
+}

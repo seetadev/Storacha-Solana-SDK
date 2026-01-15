@@ -50,6 +50,41 @@ export const sendExpirationWarningEmail = async (
 };
 
 /**
+ * Send a grouped expiration warning email to user
+ * @param to - Recipient email address
+ * @param uploads - List of uploads expiring soon
+ * @returns Resend API response
+ */
+export const sendGroupedExpirationWarningEmail = async (
+  to: string,
+  uploads: Array<{
+    fileName: string;
+    cid: string;
+    expiresAt: string;
+    daysRemaining: number;
+  }>,
+) => {
+  try {
+    const response = await resend.emails.send({
+      from: `Seven from Keep <${EMAIL_CONFIG.from}>`,
+      to,
+      replyTo: EMAIL_CONFIG.replyTo,
+      subject: `You have ${uploads.length} upload${uploads.length !== 1 ? "s" : ""} expiring soon`,
+      html: getGroupedExpirationWarningEmailHtml(uploads),
+      text: getGroupedExpirationWarningEmailText(uploads),
+    });
+
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Failed to send grouped expiration warning email:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+/**
  * HTML email template for expiration warning
  */
 function getExpirationWarningEmailHtml(data: {
@@ -133,6 +168,109 @@ function getExpirationWarningEmailHtml(data: {
   `.trim();
 }
 
+/**
+ * HTML email template for grouped expiration warnings
+ */
+function getGroupedExpirationWarningEmailHtml(
+  uploads: Array<{
+    fileName: string;
+    cid: string;
+    expiresAt: string;
+    daysRemaining: number;
+  }>,
+): string {
+  const rows = uploads
+    .map((upload) => {
+      const expirationDate = new Date(upload.expiresAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        },
+      );
+      return `
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+            ${upload.fileName}
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 13px;">
+            ${upload.cid}
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 13px;">
+            ${upload.daysRemaining} day${upload.daysRemaining !== 1 ? "s" : ""}
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; color: #374151; font-size: 13px;">
+            ${expirationDate}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uploads Expiring Soon</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1f2937; background-color: #ffffff; max-width: 650px; margin: 0 auto; padding: 40px 20px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="color: #111827; margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Uploads Expiring Soon</h1>
+    <p style="color: #6b7280; margin: 0; font-size: 14px;">You have ${uploads.length} upload${uploads.length !== 1 ? "s" : ""} that will expire soon</p>
+  </div>
+
+  <p style="color: #1f2937; font-size: 16px; margin: 0 0 16px 0;">Hello,</p>
+  <p style="color: #1f2937; font-size: 16px; margin: 0 0 24px 0;">
+    Review the uploads below and renew the ones you want to keep.
+  </p>
+
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+    <thead>
+      <tr>
+        <th style="text-align: left; padding: 8px 0; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">File</th>
+        <th style="text-align: left; padding: 8px 0; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">CID</th>
+        <th style="text-align: left; padding: 8px 0; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Remaining</th>
+        <th style="text-align: left; padding: 8px 0; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Expires</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <div style="margin-bottom: 24px;">
+    <a href="https://storacha-sol.vercel.app/renew" 
+       style="background: #111827; color: #ffffff; padding: 10px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 14px; font-weight: 500;">
+      Review & Renew
+    </a>
+  </div>
+
+  <div style="background: #fef9f3; padding: 16px; border: 1px solid #fed7aa; border-radius: 4px; margin-bottom: 24px;">
+    <p style="margin: 0; font-size: 14px; color: #92400e;">
+      <strong>What happens after expiration?</strong><br>
+      After the expiration date, your file will be automatically deleted from Storacha and removed from IPFS within 30 days.
+    </p>
+  </div>
+
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+  <div style="margin-bottom: 24px;">
+    <p style="font-size: 14px; color: #6b7280; margin: 0;">
+      Seven,<br>
+      <strong style="color: #374151;">Storacha Solana Team</strong>
+    </p>
+  </div>
+
+  <div style="margin-top: 32px;">
+    <p style="font-size: 12px; color: #9ca3af; margin: 0;">This is an automated message. Please do not reply to this email.</p>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
 // we need this plain text version to handle graceful progressive enhancement
 // perhaps, in the future, some of our users may not be using an email client that renders
 // HTML properly
@@ -169,6 +307,54 @@ After the expiration date, your file will be automatically deleted from Storacha
 To keep this file stored, you'll need to extend the storage duration before it expires.
 
 View your file: https://w3s.link/ipfs/${data.cid}
+
+Seven,
+Storacha Solana Team
+
+---
+This is an automated message. Please do not reply to this email.
+  `.trim();
+}
+
+/**
+ * Plain text email template for grouped expiration warnings
+ */
+function getGroupedExpirationWarningEmailText(
+  uploads: Array<{
+    fileName: string;
+    cid: string;
+    expiresAt: string;
+    daysRemaining: number;
+  }>,
+): string {
+  const lines = uploads
+    .map((upload) => {
+      const expirationDate = new Date(upload.expiresAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        },
+      );
+      return `- ${upload.fileName} (${upload.cid}) | ${upload.daysRemaining} day${upload.daysRemaining !== 1 ? "s" : ""} remaining | Expires: ${expirationDate}`;
+    })
+    .join("\n");
+
+  return `
+Uploads Expiring Soon
+
+Hello,
+
+You have ${uploads.length} upload${uploads.length !== 1 ? "s" : ""} that will expire soon.
+Review the uploads below and renew the ones you want to keep.
+
+${lines}
+
+Review & renew: https://storacha-sol.vercel.app/renew
+
+What happens after expiration?
+After the expiration date, your file will be automatically deleted from Storacha and removed from IPFS within 30 days.
 
 Seven,
 Storacha Solana Team

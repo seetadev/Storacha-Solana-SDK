@@ -4,9 +4,9 @@ import {
   getDepositsNeedingWarning,
   getExpiredDeposits,
   updateDeletionStatus,
-  updateWarningSentAt,
+  updateWarningSentAtBulk,
 } from "../db/uploads-table.js";
-import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
+import { sendGroupedExpirationWarningEmail } from "../services/email/resend.service.js";
 import { initStorachaClient } from "../utils/storacha.js";
 
 /**
@@ -29,48 +29,68 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
       `Found ${depositsNeedingWarning.length} deposits needing warnings`,
     );
 
+    const groupedByEmail = new Map<
+      string,
+      Array<{
+        id: number;
+        fileName: string;
+        cid: string;
+        expiresAt: string;
+        daysRemaining: number;
+      }>
+    >();
+
     for (const deposit of depositsNeedingWarning) {
+      if (!deposit.userEmail) {
+        console.warn(`Skipping deposit ${deposit.id}: no email address`);
+        continue;
+      }
+
+      if (!deposit.expiresAt) {
+        console.warn(`Skipping deposit ${deposit.id}: no expiration date`);
+        continue;
+      }
+
+      const expirationDate = new Date(deposit.expiresAt);
+      const now = new Date();
+      const daysRemaining = Math.ceil(
+        (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const entry = {
+        id: deposit.id,
+        fileName: deposit.fileName || "Unknown File",
+        cid: deposit.contentCid,
+        expiresAt: deposit.expiresAt,
+        daysRemaining,
+      };
+
+      const existing = groupedByEmail.get(deposit.userEmail) || [];
+      existing.push(entry);
+      groupedByEmail.set(deposit.userEmail, existing);
+    }
+
+    for (const [email, uploads] of groupedByEmail.entries()) {
       try {
-        if (!deposit.userEmail) {
-          console.warn(`Skipping deposit ${deposit.id}: no email address`);
-          continue;
-        }
-
-        if (!deposit.expiresAt) {
-          console.warn(`Skipping deposit ${deposit.id}: no expiration date`);
-          continue;
-        }
-
-        const expirationDate = new Date(deposit.expiresAt);
-        const now = new Date();
-        const daysRemaining = Math.ceil(
-          (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        );
-
-        console.log(`Sending warning email for deposit ${deposit.id}...`);
-        const emailResult = await sendExpirationWarningEmail(
-          deposit.userEmail,
-          {
-            fileName: deposit.fileName || "Unknown File",
-            cid: deposit.contentCid,
-            expiresAt: deposit.expiresAt,
-            daysRemaining,
-          },
+        console.log(`Sending grouped warning email to ${email}...`);
+        const emailResult = await sendGroupedExpirationWarningEmail(
+          email,
+          uploads,
         );
 
         if (emailResult.success) {
-          await updateWarningSentAt(deposit.id);
-          console.log(`Warning email sent for deposit ${deposit.id}`);
+          await updateWarningSentAtBulk(uploads.map((upload) => upload.id));
+          console.log(`Grouped warning email sent to ${email}`);
         } else {
           console.error(
-            `Failed to send email for deposit ${deposit.id}:`,
+            `Failed to send grouped email to ${email}:`,
             emailResult.error,
           );
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error(`Error processing deposit ${deposit.id}:`, errorMessage);
+        console.error(`Error processing warning email for ${email}:`, errorMessage);
       }
     }
 

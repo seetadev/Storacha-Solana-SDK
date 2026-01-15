@@ -1,5 +1,9 @@
 import { useAuthContext } from '@/hooks/context'
-import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
+import {
+  useExpiringUploads,
+  useFileDetails,
+  useRenewalCost,
+} from '@/hooks/renewal'
 import { useSolPrice } from '@/hooks/sol-price'
 import type { State } from '@/lib/types'
 import {
@@ -8,6 +12,9 @@ import {
   HStack,
   Input,
   SimpleGrid,
+  Tab,
+  TabList,
+  Tabs,
   Text,
   VStack,
 } from '@chakra-ui/react'
@@ -20,35 +27,71 @@ import {
 } from '@phosphor-icons/react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useUpload } from 'storacha-sol'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
 export const Renew = () => {
-  const { cid } = useSearch({ from: '/renew' })
+  const { cid, cids } = useSearch({ from: '/renew' })
   const navigate = useNavigate()
   const { user, network, balance } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
   const client = useUpload(network)
 
+  const parsedCids = useMemo(
+    () =>
+      cids
+        ? cids
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean)
+        : [],
+    [cids],
+  )
+
+  const [selectedCid, setSelectedCid] = useState(() => cid || parsedCids[0] || '')
   const [selectedDuration, setSelectedDuration] = useState(30)
   const [customDuration, setCustomDuration] = useState('')
   const [state, setState] = useState<State>('idle')
 
   const {
+    data: expiringUploads,
+    error: expiringError,
+    isLoading: isLoadingExpiring,
+  } = useExpiringUploads(user || '', parsedCids.length ? parsedCids : undefined)
+
+  useEffect(() => {
+    if (cid && cid !== selectedCid) {
+      setSelectedCid(cid)
+    }
+  }, [cid, selectedCid])
+
+  useEffect(() => {
+    if (!selectedCid) {
+      if (parsedCids.length > 0) {
+        setSelectedCid(parsedCids[0])
+        return
+      }
+      if (expiringUploads.length > 0) {
+        setSelectedCid(expiringUploads[0].contentCid)
+      }
+    }
+  }, [selectedCid, parsedCids, expiringUploads])
+
+  const {
     data: fileDetails,
     error: fileError,
     isLoading: isLoadingFile,
-  } = useFileDetails(user || '', cid)
+  } = useFileDetails(user || '', selectedCid)
 
   const {
     data: renewalCost,
     error: costError,
     isLoading: isLoadingCost,
-  } = useRenewalCost(cid, selectedDuration)
+  } = useRenewalCost(selectedCid, selectedDuration)
 
   const handleDurationChange = (days: number) => {
     setSelectedDuration(days)
@@ -96,7 +139,7 @@ export const Renew = () => {
 
     try {
       const result = await client.renewStorageDuration({
-        cid,
+        cid: selectedCid,
         duration: selectedDuration,
         payer: publicKey,
         signTransaction: async (tx) => {
@@ -134,17 +177,17 @@ export const Renew = () => {
     : 0
   const hasInsufficientBalance = balance !== null && costInSOL > balance
 
-  if (isLoadingFile) {
+  if (isLoadingExpiring && !selectedCid) {
     return (
       <Box textAlign="center" py="4em">
         <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
-          Loading file details...
+          Loading expiring uploads...
         </Text>
       </Box>
     )
   }
 
-  if (!cid) {
+  if (!selectedCid && expiringError) {
     return (
       <VStack spacing="2em" align="stretch">
         <Box
@@ -161,10 +204,54 @@ export const Renew = () => {
             fontWeight="var(--font-weight-semibold)"
             color="var(--text-inverse)"
           >
-            No CID Provided
+            Unable to Load Expiring Uploads
           </Text>
           <Text mt="0.5em" color="var(--text-muted)">
-            Please select a file from your history to renew
+            {expiringError instanceof Error
+              ? expiringError.message
+              : 'Failed to fetch expiring uploads'}
+          </Text>
+          <Link to="/app/history">
+            <Button mt="2em" size="md">
+              Go to History
+            </Button>
+          </Link>
+        </Box>
+      </VStack>
+    )
+  }
+
+  if (isLoadingFile) {
+    return (
+      <Box textAlign="center" py="4em">
+        <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
+          Loading file details...
+        </Text>
+      </Box>
+    )
+  }
+
+  if (!selectedCid) {
+    return (
+      <VStack spacing="2em" align="stretch">
+        <Box
+          textAlign="center"
+          py="4em"
+          bg="var(--bg-dark)"
+          border="1px solid var(--border-hover)"
+          borderRadius="var(--radius-lg)"
+        >
+          <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
+          <Text
+            mt="1em"
+            fontSize="var(--font-size-lg)"
+            fontWeight="var(--font-weight-semibold)"
+            color="var(--text-inverse)"
+          >
+            No Expiring Uploads
+          </Text>
+          <Text mt="0.5em" color="var(--text-muted)">
+            You don't have any uploads expiring in the next 7 days.
           </Text>
           <Link to="/app/history">
             <Button mt="2em" size="md">
@@ -229,6 +316,71 @@ export const Renew = () => {
           </Text>
         </HStack>
       </Link>
+
+      {expiringUploads.length > 0 && (
+        <Box
+          p="1.5em"
+          bg="var(--bg-dark)"
+          border="1px solid var(--border-hover)"
+          borderRadius="var(--radius-lg)"
+        >
+          <HStack spacing=".75em" mb="1em">
+            <ClockIcon size={24} color="var(--primary-500)" weight="duotone" />
+            <Text
+              fontSize="var(--font-size-lg)"
+              fontWeight="var(--font-weight-semibold)"
+              color="var(--text-inverse)"
+            >
+              Expiring Uploads
+            </Text>
+          </HStack>
+          <Tabs
+            index={Math.max(
+              0,
+              expiringUploads.findIndex(
+                (upload) => upload.contentCid === selectedCid,
+              ),
+            )}
+            onChange={(index) => {
+              const next = expiringUploads[index]
+              setSelectedCid(next.contentCid)
+            }}
+            variant="unstyled"
+          >
+            <TabList overflowX="auto" gap="0.5em" pb="0.5em">
+              {expiringUploads.map((upload) => (
+                <Tab
+                  key={upload.contentCid}
+                  px="1em"
+                  py="0.75em"
+                  borderRadius="var(--radius-md)"
+                  border="1px solid var(--border-hover)"
+                  _selected={{
+                    borderColor: 'var(--primary-500)',
+                    bg: 'var(--bg-dark)',
+                  }}
+                >
+                  <VStack spacing="0.25em" align="start">
+                    <Text
+                      fontSize="var(--font-size-sm)"
+                      fontWeight="var(--font-weight-semibold)"
+                      color="var(--text-inverse)"
+                      maxW="180px"
+                      noOfLines={1}
+                    >
+                      {upload.fileName}
+                    </Text>
+                    <Text fontSize="var(--font-size-xs)" color="var(--warning)">
+                      {upload.daysRemaining} day
+                      {upload.daysRemaining !== 1 ? 's' : ''} remaining
+                    </Text>
+                  </VStack>
+                </Tab>
+              ))}
+            </TabList>
+          </Tabs>
+        </Box>
+      )}
 
       <Box
         p="1.5em"

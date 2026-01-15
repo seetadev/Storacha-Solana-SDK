@@ -1,4 +1,4 @@
-import { and, desc, eq, lte, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
 
@@ -44,6 +44,7 @@ export const getDepositsNeedingWarning = async (
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
     const targetDateString = targetDate.toISOString().split("T")[0];
+    const nowDateString = new Date().toISOString().split("T")[0];
 
     const deposits = await db
       .select()
@@ -52,8 +53,10 @@ export const getDepositsNeedingWarning = async (
         and(
           eq(uploads.deletionStatus, "active"),
           lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
+          sql`DATE(${uploads.expiresAt}) >= DATE(${nowDateString})`,
           sql`${uploads.userEmail} IS NOT NULL`,
           sql`${uploads.userEmail} != ''`,
+          sql`${uploads.warningSentAt} IS NULL`,
         ),
       );
 
@@ -133,6 +136,31 @@ export const updateWarningSentAt = async (depositId: number) => {
     return updated[0] || null;
   } catch (err) {
     console.error("Error updating warningSentAt:", err);
+    return null;
+  }
+};
+
+/**
+ * Update the warningSentAt timestamp for multiple deposits
+ * @param depositIds - The IDs of the deposits
+ * @returns Updated deposit records
+ */
+export const updateWarningSentAtBulk = async (depositIds: number[]) => {
+  try {
+    if (!depositIds.length) return [];
+    const now = new Date().toISOString();
+    const updated = await db
+      .update(uploads)
+      .set({
+        warningSentAt: now,
+        deletionStatus: "warned",
+      })
+      .where(inArray(uploads.id, depositIds))
+      .returning();
+
+    return updated;
+  } catch (err) {
+    console.error("Error updating warningSentAt in bulk:", err);
     return null;
   }
 };

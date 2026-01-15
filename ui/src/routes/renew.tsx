@@ -18,6 +18,7 @@ export const Route = createFileRoute('/renew')({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       cid: (search.cid as string) || '',
+      cids: (search.cids as string) || '',
     }
   },
 })
