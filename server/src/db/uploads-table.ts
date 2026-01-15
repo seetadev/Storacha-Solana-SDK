@@ -1,4 +1,4 @@
-import { and, eq, lte, sql } from "drizzle-orm";
+import { and, desc, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
 
@@ -22,7 +22,10 @@ export const getUserHistory = async (wallet: string) => {
     const userFiles = await db
       .select()
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddres));
+      .where(eq(uploads.depositKey, userAddres))
+      .orderBy(desc(uploads.createdAt));
+
+      console.log(userFiles)
     return userFiles;
   } catch (err) {
     console.log("Error getting user history", err);
