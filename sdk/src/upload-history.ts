@@ -30,7 +30,7 @@ export async function getUserUploadHistory(
 
   try {
     const response = await fetch(
-      `${baseUrl}/api/user/user-upload-history?userAddress=${encodeURIComponent(userAddress)}`,
+      `${baseUrl}/api/upload/history?userAddress=${encodeURIComponent(userAddress)}`,
       {
         method: 'GET',
         headers: {
