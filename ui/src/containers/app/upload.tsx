@@ -22,14 +22,20 @@ export const Upload = () => {
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
-  const [storageDuration, setStorageDuration] = useState(30)
+  const [storageDuration, setStorageDuration] = useState<string>('30')
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>('idle')
+
+  const parsedDuration = Number(storageDuration)
+  const isValidDuration =
+    storageDuration !== '' &&
+    Number.isInteger(parsedDuration) &&
+    parsedDuration > 0
 
   const client = useDeposit(network)
   const { totalCost, isLoading: isCostLoading } = useStorageCost(
     selectedFiles,
-    storageDuration,
+    isValidDuration ? parsedDuration : 0,
   )
 
   useEffect(() => {
@@ -43,6 +49,11 @@ export const Upload = () => {
   }
 
   const handleUpload = async () => {
+    if (!isValidDuration) {
+      toast.error('Please enter a valid number of storage days')
+      return
+    }
+
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
       toast.error('Wallet not properly connected or no files selected')
       return
@@ -54,7 +65,7 @@ export const Upload = () => {
     try {
       const result = await client.createDeposit({
         file: selectedFiles,
-        durationDays: storageDuration,
+        durationDays: parsedDuration,
         payer: publicKey,
         signTransaction: async (tx: Transaction) => {
           toast.loading('Please sign the transaction in your wallet...', {
@@ -263,15 +274,15 @@ export const Upload = () => {
             borderRadius="var(--radius-lg)"
             transition="all 0.2s ease"
             _hover={{
-              bg: isUploadDisabled ? undefined : 'var(--primary-600)',
+              bg: isUploadDisabled ? undefined : 'var(--text-inverse)',
               transform: isUploadDisabled ? 'none' : 'translateY(-1px)',
               boxShadow: isUploadDisabled
                 ? undefined
-                : '0 4px 12px rgba(249, 115, 22, 0.4), 0 0 20px rgba(249, 115, 22, 0.2)',
+                : '0 4px 12px rgba(24, 24, 23, 0.4), 0 0 20px rgba(249, 115, 22, 0.2)',
             }}
             _active={{
               transform: isUploadDisabled ? 'none' : 'translateY(0)',
-              bg: isUploadDisabled ? undefined : 'var(--primary-700)',
+              bg: isUploadDisabled ? undefined : 'var(--text-inverse)',
             }}
             _disabled={{
               bg: 'var(--bg-dark)',

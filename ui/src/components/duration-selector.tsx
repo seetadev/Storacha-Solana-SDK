@@ -32,8 +32,8 @@ const STORAGE_OPTIONS: Array<StorageOption> = [
 ]
 
 interface StorageDurationSelectorProps {
-  selectedDuration: number
-  onDurationChange: (duration: number) => void
+  selectedDuration: string
+  onDurationChange: (duration: string) => void
   email?: string
   onEmailChange?: (email: string) => void
 }
@@ -62,29 +62,29 @@ export const StorageDurationSelector = ({
           {STORAGE_OPTIONS.map((option) => (
             <Box
               key={option.duration}
-              onClick={() => onDurationChange(option.duration)}
+              onClick={() => onDurationChange(option.duration.toString())}
               p="1em"
               border="1px solid"
               borderColor={
-                selectedDuration === option.duration
+                selectedDuration === option.duration.toString()
                   ? 'var(--primary-500)'
                   : 'var(--border-hover)'
               }
               borderRadius="var(--radius-md)"
               cursor="pointer"
               bg={
-                selectedDuration === option.duration
+                selectedDuration === option.duration.toString()
                   ? 'rgba(249, 115, 22, 0.08)'
                   : 'var(--bg-dark)'
               }
               transition="all 0.2s ease"
               _hover={{
                 borderColor:
-                  selectedDuration === option.duration
+                  selectedDuration === option.duration.toString()
                     ? 'var(--primary-500)'
                     : 'var(--border-hover)',
                 bg:
-                  selectedDuration === option.duration
+                  selectedDuration === option.duration.toString()
                     ? 'rgba(249, 115, 22, 0.12)'
                     : 'var(--lght-grey)',
               }}
@@ -116,12 +116,20 @@ export const StorageDurationSelector = ({
             Custom:
           </Text>
           <Input
-            type="number"
+            type="text"
             placeholder="Days"
             value={selectedDuration}
             onChange={(e) => {
-              const value = parseInt(e.target.value, 10)
-              if (!isNaN(value) && value > 0) {
+              const value = e.target.value
+
+              // Allow empty string (so backspace works)
+              if (value === '') {
+                onDurationChange('')
+                return
+              }
+
+              // Allow digits only
+              if (/^[0-9]+$/.test(value)) {
                 onDurationChange(value)
               }
             }}
