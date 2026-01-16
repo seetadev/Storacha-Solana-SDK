@@ -46,7 +46,7 @@ export async function createDepositTxn(
 
     let uploadErr;
 
-    const depositReq = await fetch(`${apiEndpoint}/api/solana/deposit`, {
+    const depositReq = await fetch(`${apiEndpoint}/api/upload/deposit`, {
       method: 'POST',
       body: formData,
     });
@@ -123,7 +123,7 @@ export async function createDepositTxn(
     }
 
     try {
-      await fetch(`${apiEndpoint}/api/user/update-transaction-hash`, {
+      await fetch(`${apiEndpoint}/api/upload/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export async function createDepositTxn(
     // calls the upload functionality on our server with the file when deposit is successful
     if (isMultipleFiles) {
       fileUploadReq = await fetch(
-        `${apiEndpoint}/api/user/upload-files?cid=${encodeURIComponent(
+        `${apiEndpoint}/api/upload/files?cid=${encodeURIComponent(
           depositRes.cid
         )}`,
         {
@@ -158,7 +158,7 @@ export async function createDepositTxn(
       );
     } else {
       fileUploadReq = await fetch(
-        `${apiEndpoint}/api/user/upload-file?cid=${encodeURIComponent(
+        `${apiEndpoint}/api/upload/file?cid=${encodeURIComponent(
           depositRes.cid
         )}`,
         {
