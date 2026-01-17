@@ -1,4 +1,5 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
+import { EmailPromptModal } from '@/components/email-prompt-modal'
 import { StorageCostSkeleton } from '@/components/skeletons'
 import { FileUpload } from '@/components/upload'
 import { useAuthContext } from '@/hooks/context'
@@ -25,6 +26,7 @@ export const Upload = () => {
   const [storageDuration, setStorageDuration] = useState<string>('30')
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>('idle')
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
 
   const parsedDuration = Number(storageDuration)
   const isValidDuration =
@@ -48,12 +50,7 @@ export const Upload = () => {
     setSelectedFiles(files)
   }
 
-  const handleUpload = async () => {
-    if (!isValidDuration) {
-      toast.error('Please enter a valid number of storage days')
-      return
-    }
-
+  const performUpload = async (userEmail: string) => {
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
       toast.error('Wallet not properly connected or no files selected')
       return
@@ -75,7 +72,7 @@ export const Upload = () => {
           toast.loading('Processing transaction...', { id: toastId })
           return signed
         },
-        userEmail: email || undefined,
+        userEmail,
       })
 
       if (result.success) {
@@ -95,6 +92,32 @@ export const Upload = () => {
       toast.error(errorMessage, { id: toastId })
       setState('idle')
     }
+  }
+
+  const handleUpload = () => {
+    if (!isValidDuration) {
+      toast.error('Please enter a valid number of storage days')
+      return
+    }
+
+    if (!publicKey || !signTransaction || selectedFiles.length === 0) {
+      toast.error('Wallet not properly connected or no files selected')
+      return
+    }
+
+    // If email is not provided, show the email prompt modal
+    if (!email.trim()) {
+      setIsEmailModalOpen(true)
+      return
+    }
+
+    // Email is already provided, proceed with upload
+    performUpload(email)
+  }
+
+  const handleEmailSubmit = (submittedEmail: string) => {
+    setEmail(submittedEmail)
+    performUpload(submittedEmail)
   }
 
   const usdEquivalent = solPrice ? totalCost * Number(solPrice) : 0
@@ -300,6 +323,12 @@ export const Upload = () => {
           </Button>
         </VStack>
       )}
+
+      <EmailPromptModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        onSubmit={handleEmailSubmit}
+      />
     </VStack>
   )
 }
