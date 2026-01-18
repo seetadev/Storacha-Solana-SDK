@@ -16,7 +16,7 @@ import {
     initStorachaClient,
 } from "../utils/storacha.js";
 import { createDepositTransaction } from "./solana.controller.js";
-import { PaginationContext } from "../types/StorachaTypes.js";
+import { PaginationContext } from "../types.js";
 
 /**
  * Function to upload a file to storacha
@@ -285,8 +285,8 @@ export const getUploadHistory = async (req: Request, res: Response) => {
     const result = await getUserHistory(userAddress, page, limit, paginationContext)
 
     if (!result) {
-      return res.status(500).json({
-        message: 'Failed to fetch user upload history',
+      return res.status(400).json({
+        message: 'Invalid request: unable to fetch upload history',
       })
     }
 

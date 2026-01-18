@@ -1,7 +1,7 @@
 import { and, desc, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
-import { PaginationContext } from "../types/StorachaTypes.js";
+import { PaginationContext } from "../types.js";
 
 type TransactionData = {
   depositId: number;

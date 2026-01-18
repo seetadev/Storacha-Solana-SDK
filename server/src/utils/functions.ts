@@ -1,4 +1,4 @@
-import { PaginationQuery } from "../types/StorachaTypes.js";
+import { PaginationQuery } from "../types.js";
 
 export const getExpiryDate = (duration: number) => {
   const today = new Date();
