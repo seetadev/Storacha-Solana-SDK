@@ -46,7 +46,7 @@ export async function createDepositTxn(
 
     let uploadErr;
 
-    const depositReq = await fetch(`${apiEndpoint}/api/upload/deposit`, {
+    const depositReq = await fetch(`${apiEndpoint}/upload/deposit`, {
       method: 'POST',
       body: formData,
     });
@@ -123,7 +123,7 @@ export async function createDepositTxn(
     }
 
     try {
-      await fetch(`${apiEndpoint}/api/upload/confirm`, {
+      await fetch(`${apiEndpoint}/upload/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,9 +148,7 @@ export async function createDepositTxn(
     // calls the upload functionality on our server with the file when deposit is successful
     if (isMultipleFiles) {
       fileUploadReq = await fetch(
-        `${apiEndpoint}/api/upload/files?cid=${encodeURIComponent(
-          depositRes.cid
-        )}`,
+        `${apiEndpoint}/upload/files?cid=${encodeURIComponent(depositRes.cid)}`,
         {
           method: 'POST',
           body: uploadForm,
@@ -158,9 +156,7 @@ export async function createDepositTxn(
       );
     } else {
       fileUploadReq = await fetch(
-        `${apiEndpoint}/api/upload/file?cid=${encodeURIComponent(
-          depositRes.cid
-        )}`,
+        `${apiEndpoint}/upload/file?cid=${encodeURIComponent(depositRes.cid)}`,
         {
           method: 'POST',
           body: uploadForm,
@@ -234,7 +230,7 @@ export async function getStorageRenewalCost(
 ): Promise<StorageRenewalCost | null> {
   try {
     const request = await fetch(
-      `${apiEndpoint}/api/user/renewal-cost?cid=${encodeURIComponent(
+      `${apiEndpoint}/user/renewal-cost?cid=${encodeURIComponent(
         cid
       )}&duration=${duration}`,
       {
@@ -281,7 +277,7 @@ export async function renewStorageTxn(
 ): Promise<UploadResult> {
   const { cid, duration, payer, connection, signTransaction } = args;
   const renewalTransactionIx = await fetch(
-    `${apiEndpoint}/api/user/renew-storage`,
+    `${apiEndpoint}/user/renew-storage`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -323,18 +319,15 @@ export async function renewStorageTxn(
   const signature = await connection.sendRawTransaction(signed.serialize());
   await connection.confirmTransaction(signature, 'confirmed');
 
-  const confirmRenewalTx = await fetch(
-    `${apiEndpoint}/api/user/confirm-renewal`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cid,
-        duration,
-        transactionHash: signature,
-      }),
-    }
-  );
+  const confirmRenewalTx = await fetch(`${apiEndpoint}/user/confirm-renewal`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      cid,
+      duration,
+      transactionHash: signature,
+    }),
+  });
 
   if (!confirmRenewalTx.ok) {
     console.error('Failed to confirm renewal');
