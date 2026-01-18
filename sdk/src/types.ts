@@ -227,19 +227,14 @@ export type DepositHistoryEntry = UploadHistory;
 export interface PaginationMeta {
   /** Total number of records */
   total: number
-
   /** Current page (1-indexed) */
   page: number
-
   /** Page size */
   pageSize: number
-
   /** Total number of pages */
   totalPages: number
-
   /** URL to fetch next page */
   next: string | null
-
   /** URL to fetch previous page */
   prev: string | null
 }
