@@ -230,6 +230,13 @@ export type DepositHistoryEntry = UploadHistory;
 export interface UploadHistoryResponse {
   /** Array of upload history entries */
   userHistory: UploadHistory[] | null;
+  /** Pagination details */
+  pagination: {
+    total: number
+    page: number
+    pageSize: number
+    totalPages: number
+  }
   /** The user address that was queried */
   userAddress: string;
 }

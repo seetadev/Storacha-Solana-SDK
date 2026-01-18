@@ -13,6 +13,8 @@ export function useUploadHistory() {
       if (!user) return null
 
       const historyData = await client.getUserUploadHistory(user)
+      // TODO: Fix according to new response structure after package update
+      // const historyData = await client.getUserUploadHistory(user, 1, 20)
 
       if (!historyData.userHistory || historyData.userHistory.length === 0) {
         return {
