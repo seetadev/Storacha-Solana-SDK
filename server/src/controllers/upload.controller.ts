@@ -10,7 +10,7 @@ import {
     DAY_TIME_IN_SECONDS,
     getAmountInLamportsFromUSD,
 } from "../utils/constant.js";
-import { getExpiryDate } from "../utils/functions.js";
+import { getExpiryDate, getPaginationParams } from "../utils/functions.js";
 import {
     getPricingConfig,
     initStorachaClient,
@@ -272,7 +272,10 @@ export const getUploadHistory = async (req: Request, res: Response) => {
         message: "Error getting the user address from the params",
       });
     }
-    const userHistory = await getUserHistory(userAddress);
+    const { page, limit } = getPaginationParams(req.query)
+
+    const userHistory = await getUserHistory(userAddress, page, limit);
+
     return res.status(200).json({
       userHistory: userHistory,
       userAddress: userAddress,
