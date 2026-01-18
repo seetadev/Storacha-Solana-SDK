@@ -6,7 +6,14 @@ import {
   real,
   text,
   varchar,
+  pgEnum
 } from "drizzle-orm/pg-core";
+
+export const deletionStatusEnum = pgEnum("deletion_status_enum", [
+  "active",
+  "warned",
+  "deleted",
+]);
 
 export const configTable = pgTable("config", {
   id: integer("id")
@@ -36,7 +43,7 @@ export const uploads = pgTable("uploads", {
   fileSize: bigint("file_size", { mode: "number" }),
   transactionHash: varchar("transaction_hash", { length: 255 }),
   // this could be of type (value) 'active' | 'warned' | 'deleted'
-  deletionStatus: varchar("deletion_status", { length: 20 })
+  deletionStatus: deletionStatusEnum("deletion_status")
     .notNull()
     .default("active"),
   warningSentAt: date("warning_sent_at"),

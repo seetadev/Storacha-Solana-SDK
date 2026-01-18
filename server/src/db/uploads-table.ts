@@ -70,29 +70,33 @@ export const getUserHistory = async (
 
 /**
  * Find deposits that will expire in X days and haven't been warned yet
- * @param daysUntilExpiration - Number of days before expiration to warn (default: 7)
+ * @param daysUntilExpiration - Number of days before expiration to warn is half of the duration days by user or 7 days, whichever is less
  * @returns Array of deposits that need warning emails
  */
 export const getDepositsNeedingWarning = async (
   daysUntilExpiration: number = 7,
 ) => {
   try {
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
-    const targetDateString = targetDate.toISOString().split("T")[0];
-
     const deposits = await db
       .select()
       .from(uploads)
       .where(
         and(
           eq(uploads.deletionStatus, "active"),
-          lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
           sql`${uploads.userEmail} IS NOT NULL`,
           sql`${uploads.userEmail} != ''`,
-        ),
+          sql`
+          ${uploads.expiresAt} -
+          (
+            LEAST(
+              ${daysUntilExpiration},
+              (${uploads.durationDays} * 0.5)
+            ) * INTERVAL '1 day'
+          )
+          <= CURRENT_DATE
+        `
+          )
       );
-
     return deposits;
   } catch (err) {
     console.error("Error getting deposits needing warning:", err);
@@ -173,6 +177,35 @@ export const updateWarningSentAt = async (depositId: number) => {
   }
 };
 
+
+/**
+ * Mark an upload as warned
+ * @param uploadId - The ID of the upload to mark as warned
+ * @returns Updated upload record
+ */
+export const markUploadAsWarned = async (uploadId: number) => {
+  try {
+    const updated = await db
+      .update(uploads)
+      .set({
+        deletionStatus: "warned",
+        warningSentAt: new Date().toISOString().split("T")[0],
+      })
+      .where(
+        and(
+          eq(uploads.id, uploadId),
+          eq(uploads.deletionStatus, "active"),
+          sql`${uploads.warningSentAt} IS NULL`,
+        ),
+      )
+      .returning();
+
+    return updated[0] || null;
+  } catch (err) {
+    console.error("Error marking upload as warned:", err);
+    return null;
+  }
+};
 /**
  *
  * @param cid - CID of the upload/deposit to renew

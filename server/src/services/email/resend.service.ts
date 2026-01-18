@@ -1,4 +1,9 @@
 import { Resend } from "resend";
+import { db } from "../../db/db.js";
+import { uploads } from "../../db/schema.js";
+import { and, eq, sql } from "drizzle-orm";
+import { markUploadAsWarned, updateDeletionStatus } from "../../db/uploads-table.js";
+
 
 /**
  * Initialize Resend client
@@ -27,6 +32,7 @@ export const sendExpirationWarningEmail = async (
     cid: string;
     expiresAt: string;
     daysRemaining: number;
+    uploadId: number;
   },
 ) => {
   try {
@@ -38,7 +44,10 @@ export const sendExpirationWarningEmail = async (
       html: getExpirationWarningEmailHtml(data),
       text: getExpirationWarningEmailText(data),
     });
-
+    const updated = await markUploadAsWarned(data.uploadId);
+    if (!updated) {
+      return { success: false, error: "Email sent but upload was already warned or not active" };
+    }
     return { success: true, data: response };
   } catch (error) {
     console.error("Failed to send expiration warning email:", error);

@@ -55,6 +55,7 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
             cid: deposit.contentCid,
             expiresAt: deposit.expiresAt,
             daysRemaining,
+            uploadId: deposit.id,
           },
         );
 
