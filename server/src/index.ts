@@ -44,12 +44,12 @@ app.use(cors());
 app.use(express.json());
 app.use(apiLimiter);
 
-app.use("/api/admin", adminRouter);
-app.use("/api/upload", uploadsRouter);
-app.use("/api/user", userRouter);
-app.use("/api/solana", solanaRouter);
-app.use("/api/jobs", jobsRouter);
-app.use("/api/health", serverRouter);
+app.use("/console", adminRouter);
+app.use("/upload", uploadsRouter);
+app.use("/user", userRouter);
+app.use("/solana", solanaRouter);
+app.use("/jobs", jobsRouter);
+app.use("/health", serverRouter);
 
 Sentry.setupExpressErrorHandler(app);
 

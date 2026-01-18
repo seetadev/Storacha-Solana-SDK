@@ -124,7 +124,7 @@ export class Client {
     const durationInDays = Math.floor(duration / 86400); // convert seconds to day
 
     const response = await fetch(
-      `${this.apiEndpoint}/api/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
+      `${this.apiEndpoint}/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
     );
 
     if (!response.ok) throw new Error('Failed to get storage cost estimate');
@@ -216,7 +216,7 @@ export class Client {
    * @returns {Promise<{ price: number }>} Current SOL price in USD
    */
   async getSolPrice(): Promise<number> {
-    const request = await fetch(`${this.apiEndpoint}/api/user/sol-price`);
+    const request = await fetch(`${this.apiEndpoint}/user/sol-price`);
     if (!request.ok) throw new Error("Couldn't fetch SOL price");
     const data = await request.json();
     return data.price;

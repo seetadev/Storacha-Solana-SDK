@@ -5,7 +5,7 @@
     "dark": "/logo/keep.svg",
     "light": "/logo/keep.svg"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/logo/keep.svg",
   "colors": {
     "primary": "#F97316",
     "light": "#FED7AA",
@@ -23,7 +23,7 @@
   ],
   "topbarCtaButton": {
     "name": "Launch App",
-    "url": "https://storacha-sol.vercel.app"
+    "url": "https://toju.network"
   },
   "tabs": [
     {
