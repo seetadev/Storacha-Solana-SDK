@@ -6,7 +6,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
-import { adminRouter } from "./routes/admin.route.js";
+import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
 import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
@@ -44,7 +44,7 @@ app.use(cors());
 app.use(express.json());
 app.use(apiLimiter);
 
-app.use("/console", adminRouter);
+app.use("/console", consoleRouter);
 app.use("/upload", uploadsRouter);
 app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
