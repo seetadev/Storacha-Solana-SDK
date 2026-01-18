@@ -3,14 +3,21 @@ import { ServerOptions, UploadHistoryResponse } from './types';
 /**
  * Get the upload history for a given user address from the server
  *
- * @param userAddress - The wallet address of the user to fetch upload history for
- * @param options - Optional server configuration
- * @returns Promise<UploadHistoryResponse> - The user's upload history
+ * @param userAddress - The wallet address of the user
+ * @param apiEndpoint - Base API URL
+ * @param options - Optional server configuration and pagination options
+ * @returns Promise<UploadHistoryResponse>
  *
  * @example
- * ```typescript
- * const history = await getUserUploadHistory('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
- * console.log('User upload history:', history.userHistory);
+ * ```ts
+ * const history = await getUserUploadHistory(
+ *   '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+ *   API_BASE_URL,
+ *   { page: 1, limit: 20 }
+ * )
+ *
+ * console.log(history.data)
+ * console.log(history.next)
  * ```
  *
  * @throws {Error} When the user address is invalid or the request fails
@@ -18,19 +25,22 @@ import { ServerOptions, UploadHistoryResponse } from './types';
 export async function getUserUploadHistory(
   userAddress: string,
   apiEndpoint: string,
-  options: ServerOptions = {}
+  options: ServerOptions & {
+    page?: number;
+    limit?: number;
+  } = {}
 ): Promise<UploadHistoryResponse> {
-  // Validate user address
   if (!userAddress || typeof userAddress !== 'string') {
     throw new Error('User address is required and must be a string');
   }
 
-  // Use provided apiEndpoint, or allow override via options
   const baseUrl = options.url || apiEndpoint;
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
 
   try {
     const response = await fetch(
-      `${baseUrl}/upload/history?userAddress=${encodeURIComponent(userAddress)}`,
+      `${baseUrl}/upload/history?userAddress=${encodeURIComponent(userAddress)}?userAddress=${encodeURIComponent(userAddress)}&page=${page}&limit=${limit}`,
       {
         method: 'GET',
         headers: {
@@ -49,13 +59,13 @@ export async function getUserUploadHistory(
 
     const data: UploadHistoryResponse = await response.json();
 
-    // Validate response structure
-    if (typeof data !== 'object' || data === null) {
+    if (
+      typeof data !== 'object' ||
+      data === null ||
+      !Array.isArray(data.data) ||
+      typeof data !== 'object'
+    ) {
       throw new Error('Invalid response format from server');
-    }
-
-    if (typeof data.userAddress !== 'string') {
-      throw new Error('Invalid userAddress in response');
     }
 
     return data;

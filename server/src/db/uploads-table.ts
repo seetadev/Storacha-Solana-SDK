@@ -1,6 +1,7 @@
 import { and, desc, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
+import { PaginationContext } from "../types.js";
 
 type TransactionData = {
   depositId: number;
@@ -14,23 +15,58 @@ type TransactionData = {
 /**
  * Get transactions related to a user addresss
  * @param wallet
+ * @param page
+ * @param limit
+ * @param ctx - Pagination context for building next/prev URLs
  * @returns
  */
-export const getUserHistory = async (wallet: string) => {
+
+export const getUserHistory = async (
+  wallet: string,
+  page = 1,
+  limit = 20,
+  ctx?: PaginationContext
+
+) => {
   try {
-    const userAddres = wallet.toLowerCase();
-    const userFiles = await db
+    const userAddress = wallet.toLowerCase()
+    const offset = (page - 1) * limit
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(uploads)
+      .where(eq(uploads.depositKey, userAddress))
+
+    const data = await db
       .select()
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddres))
-      .orderBy(desc(uploads.createdAt));
+      .where(eq(uploads.depositKey, userAddress))
+      .orderBy(desc(uploads.createdAt))
+      .limit(limit)
+      .offset(offset)
 
-    return userFiles;
+    const total = Number(count)
+    const totalPages = Math.ceil(total / limit)
+
+    const buildPageUrl = (p: number) =>
+      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`
+
+    return {
+      data,
+      total,
+      page,
+      pageSize: limit,
+      totalPages,
+      next: page < totalPages ? buildPageUrl(page + 1) : null,
+      prev: page > 1 ? buildPageUrl(page - 1) : null,
+    }
   } catch (err) {
-    console.log("Error getting user history", err);
-    return null;
+    console.error('Error getting user history', err)
+    return null
   }
-};
+}
+
+
 
 /**
  * Find deposits that will expire in X days and haven't been warned yet
