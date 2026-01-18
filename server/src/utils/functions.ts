@@ -1,3 +1,5 @@
+import { PaginationQuery } from "../types/StorachaTypes.js";
+
 export const getExpiryDate = (duration: number) => {
   const today = new Date();
   const future = new Date(today);
@@ -7,9 +9,9 @@ export const getExpiryDate = (duration: number) => {
   return expiryDate;
 };
 
-export function getPaginationParams(query: any) {
-  const page = Math.max(parseInt(query.page ?? '1', 10), 1)
-  const limit = Math.max(parseInt(query.limit ?? '20', 10), 1)
+export function getPaginationParams(query: PaginationQuery) {
+  const page = Math.max(Number(query.page ?? 1), 1)
+  const limit = Math.max(Number(query.limit ?? 20), 1)
 
   const offset = (page - 1) * limit
 

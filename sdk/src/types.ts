@@ -224,19 +224,33 @@ export interface UploadHistory {
  */
 export type DepositHistoryEntry = UploadHistory;
 
+export interface PaginationMeta {
+  /** Total number of records */
+  total: number
+
+  /** Current page (1-indexed) */
+  page: number
+
+  /** Page size */
+  pageSize: number
+
+  /** Total number of pages */
+  totalPages: number
+
+  /** URL to fetch next page */
+  next: string | null
+
+  /** URL to fetch previous page */
+  prev: string | null
+}
+
+
 /**
  * Response from the getUserUploadHistory endpoint
  */
-export interface UploadHistoryResponse {
+export interface UploadHistoryResponse extends PaginationMeta {
   /** Array of upload history entries */
-  userHistory: UploadHistory[] | null;
-  /** Pagination details */
-  pagination: {
-    total: number
-    page: number
-    pageSize: number
-    totalPages: number
-  }
+  data: UploadHistory[] | null;
   /** The user address that was queried */
   userAddress: string;
 }

@@ -3,14 +3,21 @@ import { ServerOptions, UploadHistoryResponse } from './types';
 /**
  * Get the upload history for a given user address from the server
  *
- * @param userAddress - The wallet address of the user to fetch upload history for
+ * @param userAddress - The wallet address of the user
+ * @param apiEndpoint - Base API URL
  * @param options - Optional server configuration and pagination options
- * @returns Promise<UploadHistoryResponse> - The user's upload history
+ * @returns Promise<UploadHistoryResponse>
  *
  * @example
- * ```typescript
- * const history = await getUserUploadHistory('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
- * console.log('User upload history:', history.userHistory);
+ * ```ts
+ * const history = await getUserUploadHistory(
+ *   '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+ *   API_BASE_URL,
+ *   { page: 1, limit: 20 }
+ * )
+ *
+ * console.log(history.data)
+ * console.log(history.next)
  * ```
  *
  * @throws {Error} When the user address is invalid or the request fails
@@ -58,8 +65,8 @@ export async function getUserUploadHistory(
     if (
       typeof data !== 'object' ||
       data === null ||
-      !Array.isArray(data.userHistory) ||
-      typeof data.pagination !== 'object'
+      !Array.isArray(data.data) ||
+      typeof data !== 'object'
     ) {
       throw new Error('Invalid response format from server')
     }

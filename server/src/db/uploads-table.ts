@@ -1,6 +1,7 @@
 import { and, desc, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
+import { PaginationContext } from "../types/StorachaTypes.js";
 
 type TransactionData = {
   depositId: number;
@@ -16,24 +17,26 @@ type TransactionData = {
  * @param wallet
  * @param page
  * @param limit
+ * @param ctx - Pagination context for building next/prev URLs
  * @returns
  */
+
 export const getUserHistory = async (
   wallet: string,
   page = 1,
-  limit = 20
+  limit = 20,
+  ctx?: PaginationContext
+
 ) => {
   try {
     const userAddress = wallet.toLowerCase()
     const offset = (page - 1) * limit
 
-    // total count
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
       .where(eq(uploads.depositKey, userAddress))
 
-    // paginated data
     const data = await db
       .select()
       .from(uploads)
@@ -42,20 +45,27 @@ export const getUserHistory = async (
       .limit(limit)
       .offset(offset)
 
+    const total = Number(count)
+    const totalPages = Math.ceil(total / limit)
+
+    const buildPageUrl = (p: number) =>
+      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`
+
     return {
       data,
-      pagination: {
-        total: Number(count),
-        page,
-        pageSize: limit,
-        totalPages: Math.ceil(Number(count) / limit),
-      },
+      total,
+      page,
+      pageSize: limit,
+      totalPages,
+      next: page < totalPages ? buildPageUrl(page + 1) : null,
+      prev: page > 1 ? buildPageUrl(page - 1) : null,
     }
   } catch (err) {
     console.error('Error getting user history', err)
     return null
   }
 }
+
 
 
 /**
