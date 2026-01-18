@@ -10,12 +10,13 @@ import {
     DAY_TIME_IN_SECONDS,
     getAmountInLamportsFromUSD,
 } from "../utils/constant.js";
-import { getExpiryDate } from "../utils/functions.js";
+import { getExpiryDate, getPaginationParams } from "../utils/functions.js";
 import {
     getPricingConfig,
     initStorachaClient,
 } from "../utils/storacha.js";
 import { createDepositTransaction } from "./solana.controller.js";
+import { PaginationContext } from "../types.js";
 
 /**
  * Function to upload a file to storacha
@@ -262,28 +263,42 @@ export const deposit = async (req: Request, res: Response) => {
 };
 
 /**
- * Function to get user upload history
+ * Function to get user upload history (paginated)
  */
 export const getUploadHistory = async (req: Request, res: Response) => {
   try {
-    const userAddress = req.query.userAddress as string;
-    if (userAddress === null || userAddress === undefined) {
+    const userAddress = req.query.userAddress as string
+
+    if (!userAddress) {
       return res.status(400).json({
-        message: "Error getting the user address from the params",
-      });
+        message: 'User address is required',
+      })
     }
-    const userHistory = await getUserHistory(userAddress);
-    return res.status(200).json({
-      userHistory: userHistory,
-      userAddress: userAddress,
-    });
+
+    const { page, limit } = getPaginationParams(req.query)
+
+    const paginationContext: PaginationContext = {
+      baseUrl: req.baseUrl,
+      path: req.path,
+    }
+
+    const result = await getUserHistory(userAddress, page, limit, paginationContext)
+
+    if (!result) {
+      return res.status(400).json({
+        message: 'Invalid request: unable to fetch upload history',
+      })
+    }
+
+    return res.status(200).json(result)
   } catch (err) {
-    Sentry.captureException(err);
-    return res.status(400).json({
-      message: "Error getting the user history",
-    });
+    Sentry.captureException(err)
+    return res.status(500).json({
+      message: 'Error getting the user history',
+    })
   }
-};
+}
+
 
 /**
  * Function to update transaction hash after transaction is confirmed

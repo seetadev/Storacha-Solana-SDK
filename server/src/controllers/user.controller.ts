@@ -13,7 +13,7 @@ import {
   saveTransaction,
 } from "../db/uploads-table.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
-import { QuoteOutput } from "../types/StorachaTypes.js";
+import { QuoteOutput } from "../types.js";
 import {
   getAmountInLamportsFromUSD,
   getAmountInSOL,

@@ -139,8 +139,11 @@ export class Client {
     };
   }
 
-  async getUserUploadHistory(userAddress: string) {
-    const response = await getUserUploadHistory(userAddress, this.apiEndpoint);
+  async getUserUploadHistory(userAddress: string, page: number, limit: number) {
+    const response = await getUserUploadHistory(userAddress, this.apiEndpoint, {
+      page,
+      limit,
+    });
     return response;
   }
 
