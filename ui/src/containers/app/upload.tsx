@@ -58,7 +58,7 @@ export const Upload = () => {
     setSelectedFiles(files)
   }
 
-  const performUpload = async (userEmail: string) => {
+  const performUpload = async () => {
     if (!publicKey || !signTransaction || selectedFiles.length === 0) {
       toast.error('Wallet not properly connected or no files selected')
       return
