@@ -8,6 +8,12 @@ const ENDPOINTS = {
  * Determines the appropriate backend endpoint based on Solana RPC URL
  */
 export function getEndpointForRpc(rpcUrl: string): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1')
+      return ENDPOINTS.local;
+  }
+
   const url = rpcUrl.toLowerCase();
 
   if (url.includes('localhost') || url.includes('127.0.0.1')) {

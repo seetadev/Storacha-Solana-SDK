@@ -1,5 +1,5 @@
 import { useAuthContext } from '@/hooks/context'
-import { useUpload } from 'storacha-sol'
+import { useUpload } from '@toju.network/sol'
 import useSWR from 'swr'
 
 export const useRenewalCost = (cid: string, duration: number) => {

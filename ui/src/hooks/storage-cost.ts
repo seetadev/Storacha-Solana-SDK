@@ -1,5 +1,5 @@
 import { useAuthContext } from '@/hooks/context'
-import { useDeposit } from 'storacha-sol'
+import { useDeposit } from '@toju.network/sol'
 import useSWR from 'swr'
 
 export const useStorageCost = (files: Array<File>, durationDays: number) => {

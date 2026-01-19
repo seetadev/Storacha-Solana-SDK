@@ -15,7 +15,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import type { Transaction } from '@solana/web3.js'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useDeposit } from 'storacha-sol'
+import { useDeposit } from '@toju.network/sol'
 
 export const Upload = () => {
   const { isAuthenticated, balance, refreshBalance, network } = useAuthContext()

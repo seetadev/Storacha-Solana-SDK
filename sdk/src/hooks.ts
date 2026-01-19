@@ -1,6 +1,6 @@
-import { Client, ClientOptions } from './client';
+import { Client, Environment } from './client';
 
-export const useUpload = (environment: ClientOptions['environment']) => {
+export const useUpload = (environment: Environment) => {
   const client = new Client({ environment: environment || 'testnet' });
   return client;
 };

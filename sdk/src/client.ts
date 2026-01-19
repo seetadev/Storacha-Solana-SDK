@@ -21,6 +21,7 @@ export enum Environment {
   mainnet = 'mainnet-beta',
   testnet = 'testnet',
   devnet = 'devnet',
+  local = 'localnet',
 }
 
 export function getRpcUrl(env: Environment): string {
@@ -31,6 +32,8 @@ export function getRpcUrl(env: Environment): string {
       return 'https://api.testnet.solana.com';
     case Environment.devnet:
       return 'https://api.devnet.solana.com';
+    case Environment.local:
+      return 'http://localhost:5040';
     default:
       throw new Error(`Unsupported environment: ${env}`);
   }

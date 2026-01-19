@@ -12,7 +12,7 @@ import {
 } from '@solana/wallet-adapter-wallets'
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import React, { useEffect, useMemo, useReducer, useState } from 'react'
-import type { Environment } from 'storacha-sol'
+import type { Environment } from '@toju.network/sol'
 
 import '@solana/wallet-adapter-react-ui/styles.css'
 
@@ -51,7 +51,7 @@ const getEnvironment = (network: WalletAdapterNetwork): Environment => {
       return 'testnet' as Environment
     case WalletAdapterNetwork.Devnet:
     default:
-      return 'devnet' as Environment
+      return 'local' as Environment
   }
 }
 

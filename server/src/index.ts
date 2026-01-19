@@ -10,6 +10,7 @@ import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
 import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
+import { storageRouter } from "./routes/storage.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
@@ -46,6 +47,7 @@ app.use(apiLimiter);
 
 app.use("/console", consoleRouter);
 app.use("/upload", uploadsRouter);
+app.use("/storage", storageRouter);
 app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
 app.use("/jobs", jobsRouter);
