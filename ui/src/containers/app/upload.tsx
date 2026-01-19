@@ -1,13 +1,21 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
-import { EmailPromptModal } from '@/components/email-prompt-modal'
 import { StorageCostSkeleton } from '@/components/skeletons'
 import { FileUpload } from '@/components/upload'
 import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
 import { useStorageCost } from '@/hooks/storage-cost'
+import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
 import type { State } from '@/lib/types'
 import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
-import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  HStack,
+  Stack,
+  Text,
+  useDisclosure,
+  VStack,
+} from '@chakra-ui/react'
 import {
   CurrencyCircleDollarIcon,
   WarningCircleIcon,
@@ -26,7 +34,7 @@ export const Upload = () => {
   const [storageDuration, setStorageDuration] = useState<string>('30')
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>('idle')
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const parsedDuration = Number(storageDuration)
   const isValidDuration =
@@ -105,9 +113,9 @@ export const Upload = () => {
       return
     }
 
-    // If email is not provided, show the email prompt modal
+    // If email is not provided, show the nudge modal
     if (!email.trim()) {
-      setIsEmailModalOpen(true)
+      onOpen()
       return
     }
 
@@ -115,9 +123,9 @@ export const Upload = () => {
     performUpload(email)
   }
 
-  const handleEmailSubmit = (submittedEmail: string) => {
-    setEmail(submittedEmail)
-    performUpload(submittedEmail)
+  const handleProceedWithoutEmail = () => {
+    onClose()
+    performUpload('')
   }
 
   const usdEquivalent = solPrice ? totalCost * Number(solPrice) : 0
@@ -324,10 +332,10 @@ export const Upload = () => {
         </VStack>
       )}
 
-      <EmailPromptModal
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        onSubmit={handleEmailSubmit}
+      <EmailNudge
+        isOpen={isOpen}
+        onClose={onClose}
+        onProceedWithoutEmail={handleProceedWithoutEmail}
       />
     </VStack>
   )

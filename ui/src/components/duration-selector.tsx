@@ -205,7 +205,7 @@ export const StorageDurationSelector = ({
             color="var(--text-muted)"
             lineHeight="var(--line-height-relaxed)"
           >
-            We'll send you reminders before your storage expires
+            We'll send you reminders before your storage expires (optional)
           </Text>
         </VStack>
       </VStack>
