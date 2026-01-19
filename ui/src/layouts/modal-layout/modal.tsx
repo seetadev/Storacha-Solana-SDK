@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { XIcon } from '@phosphor-icons/react'
 
-interface ModalLayoutProps extends ChakraProps {
+export interface ModalLayoutProps extends ChakraProps {
   title?: string
   subTitle?: string
   children: React.ReactNode
@@ -99,8 +99,8 @@ export const ModalLayout = ({
           )}
           {!title ? null : (
             <ModalHeader
-              color="var(--text-inverse)"
-              fontWeight="var(--font-weight-semibold)"
+              color="var(--text-muted)"
+              fontWeight="var(--font-weight-medium)"
               fontSize="var(--font-size-lg)"
               lineHeight="var(--line-height-tight)"
               textTransform="capitalize"
