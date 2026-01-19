@@ -118,7 +118,6 @@ export const Upload = () => {
       return
     }
 
-    // Email is already provided, proceed with upload
     performUpload()
   }
 
