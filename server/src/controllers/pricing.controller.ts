@@ -25,7 +25,7 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (err) {
-    console.log("The error is", err);
+    console.error("Error getting file upload quote", err);
     return res.status(400).json({
       quoteObject: null,
       success: false,
