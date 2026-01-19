@@ -40,23 +40,6 @@ export const EmailNudge = ({
           >
             Go Back
           </Button>
-          <Button
-            onClick={onProceedWithoutEmail}
-            size="md"
-            bg="var(--text-inverse)"
-            color="var(--eerie-black)"
-            borderRadius="var(--radius-md)"
-            fontWeight="var(--font-weight-semibold)"
-            _hover={{
-              transform: 'translateY(-1px)',
-              boxShadow: '0 4px 12px rgba(24, 24, 23, 0.4)',
-            }}
-            _active={{
-              transform: 'translateY(0)',
-            }}
-          >
-            Continue Without Email
-          </Button>
         </HStack>
       </VStack>
     </ModalLayout>
