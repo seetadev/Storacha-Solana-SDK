@@ -120,7 +120,7 @@ export const Upload = () => {
     }
 
     // Email is already provided, proceed with upload
-    performUpload(email)
+    performUpload()
   }
 
   const handleProceedWithoutEmail = () => {
