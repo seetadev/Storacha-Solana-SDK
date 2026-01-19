@@ -46,7 +46,7 @@ import { useUpload, Environment } from 'storacha-sol';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 function UploadComponent() {
-  const client = useUpload('testnet' as Environment);
+  const client = useUpload(Environment.testnet);
   const { publicKey, signTransaction } = useWallet();
   
   const handleUpload = async (file, duration) => {

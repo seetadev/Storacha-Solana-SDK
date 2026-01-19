@@ -10,9 +10,9 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 - **No Credit Cards** – Pure crypto-native flow.
 - **Escrow-based Rewards** – Funds released linearly per block to service providers.
 - **Backend API with UCAN Delegation** – Secure storage delegation via UCAN tokens.
-- **TypeScript SDK** – Easily integrate with dapps (supports Solana Mobile dapp publishing).
+- **TypeScript SDK** – Easily integrate with dapps
 - **Upload History** – Track all your uploads with detailed metadata (file name, size, expiration, status).
-- **Email Notifications** – Get warned 7 days before your files expire (powered by Resend).
+- **Email Notifications** – Get warned 7 days before your storage duration elapses.
 - **Automatic Cleanup** – Expired files are automatically deleted from Storacha storage.
 - **Extensible** – Designed for multi-chain support (Phase 2).
 

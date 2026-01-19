@@ -1,6 +1,6 @@
 import { useAuthContext } from '@/hooks/context'
 import type { DashboardStats, UploadedFile } from '@/lib/types'
-import { useDeposit } from 'storacha-sol'
+import { useDeposit } from '@toju.network/sol'
 import useSWR from 'swr'
 
 export function useUploadHistory() {

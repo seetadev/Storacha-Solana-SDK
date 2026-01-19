@@ -68,7 +68,7 @@ export const HomeHeader = () => {
             </Link>
 
             <HStack spacing="1.5em" alignItems="center">
-              <ChakraLink href="https://meje.mintlify.app" target="__blank">
+              <ChakraLink href="https://docs.toju.network" target="__blank">
                 <Text
                   fontSize="var(--font-size-sm)"
                   fontWeight="500"

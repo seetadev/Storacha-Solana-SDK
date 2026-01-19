@@ -170,7 +170,7 @@ export const HomePage = () => {
               fontSize="var(--font-size-base)"
               display={{ lg: 'flex', md: 'flex', base: 'none' }}
             >
-              pnpm i storacha-sol
+              pnpm i @toju.network/sol
             </Box>
           </HStack>
         </VStack>
