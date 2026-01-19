@@ -1,6 +1,7 @@
 import { Box, HStack, Input, SimpleGrid, Text, VStack } from '@chakra-ui/react'
 import { ClockIcon } from '@phosphor-icons/react'
 import { PaperPlaneTiltIcon } from '@phosphor-icons/react/dist/ssr'
+import type { RefObject } from 'react'
 
 interface StorageOption {
   duration: number
@@ -36,6 +37,7 @@ interface StorageDurationSelectorProps {
   onDurationChange: (duration: string) => void
   email?: string
   onEmailChange?: (email: string) => void
+  emailInputRef?: RefObject<HTMLInputElement | null>
 }
 
 export const StorageDurationSelector = ({
@@ -43,6 +45,7 @@ export const StorageDurationSelector = ({
   onDurationChange,
   email,
   onEmailChange,
+  emailInputRef,
 }: StorageDurationSelectorProps) => {
   return (
     <VStack spacing="1.5em" align="stretch">
@@ -182,6 +185,7 @@ export const StorageDurationSelector = ({
 
         <VStack spacing=".5em" align="stretch">
           <Input
+            ref={emailInputRef}
             type="email"
             placeholder="your.email@example.com"
             value={email || ''}
@@ -196,6 +200,11 @@ export const StorageDurationSelector = ({
               borderColor: 'var(--border-hover)',
             }}
             _focus={{
+              borderColor: 'var(--primary-500)',
+              boxShadow: '0 0 0 1px var(--primary-500)',
+              outline: 'none',
+            }}
+            _focusVisible={{
               borderColor: 'var(--primary-500)',
               boxShadow: '0 0 0 1px var(--primary-500)',
             }}
