@@ -121,10 +121,6 @@ export const Upload = () => {
     performUpload()
   }
 
-  const handleProceedWithoutEmail = () => {
-    onClose()
-    performUpload('')
-  }
 
   const usdEquivalent = solPrice ? totalCost * Number(solPrice) : 0
   const hasInsufficientBalance = balance !== null && totalCost > balance
