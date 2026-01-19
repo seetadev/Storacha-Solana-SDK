@@ -80,7 +80,7 @@ export const Upload = () => {
           toast.loading('Processing transaction...', { id: toastId })
           return signed
         },
-        userEmail,
+        email || undefined,
       })
 
       if (result.success) {
