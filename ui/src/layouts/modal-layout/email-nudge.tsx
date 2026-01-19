@@ -4,7 +4,6 @@ import { ModalLayout } from './modal'
 interface EmailNudgeProps {
   isOpen: boolean
   onClose: () => void
-  onProceedWithoutEmail: () => void
 }
 
 export const EmailNudge = ({
