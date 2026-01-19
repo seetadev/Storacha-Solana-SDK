@@ -113,7 +113,6 @@ export const Upload = () => {
       return
     }
 
-    // If email is not provided, show the nudge modal
     if (!email.trim()) {
       onOpen()
       return
