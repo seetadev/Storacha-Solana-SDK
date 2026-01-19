@@ -14,6 +14,7 @@ import { storageRouter } from "./routes/storage.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
+import { pricingRouter } from "./routes/pricing.route.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +53,7 @@ app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
 app.use("/jobs", jobsRouter);
 app.use("/health", serverRouter);
+app.use("/pricing", pricingRouter)
 
 Sentry.setupExpressErrorHandler(app);
 
