@@ -56,14 +56,12 @@ export const FileUpload = ({
           },
         )
 
-        setSelectedFiles((prev) => {
-          const combined = [...prev, ...filesWithId]
-          onFilesSelected(combined)
-          return combined
-        })
+        const combined = [...selectedFiles, ...filesWithId]
+        setSelectedFiles(combined)
+        onFilesSelected(combined)
       }
     },
-    [onFilesSelected, maxSize, maxFiles],
+    [onFilesSelected, maxSize, maxFiles, selectedFiles],
   )
 
   const removeFile = (fileId: string) => {
