@@ -5,6 +5,7 @@ import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
 import { useStorageCost } from '@/hooks/storage-cost'
 import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
+import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
 import type { State } from '@/lib/types'
 import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import {
@@ -37,6 +38,11 @@ export const Upload = () => {
   const emailInputRef = useRef<HTMLInputElement>(null)
 
   const { isOpen, onOpen: openEmailNudge, onClose } = useDisclosure()
+  const {
+    isOpen: isShortDurationWarningOpen,
+    onOpen: openShortDurationWarning,
+    onClose: closeShortDurationWarning,
+  } = useDisclosure()
 
   const parsedDuration = Number(storageDuration)
   const isValidDuration =
@@ -110,6 +116,12 @@ export const Upload = () => {
       return
     }
 
+    // Show warning if duration is less than 7 days
+    if (parsedDuration < 7) {
+      openShortDurationWarning()
+      return
+    }
+
     if (!email.trim()) {
       openEmailNudge()
       return
@@ -121,6 +133,16 @@ export const Upload = () => {
   const proceed = () => {
     onClose()
     performUpload()
+  }
+
+  const proceedWithShortDuration = () => {
+    closeShortDurationWarning()
+    // If no email, show email nudge, otherwise proceed with upload
+    if (!email.trim()) {
+      openEmailNudge()
+    } else {
+      performUpload()
+    }
   }
 
   const enterEmail = () => {
@@ -349,6 +371,12 @@ export const Upload = () => {
       </VStack>
 
       <EmailNudge isOpen={isOpen} onClose={enterEmail} onProceed={proceed} />
+      <ShortDurationWarning
+        isOpen={isShortDurationWarningOpen}
+        onClose={closeShortDurationWarning}
+        onProceed={proceedWithShortDuration}
+        duration={parsedDuration}
+      />
     </>
   )
 }

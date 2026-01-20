@@ -1,4 +1,4 @@
-import { and, desc, eq, lte, sql, gte } from "drizzle-orm";
+import { and, desc, eq, lte, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
 import { PaginationContext } from "../types.js";
@@ -77,18 +77,17 @@ export const getDepositsNeedingWarning = async (
   daysUntilExpiration: number = 7,
 ) => {
   try {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
+    const targetDateString = targetDate.toISOString().split("T")[0];
+
     const deposits = await db
       .select()
       .from(uploads)
       .where(
         and(
           eq(uploads.deletionStatus, "active"),
-          gte(uploads.durationDays, daysUntilExpiration),
-          sql`
-            CURRENT_DATE >=
-            DATE(${uploads.expiresAt}) -
-            (${uploads.durationDays} / 2) * INTERVAL '1 day'
-          `,
+          lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
           sql`${uploads.userEmail} IS NOT NULL`,
           sql`${uploads.userEmail} != ''`,
         ),
