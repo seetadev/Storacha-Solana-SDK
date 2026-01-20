@@ -43,7 +43,23 @@ function validateEnv() {
 validateEnv();
 
 const app = express();
-app.use(cors());
+const corsOptions: cors.CorsOptions = {
+  origin: "*", // allow requests from any domain
+  methods: ["GET", "POST", "OPTIONS"], // OPTIONS is required for preflight requests
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+  ],
+  exposedHeaders: [
+    "Content-Length",
+    "Content-Type",
+  ],
+  maxAge: 3600, // cache preflight response for 1 hour
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(apiLimiter);
 
