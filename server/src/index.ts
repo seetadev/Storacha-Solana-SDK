@@ -8,14 +8,14 @@ import express from "express";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
 import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
+import { pricingRouter } from "./routes/pricing.route.js";
 import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
 import { storageRouter } from "./routes/storage.route.js";
+import { transactionsRouter } from "./routes/transactions.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
-import { pricingRouter } from "./routes/pricing.route.js";
-import { transactionsRouter } from "./routes/transactions.route.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -46,20 +46,12 @@ const app = express();
 const corsOptions: cors.CorsOptions = {
   origin: "*", // allow requests from any domain
   methods: ["GET", "POST", "OPTIONS"], // OPTIONS is required for preflight requests
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-  ],
-  exposedHeaders: [
-    "Content-Length",
-    "Content-Type",
-  ],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Length", "Content-Type"],
   maxAge: 3600, // cache preflight response for 1 hour
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(apiLimiter);
 
@@ -70,8 +62,8 @@ app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
 app.use("/jobs", jobsRouter);
 app.use("/health", serverRouter);
-app.use("/pricing", pricingRouter)
-app.use("/transactions", transactionsRouter)
+app.use("/pricing", pricingRouter);
+app.use("/transactions", transactionsRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
