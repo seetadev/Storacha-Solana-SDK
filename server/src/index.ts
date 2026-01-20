@@ -10,9 +10,12 @@ import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
 import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
+import { storageRouter } from "./routes/storage.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
+import { pricingRouter } from "./routes/pricing.route.js";
+import { transactionsRouter } from "./routes/transactions.route.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -46,10 +49,13 @@ app.use(apiLimiter);
 
 app.use("/console", consoleRouter);
 app.use("/upload", uploadsRouter);
+app.use("/storage", storageRouter);
 app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
 app.use("/jobs", jobsRouter);
 app.use("/health", serverRouter);
+app.use("/pricing", pricingRouter)
+app.use("/transactions", transactionsRouter)
 
 Sentry.setupExpressErrorHandler(app);
 

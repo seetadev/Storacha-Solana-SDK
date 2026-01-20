@@ -1,5 +1,5 @@
 {
-  "name": "storacha-sol",
+  "name": "@toju.network/sol",
   "version": "0.1.0",
   "type": "module",
   "module": "./dist/index.js",
@@ -29,12 +29,15 @@
     "solana",
     "storacha",
     "typescript",
-    "rust",
-    "dapp"
+    "web3",
+    "ipfs",
+    "filecoin",
+    "decentralized-storage",
+    "blockchain"
   ],
-  "author": "",
+  "author": "toju.network",
   "license": "ISC",
-  "description": "",
+  "description": "Decentralized storage SDK for Solana via Storacha - pay with SOL, store on IPFS",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",

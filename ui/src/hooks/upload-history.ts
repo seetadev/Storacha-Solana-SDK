@@ -1,6 +1,6 @@
 import { useAuthContext } from '@/hooks/context'
 import type { DashboardStats, UploadedFile } from '@/lib/types'
-import { useDeposit } from 'storacha-sol'
+import { useDeposit } from '@toju.network/sol'
 import useSWR from 'swr'
 
 export function useUploadHistory() {
@@ -12,11 +12,9 @@ export function useUploadHistory() {
     async () => {
       if (!user) return null
 
-      const historyData = await client.getUserUploadHistory(user)
-      // TODO: Fix according to new response structure after package update
-      // const historyData = await client.getUserUploadHistory(user, 1, 20)
+      const historyData = await client.getUserUploadHistory(user, 1, 20)
 
-      if (!historyData.userHistory || historyData.userHistory.length === 0) {
+      if (!historyData.data || historyData.data.length === 0) {
         return {
           files: [],
           stats: {
@@ -28,8 +26,8 @@ export function useUploadHistory() {
         }
       }
 
-      const transformedFiles: Array<UploadedFile> = historyData.userHistory.map(
-        (deposit) => {
+      const transformedFiles: Array<UploadedFile> = historyData.data.map(
+        (deposit: any) => {
           let status: 'active' | 'expired' | 'pending' = 'active'
           if (deposit.deletionStatus === 'deleted') {
             status = 'expired'

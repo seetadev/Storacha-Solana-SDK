@@ -1,5 +1,5 @@
 import { useAuthContext } from '@/hooks/context'
-import { useUpload } from 'storacha-sol'
+import { useUpload } from '@toju.network/sol'
 import useSWR from 'swr'
 
 export const useRenewalCost = (cid: string, duration: number) => {
@@ -26,8 +26,8 @@ export const useFileDetails = (walletAddress: string, cid: string) => {
     walletAddress && cid ? ['file-details', walletAddress, cid, network] : null
 
   const { data, error, isLoading } = useSWR(key, async () => {
-    const response = await client.getUserUploadHistory(walletAddress)
-    const file = response.userHistory?.find((f: any) => f.contentCid === cid)
+    const response = await client.getUserUploadHistory(walletAddress, 1, 100)
+    const file = response.data?.find((f: any) => f.contentCid === cid)
 
     if (!file) {
       throw new Error('File not found in your upload history')
