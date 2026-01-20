@@ -42,8 +42,27 @@ function validateEnv() {
 }
 validateEnv();
 
+/**
+ * CORS options
+ * Allow requests from any domain
+ */
+const corsOptions: cors.CorsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+  ],
+  exposedHeaders: [
+    "Content-Length",
+    "Content-Type",
+  ],
+  maxAge: 3600, // cache preflight response for 1 hours to prevent repeated preflight requests
+};
+
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(apiLimiter);
 
