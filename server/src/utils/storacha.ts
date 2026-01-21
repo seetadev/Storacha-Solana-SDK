@@ -8,6 +8,7 @@ import { configTable } from "../db/schema.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
 import { QuoteInput } from "../types/StorachaTypes.js";
 import { getAmountInLamportsFromUSD } from "./constant.js";
+import { logger } from "./logger.js";
 
 /**
  * Initializes a Storacha client using user-provided key and proof.
@@ -80,7 +81,9 @@ export const getPricingConfig = async () => {
       ratePerBytePerDay: data[0].ratePerBytePerDay,
     };
   } catch (error) {
-    console.error("Error fetching pricing config from database:", error);
+    logger.error("Error fetching pricing config from database", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 };

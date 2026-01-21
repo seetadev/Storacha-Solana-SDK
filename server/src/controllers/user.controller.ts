@@ -24,6 +24,7 @@ import {
   ONE_BILLION_LAMPORTS,
 } from "../utils/constant.js";
 import { getExpiryDate } from "../utils/functions.js";
+import { logger } from "../utils/logger.js";
 import {
   getPricingConfig,
   getQuoteForFileUpload,
@@ -74,7 +75,9 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
       delegation: Buffer.from(archive.ok).toString("base64"),
     });
   } catch (err) {
-    console.error("Error creating UCAN delegation:", err);
+    logger.error("Error creating UCAN delegation", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({ error: "Failed to create delegation" });
   }
 };
@@ -128,7 +131,9 @@ export const uploadFile = async (req: Request, res: Response) => {
       object: uploadObject,
     });
   } catch (error: any) {
-    console.error("Error uploading file to Storacha:", error);
+    logger.error("Error uploading file to Storacha", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({
       message: "Error uploading file to directory",
     });
@@ -191,7 +196,9 @@ export const uploadFiles = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error("Error uploading files:", error);
+    logger.error("Error uploading files", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({ message: "Error uploading files" });
   }
 };
@@ -249,7 +256,7 @@ export const deposit = async (req: Request, res: Response) => {
       email: userEmail || undefined,
     });
 
-    console.log("Deposit calculation:", {
+    logger.info("Deposit calculation", {
       totalSize,
       ratePerBytePerDay,
       duration_days,
@@ -321,7 +328,9 @@ export const deposit = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error(error);
+    logger.error("Error making a deposit", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({
       message: "Error making a deposit",
     });
@@ -347,7 +356,9 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (err) {
-    console.log("The error is", err);
+    logger.error("Error getting upload quote", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(400).json({
       quoteObject: null,
       success: false,
@@ -423,7 +434,9 @@ export const updateTransactionHash = async (req: Request, res: Response) => {
       deposit: updated[0],
     });
   } catch (err) {
-    console.error("Error updating transaction hash:", err);
+    logger.error("Error updating transaction hash", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({
       message: "Error updating transaction hash",
     });
@@ -485,10 +498,9 @@ export const getStorageRenewalCost = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error(
-      "An error occured while retrieving storage renewal cost",
-      error,
-    );
+    logger.error("Error retrieving storage renewal cost", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to get renewal cost",
     });
@@ -564,7 +576,9 @@ export const renewStorage = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error("Error making storage renewal:", error);
+    logger.error("Error making storage renewal", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to renew storage duration",
     });
@@ -615,7 +629,9 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
       deposit: updated,
     });
   } catch (error) {
-    console.error("Error confirming renewal:", error);
+    logger.error("Error confirming renewal", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to confirm renewal",
     });
@@ -639,7 +655,9 @@ export const getUploadTransactions = async (req: Request, res: Response) => {
       transactions,
     });
   } catch (error) {
-    console.error("Error fetching transaction history:", error);
+    logger.error("Error fetching transaction history", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({ message: "Failed to fetch transactions" });
   }
 };
@@ -652,7 +670,9 @@ export const getSolUsdPrice = async (_req: Request, res: Response) => {
       timestamp: Date.now,
     });
   } catch (error) {
-    console.error("Error getting SOL/USD price:", error);
+    logger.error("Error getting SOL/USD price", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({ message: "Failed to get SOL/USD price" });
   }
 };

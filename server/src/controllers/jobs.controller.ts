@@ -7,6 +7,7 @@ import {
   updateWarningSentAt,
 } from "../db/uploads-table.js";
 import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
+import { logger } from "../utils/logger.js";
 import { initStorachaClient } from "../utils/storacha.js";
 
 /**
@@ -14,30 +15,34 @@ import { initStorachaClient } from "../utils/storacha.js";
  */
 export const sendExpirationWarnings = async (req: Request, res: Response) => {
   try {
-    console.log("Running expiration warning job...");
+    logger.info("Running expiration warning job");
     const depositsNeedingWarning = await getDepositsNeedingWarning();
 
     if (!depositsNeedingWarning || depositsNeedingWarning.length === 0) {
-      console.log("No deposits need warning emails at this time");
+      logger.info("No deposits need warning emails at this time");
       return res.status(200).json({
         success: true,
         message: "No deposits need warnings",
       });
     }
 
-    console.log(
-      `Found ${depositsNeedingWarning.length} deposits needing warnings`,
-    );
+    logger.info("Found deposits needing warnings", {
+      count: depositsNeedingWarning.length,
+    });
 
     for (const deposit of depositsNeedingWarning) {
       try {
         if (!deposit.userEmail) {
-          console.warn(`Skipping deposit ${deposit.id}: no email address`);
+          logger.warn("Skipping deposit: no email address", {
+            depositId: deposit.id,
+          });
           continue;
         }
 
         if (!deposit.expiresAt) {
-          console.warn(`Skipping deposit ${deposit.id}: no expiration date`);
+          logger.warn("Skipping deposit: no expiration date", {
+            depositId: deposit.id,
+          });
           continue;
         }
 
@@ -47,7 +52,9 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
           (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        console.log(`Sending warning email for deposit ${deposit.id}...`);
+        logger.info("Sending warning email for deposit", {
+          depositId: deposit.id,
+        });
         const emailResult = await sendExpirationWarningEmail(
           deposit.userEmail,
           {
@@ -60,17 +67,22 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
 
         if (emailResult.success) {
           await updateWarningSentAt(deposit.id);
-          console.log(`Warning email sent for deposit ${deposit.id}`);
+          logger.info("Warning email sent for deposit", {
+            depositId: deposit.id,
+          });
         } else {
-          console.error(
-            `Failed to send email for deposit ${deposit.id}:`,
-            emailResult.error,
-          );
+          logger.error("Failed to send email for deposit", {
+            depositId: deposit.id,
+            error: emailResult.error,
+          });
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error(`Error processing deposit ${deposit.id}:`, errorMessage);
+        logger.error("Error processing deposit", {
+          depositId: deposit.id,
+          error: errorMessage,
+        });
       }
     }
 
@@ -79,7 +91,9 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
       message: "Expiration warnings processed",
     });
   } catch (error) {
-    console.error("Error in sendExpirationWarnings cron:", error);
+    logger.error("Error in sendExpirationWarnings cron", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       success: false,
       message: "Failed to process expiration warnings",
@@ -93,23 +107,25 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
  */
 export const deleteExpiredDeposits = async (req: Request, res: Response) => {
   try {
-    console.log("Running expired deposits deletion job...");
+    logger.info("Running expired deposits deletion job");
     const expiredDeposits = await getExpiredDeposits();
 
     if (!expiredDeposits || expiredDeposits.length === 0) {
-      console.log("No expired deposits to delete at this time");
+      logger.info("No expired deposits to delete at this time");
       return res.status(200).json({
         success: true,
         message: "No expired deposits to delete",
       });
     }
 
-    console.log(`Found ${expiredDeposits.length} expired deposits to delete`);
+    logger.info("Found expired deposits to delete", {
+      count: expiredDeposits.length,
+    });
     const client = await initStorachaClient();
 
     for (const deposit of expiredDeposits) {
       try {
-        console.log(`Deleting expired deposit:`, {
+        logger.info("Deleting expired deposit", {
           id: deposit.id,
           cid: deposit.contentCid,
           expiresAt: deposit.expiresAt,
@@ -121,11 +137,14 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
           shards: true,
         });
         await updateDeletionStatus(deposit.id, "deleted");
-        console.log(`Successfully deleted deposit ${deposit.id}`);
+        logger.info("Successfully deleted deposit", { depositId: deposit.id });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error(`Failed to delete deposit ${deposit.id}:`, errorMessage);
+        logger.error("Failed to delete deposit", {
+          depositId: deposit.id,
+          error: errorMessage,
+        });
       }
     }
 
@@ -134,7 +153,9 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
       message: "Expired deposits processed",
     });
   } catch (error) {
-    console.error("Error in deleteExpiredDeposits job:", error);
+    logger.error("Error in deleteExpiredDeposits job", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       success: false,
       message: "Failed to process expired deposits deletion",

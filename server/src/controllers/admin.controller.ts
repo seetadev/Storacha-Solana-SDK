@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db/db.js";
 import { configTable } from "../db/schema.js";
+import { logger } from "../utils/logger.js";
 
 //All the endpoints in this Particular controller are protected using Auth middleware
 
@@ -18,7 +19,9 @@ export const updateRate = async (req: Request, res: Response) => {
       value: result[0].ratePerBytePerDay,
     });
   } catch (err) {
-    console.log("The error is", err);
+    logger.error("Error updating rate per file", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({ error: "Failed to update rate" });
   }
 };
@@ -42,7 +45,9 @@ export const updateMinDuration = async (req: Request, res: Response) => {
       value: result[0].minDurationDays,
     });
   } catch (err) {
-    console.log("The error is", err);
+    logger.error("Error updating minimum duration", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({ error: "Failed to update rate" });
   }
 };
