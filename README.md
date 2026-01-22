@@ -1,6 +1,6 @@
-# Storacha Onchain Payments (Solana)
+# Keep - Decentralized Storage Payments
 
-**Storacha Onchain Payments** is a **per-upload, pay-as-you-go decentralized storage payments on Solana**.
+**Keep** is a **per-upload, pay-as-you-go decentralized storage payment solution on Solana**.
 Users pay with **native SOL**, while a fiat-subscribed reseller account underwrites the storage service.
 This monorepo contains the **Solana Payment Program**, **Backend API**, and **TypeScript SDK**.
 
@@ -10,9 +10,9 @@ This monorepo contains the **Solana Payment Program**, **Backend API**, and **Ty
 - **No Credit Cards** – Pure crypto-native flow.
 - **Escrow-based Rewards** – Funds released linearly per block to service providers.
 - **Backend API with UCAN Delegation** – Secure storage delegation via UCAN tokens.
-- **TypeScript SDK** – Easily integrate with dapps (supports Solana Mobile dapp publishing).
+- **TypeScript SDK** – Easily integrate with dapps
 - **Upload History** – Track all your uploads with detailed metadata (file name, size, expiration, status).
-- **Email Notifications** – Get warned 7 days before your files expire (powered by Resend).
+- **Email Notifications** – Get warned 7 days before your storage duration elapses.
 - **Automatic Cleanup** – Expired files are automatically deleted from Storacha storage.
 - **Extensible** – Designed for multi-chain support (Phase 2).
 
@@ -181,7 +181,7 @@ Install a Solana wallet like Phantom wallet in your browser. Go your settings an
 
 Toggle the testnet option, and then go to [Solana Faucet](https://faucet.solana.com/) to airdrop SOL into your wallet. You'll need to copy your testnet address for this.
 
-You can test everything out on the playground [here](https://storacha-sol.vercel.app/)
+You can use our app to try out the SDK [here](https://toju.network/)
 
 ## Contributing to Documentation
 

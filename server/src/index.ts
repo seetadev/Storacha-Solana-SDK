@@ -7,9 +7,14 @@ import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import morgan, { FormatFn } from "morgan";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
-import { adminRouter } from "./routes/admin.route.js";
+import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
+import { pricingRouter } from "./routes/pricing.route.js";
+import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
+import { storageRouter } from "./routes/storage.route.js";
+import { transactionsRouter } from "./routes/transactions.route.js";
+import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
 import { logger } from "./utils/logger.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
@@ -40,7 +45,15 @@ function validateEnv() {
 validateEnv();
 
 const app = express();
-app.use(cors());
+const corsOptions: cors.CorsOptions = {
+  origin: "*", // allow requests from any domain
+  methods: ["GET", "POST", "OPTIONS"], // OPTIONS is required for preflight requests
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Length", "Content-Type"],
+  maxAge: 3600, // cache preflight response for 1 hour
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) =>
   JSON.stringify({
@@ -56,10 +69,15 @@ const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) =>
 app.use(morgan(requestLogFormat, { stream: logger.stream }));
 app.use(apiLimiter);
 
-app.use("/api/admin", adminRouter);
-app.use("/api/user", userRouter);
-app.use("/api/solana", solanaRouter);
-app.use("/api/jobs", jobsRouter);
+app.use("/console", consoleRouter);
+app.use("/upload", uploadsRouter);
+app.use("/storage", storageRouter);
+app.use("/user", userRouter);
+app.use("/solana", solanaRouter);
+app.use("/jobs", jobsRouter);
+app.use("/health", serverRouter);
+app.use("/pricing", pricingRouter);
+app.use("/transactions", transactionsRouter);
 
 Sentry.setupExpressErrorHandler(app);
 

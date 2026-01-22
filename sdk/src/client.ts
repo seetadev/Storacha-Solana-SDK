@@ -21,6 +21,7 @@ export enum Environment {
   mainnet = 'mainnet-beta',
   testnet = 'testnet',
   devnet = 'devnet',
+  local = 'localnet',
 }
 
 export function getRpcUrl(env: Environment): string {
@@ -31,6 +32,8 @@ export function getRpcUrl(env: Environment): string {
       return 'https://api.testnet.solana.com';
     case Environment.devnet:
       return 'https://api.devnet.solana.com';
+    case Environment.local:
+      return 'http://localhost:5040';
     default:
       throw new Error(`Unsupported environment: ${env}`);
   }
@@ -124,7 +127,7 @@ export class Client {
     const durationInDays = Math.floor(duration / 86400); // convert seconds to day
 
     const response = await fetch(
-      `${this.apiEndpoint}/api/user/get-quote?size=${fileSizeInBytes}&duration=${durationInDays}`
+      `${this.apiEndpoint}/pricing/quote?size=${fileSizeInBytes}&duration=${durationInDays}`
     );
 
     if (!response.ok) throw new Error('Failed to get storage cost estimate');
@@ -139,8 +142,11 @@ export class Client {
     };
   }
 
-  async getUserUploadHistory(userAddress: string) {
-    const response = await getUserUploadHistory(userAddress, this.apiEndpoint);
+  async getUserUploadHistory(userAddress: string, page: number, limit: number) {
+    const response = await getUserUploadHistory(userAddress, this.apiEndpoint, {
+      page,
+      limit,
+    });
     return response;
   }
 
@@ -213,7 +219,7 @@ export class Client {
    * @returns {Promise<{ price: number }>} Current SOL price in USD
    */
   async getSolPrice(): Promise<number> {
-    const request = await fetch(`${this.apiEndpoint}/api/user/sol-price`);
+    const request = await fetch(`${this.apiEndpoint}/pricing/sol`);
     if (!request.ok) throw new Error("Couldn't fetch SOL price");
     const data = await request.json();
     return data.price;

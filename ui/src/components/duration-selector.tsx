@@ -1,6 +1,7 @@
 import { Box, HStack, Input, SimpleGrid, Text, VStack } from '@chakra-ui/react'
 import { ClockIcon } from '@phosphor-icons/react'
 import { PaperPlaneTiltIcon } from '@phosphor-icons/react/dist/ssr'
+import type { RefObject } from 'react'
 
 interface StorageOption {
   duration: number
@@ -32,10 +33,11 @@ const STORAGE_OPTIONS: Array<StorageOption> = [
 ]
 
 interface StorageDurationSelectorProps {
-  selectedDuration: number
-  onDurationChange: (duration: number) => void
+  selectedDuration: string
+  onDurationChange: (duration: string) => void
   email?: string
   onEmailChange?: (email: string) => void
+  emailInputRef?: RefObject<HTMLInputElement | null>
 }
 
 export const StorageDurationSelector = ({
@@ -43,6 +45,7 @@ export const StorageDurationSelector = ({
   onDurationChange,
   email,
   onEmailChange,
+  emailInputRef,
 }: StorageDurationSelectorProps) => {
   return (
     <VStack spacing="1.5em" align="stretch">
@@ -59,52 +62,55 @@ export const StorageDurationSelector = ({
         </HStack>
 
         <SimpleGrid columns={{ base: 2, md: 4 }} spacing="1em">
-          {STORAGE_OPTIONS.map((option) => (
-            <Box
-              key={option.duration}
-              onClick={() => onDurationChange(option.duration)}
-              p="1em"
-              border="1px solid"
-              borderColor={
-                selectedDuration === option.duration
-                  ? 'var(--primary-500)'
-                  : 'var(--border-hover)'
-              }
-              borderRadius="var(--radius-md)"
-              cursor="pointer"
-              bg={
-                selectedDuration === option.duration
-                  ? 'rgba(249, 115, 22, 0.08)'
-                  : 'var(--bg-dark)'
-              }
-              transition="all 0.2s ease"
-              _hover={{
-                borderColor:
-                  selectedDuration === option.duration
+          {STORAGE_OPTIONS.map((option) => {
+            const duration = option.duration.toString()
+            return (
+              <Box
+                key={option.duration}
+                onClick={() => onDurationChange(duration)}
+                p="1em"
+                border="1px solid"
+                borderColor={
+                  selectedDuration === duration
                     ? 'var(--primary-500)'
-                    : 'var(--border-hover)',
-                bg:
-                  selectedDuration === option.duration
-                    ? 'rgba(249, 115, 22, 0.12)'
-                    : 'var(--lght-grey)',
-              }}
-            >
-              <Text
-                fontWeight="var(--font-weight-medium)"
-                color="var(--text-inverse)"
-                fontSize="var(--font-size-sm)"
+                    : 'var(--border-hover)'
+                }
+                borderRadius="var(--radius-md)"
+                cursor="pointer"
+                bg={
+                  selectedDuration === duration
+                    ? 'rgba(249, 115, 22, 0.08)'
+                    : 'var(--bg-dark)'
+                }
+                transition="all 0.2s ease"
+                _hover={{
+                  borderColor:
+                    selectedDuration === duration
+                      ? 'var(--primary-500)'
+                      : 'var(--border-hover)',
+                  bg:
+                    selectedDuration === duration
+                      ? 'rgba(249, 115, 22, 0.12)'
+                      : 'var(--lght-grey)',
+                }}
               >
-                {option.label}
-              </Text>
-              <Text
-                fontSize="var(--font-size-xs)"
-                color="var(--text-muted)"
-                mt="0.25em"
-              >
-                {option.description}
-              </Text>
-            </Box>
-          ))}
+                <Text
+                  fontWeight="var(--font-weight-medium)"
+                  color="var(--text-inverse)"
+                  fontSize="var(--font-size-sm)"
+                >
+                  {option.label}
+                </Text>
+                <Text
+                  fontSize="var(--font-size-xs)"
+                  color="var(--text-muted)"
+                  mt="0.25em"
+                >
+                  {option.description}
+                </Text>
+              </Box>
+            )
+          })}
         </SimpleGrid>
 
         <HStack spacing=".75em" align="center">
@@ -116,12 +122,20 @@ export const StorageDurationSelector = ({
             Custom:
           </Text>
           <Input
-            type="number"
+            type="text"
             placeholder="Days"
             value={selectedDuration}
             onChange={(e) => {
-              const value = parseInt(e.target.value, 10)
-              if (!isNaN(value) && value > 0) {
+              const value = e.target.value
+
+              // Allow empty string (so backspace works)
+              if (value === '') {
+                onDurationChange('')
+                return
+              }
+
+              // Allow digits only
+              if (/^[0-9]+$/.test(value)) {
                 onDurationChange(value)
               }
             }}
@@ -171,6 +185,7 @@ export const StorageDurationSelector = ({
 
         <VStack spacing=".5em" align="stretch">
           <Input
+            ref={emailInputRef}
             type="email"
             placeholder="your.email@example.com"
             value={email || ''}
@@ -185,6 +200,11 @@ export const StorageDurationSelector = ({
               borderColor: 'var(--border-hover)',
             }}
             _focus={{
+              borderColor: 'var(--primary-500)',
+              boxShadow: '0 0 0 1px var(--primary-500)',
+              outline: 'none',
+            }}
+            _focusVisible={{
               borderColor: 'var(--primary-500)',
               boxShadow: '0 0 0 1px var(--primary-500)',
             }}

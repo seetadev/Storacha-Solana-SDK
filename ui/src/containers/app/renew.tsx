@@ -22,7 +22,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { useUpload } from 'storacha-sol'
+import { useUpload } from '@toju.network/sol'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 

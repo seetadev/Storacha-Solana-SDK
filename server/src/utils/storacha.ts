@@ -6,7 +6,7 @@ import { StoreMemory } from "@storacha/client/stores/memory";
 import { db } from "../db/db.js";
 import { configTable } from "../db/schema.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
-import { QuoteInput } from "../types/StorachaTypes.js";
+import { QuoteInput } from "../types.js";
 import { getAmountInLamportsFromUSD } from "./constant.js";
 import { logger } from "./logger.js";
 
