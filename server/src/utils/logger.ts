@@ -5,8 +5,12 @@ type LogContext = Record<string, unknown>;
 
 const sourceToken = process.env.BTRSTACK_SOURCE_TOKEN;
 const sourceId = process.env.BTRSTACK_SOURCE_ID;
+const ingestingHost = process.env.BTRSTACK_INGESTING_HOST;
 
-const logtail = sourceToken ? new Logtail(sourceToken) : null;
+const logtail =
+  sourceToken && ingestingHost
+    ? new Logtail(sourceToken, { endpoint: `https://${ingestingHost}` })
+    : null;
 
 const buildContext = (context?: LogContext) => {
   if (!sourceId) return context || {};
@@ -46,10 +50,14 @@ const log = (level: LogLevel, message: string, context?: LogContext) => {
 };
 
 export const logger = {
-  debug: (message: string, context?: LogContext) => log("debug", message, context),
-  info: (message: string, context?: LogContext) => log("info", message, context),
-  warn: (message: string, context?: LogContext) => log("warn", message, context),
-  error: (message: string, context?: LogContext) => log("error", message, context),
+  debug: (message: string, context?: LogContext) =>
+    log("debug", message, context),
+  info: (message: string, context?: LogContext) =>
+    log("info", message, context),
+  warn: (message: string, context?: LogContext) =>
+    log("warn", message, context),
+  error: (message: string, context?: LogContext) =>
+    log("error", message, context),
   http: (context?: LogContext) => log("info", "http_request", context),
   stream: {
     write: (message: string) => {
