@@ -12,6 +12,21 @@ const logtail =
     ? new Logtail(sourceToken, { endpoint: `https://${ingestingHost}` })
     : null;
 
+// according to their docs... we have to ensure logs are sent.
+if (logtail) {
+  process.on("beforeExit", () => {
+    logtail.flush();
+  });
+  process.on("SIGINT", () => {
+    logtail.flush();
+    process.exit(0);
+  });
+  process.on("SIGTERM", () => {
+    logtail.flush();
+    process.exit(0);
+  });
+}
+
 const buildContext = (context?: LogContext) => {
   if (!sourceId) return context || {};
   return { sourceId, ...(context || {}) };
