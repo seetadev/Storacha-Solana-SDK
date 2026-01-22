@@ -4,7 +4,8 @@ import "./instrument.js";
 import * as Sentry from "@sentry/node";
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { Request, Response } from "express";
+import morgan, { FormatFn } from "morgan";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
 import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
@@ -15,6 +16,7 @@ import { storageRouter } from "./routes/storage.route.js";
 import { transactionsRouter } from "./routes/transactions.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
+import { logger } from "./utils/logger.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
 
 dotenv.config();
@@ -34,7 +36,7 @@ function validateEnv() {
   const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
-    console.log(missing);
+    logger.error("Missing required environment variables", { missing });
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}`,
     );
@@ -53,6 +55,18 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) =>
+  JSON.stringify({
+    method: tokens.method(req, res),
+    path: tokens.url(req, res),
+    status: Number(tokens.status(req, res)),
+    responseTimeMs: Number(tokens["response-time"](req, res)),
+    contentLength: tokens.res(req, res, "content-length"),
+    userAgent: tokens["user-agent"](req, res),
+    ip: tokens["remote-addr"](req, res),
+  });
+
+app.use(morgan(requestLogFormat, { stream: logger.stream }));
 app.use(apiLimiter);
 
 app.use("/console", consoleRouter);
@@ -68,12 +82,14 @@ app.use("/transactions", transactionsRouter);
 Sentry.setupExpressErrorHandler(app);
 
 app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info("Server running", { port: PORT });
   try {
     await ensureConfigInitialized();
-    console.log("Solana config initialized successfully");
+    logger.info("Solana config initialized successfully");
   } catch (error) {
-    console.error("Failed to initialize Solana config:", error);
+    logger.error("Failed to initialize Solana config", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     process.exit(1);
   }
 });

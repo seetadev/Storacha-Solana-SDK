@@ -10,6 +10,7 @@ import { sha256 } from "js-sha256";
 import { db } from "../../db/db.js";
 import { configTable } from "../../db/schema.js";
 import { SolanaProgram as StorachaSolProgram } from "./program.js";
+import { logger } from "../logger.js";
 
 const CONFIG_SEED = "config";
 const DEPOSIT_SEED = "deposit";
@@ -140,7 +141,7 @@ export async function ensureConfigInitialized(): Promise<void> {
 
   const configAccount = await connection.getAccountInfo(configPda);
   if (!configAccount) {
-    console.log("Config not found — initializing it now...");
+    logger.info("Config not found — initializing it now");
 
     const adminKeypair = await loadAdminKeypair();
 
@@ -189,13 +190,15 @@ export async function ensureConfigInitialized(): Promise<void> {
         preflightCommitment: "confirmed",
       });
       await connection.confirmTransaction(sig, "confirmed");
-      console.log(`✅ Config initialized. Tx: ${sig}`);
+      logger.info("Config initialized", { signature: sig });
     } catch (err) {
-      console.error("Failed to send init transaction:", err);
+      logger.error("Failed to send init transaction", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       throw err;
     }
   } else {
-    console.log("✅ Config already exists — no update needed.");
+    logger.info("Config already exists — no update needed");
     // NOTE: We don't update the on-chain rate because our pricing is in USD (3e-12)
     // and the backend calculates lamports dynamically based on current SOL price.
     // The on-chain program only validates that the deposit amount is sufficient.

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logger } from "../../utils/logger.js";
 
 /**
  * Initialize Resend client
@@ -41,7 +42,9 @@ export const sendExpirationWarningEmail = async (
 
     return { success: true, data: response };
   } catch (error) {
-    console.error("Failed to send expiration warning email:", error);
+    logger.error("Failed to send expiration warning email", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

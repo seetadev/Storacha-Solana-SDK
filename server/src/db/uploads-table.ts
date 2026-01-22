@@ -1,7 +1,8 @@
 import { and, desc, eq, lte, sql } from "drizzle-orm";
+import { logger } from "../utils/logger.js";
+import { PaginationContext } from "../types.js";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
-import { PaginationContext } from "../types.js";
 
 type TransactionData = {
   depositId: number;
@@ -61,7 +62,9 @@ export const getUserHistory = async (
       prev: page > 1 ? buildPageUrl(page - 1) : null,
     }
   } catch (err) {
-    console.error('Error getting user history', err)
+    logger.error("Error getting user history", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null
   }
 }
@@ -95,7 +98,9 @@ export const getDepositsNeedingWarning = async (
 
     return deposits;
   } catch (err) {
-    console.error("Error getting deposits needing warning:", err);
+    logger.error("Error getting deposits needing warning", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -120,7 +125,9 @@ export const getExpiredDeposits = async () => {
 
     return deposits;
   } catch (err) {
-    console.error("Error getting expired deposits:", err);
+    logger.error("Error getting expired deposits", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -144,7 +151,9 @@ export const updateDeletionStatus = async (
 
     return updated[0] || null;
   } catch (err) {
-    console.error("Error updating deletion status:", err);
+    logger.error("Error updating deletion status", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -168,7 +177,9 @@ export const updateWarningSentAt = async (depositId: number) => {
 
     return updated[0] || null;
   } catch (err) {
-    console.error("Error updating warningSentAt:", err);
+    logger.error("Error updating warningSentAt", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -188,7 +199,7 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
       .limit(1);
 
     if (!existingUpload || existingUpload.length === 0) {
-      console.error(`File upload with this CID: ${cid} does not exist`);
+      logger.warn("File upload with CID does not exist", { cid });
       return null;
     }
 
@@ -217,7 +228,9 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
 
     return deposits[0] || null;
   } catch (error) {
-    console.error("Failed to renew storage duration", error);
+    logger.error("Failed to renew storage duration", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 };
@@ -241,7 +254,9 @@ export const saveTransaction = async (data: TransactionData) => {
 
     return result[0] || null;
   } catch (err) {
-    console.error("Error saving transaction:", err);
+    logger.error("Error saving transaction", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -260,7 +275,9 @@ const getUploadTransactions = async (depositId: number) => {
 
     return transactions;
   } catch (err) {
-    console.error("Error getting upload transactions:", err);
+    logger.error("Error getting upload transactions", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };
@@ -280,7 +297,9 @@ export const getTransactionsForCID = async (cid: string) => {
 
     return await getUploadTransactions(deposit[0].id);
   } catch (err) {
-    console.error("Error getting transactions for CID:", err);
+    logger.error("Error getting transactions for CID", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };

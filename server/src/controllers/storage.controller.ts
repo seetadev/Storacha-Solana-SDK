@@ -8,6 +8,7 @@ import {
   saveTransaction,
 } from "../db/uploads-table.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
+import { logger } from "../utils/logger.js";
 import {
   getAmountInLamportsFromUSD,
   getAmountInSOL,
@@ -72,10 +73,9 @@ export const getStorageRenewalCost = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error(
-      "An error occured while retrieving storage renewal cost",
-      error,
-    );
+    logger.error("Error retrieving storage renewal cost", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to get renewal cost",
     });
@@ -151,7 +151,9 @@ export const renewStorage = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error("Error making storage renewal:", error);
+    logger.error("Error making storage renewal", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to renew storage duration",
     });
@@ -202,7 +204,9 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
       deposit: updated,
     });
   } catch (error) {
-    console.error("Error confirming renewal:", error);
+    logger.error("Error confirming renewal", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       message: "Failed to confirm renewal",
     });

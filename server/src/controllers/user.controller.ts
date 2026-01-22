@@ -3,9 +3,8 @@ import { DID } from "@ucanto/core";
 import * as Delegation from "@ucanto/core/delegation";
 import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
-import {
-  initStorachaClient,
-} from "../utils/storacha.js";
+import { logger } from "../utils/logger.js";
+import { initStorachaClient } from "../utils/storacha.js";
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -47,7 +46,9 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
       delegation: Buffer.from(archive.ok).toString("base64"),
     });
   } catch (err) {
-    console.error("Error creating UCAN delegation:", err);
+    logger.error("Error creating UCAN delegation", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({ error: "Failed to create delegation" });
   }
 };

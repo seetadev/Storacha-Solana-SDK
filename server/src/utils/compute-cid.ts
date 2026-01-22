@@ -3,6 +3,7 @@ import {
   CAREncoderStream,
   createDirectoryEncoderStream,
 } from "ipfs-car";
+import { logger } from "./logger.js";
 
 /**
  * pre-computes the Storacha/IPFS-compatible CID for a file/directory
@@ -37,7 +38,9 @@ export async function computeCID(
 
     return await computeDirectoryCID(fileMap);
   } catch (error) {
-    console.error("Error computing CID:", error);
+    logger.error("Error computing CID", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new Error(
       `Failed to compute CID: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -83,8 +86,9 @@ async function computeDirectoryCID(
     .pipeThrough(new CAREncoderStream())
     .pipeTo(new WritableStream());
 
-  console.log(
-    `Total blocks processed: ${blockCount}, Root CID: ${rootCID?.toString()}`,
-  );
+  logger.info("Directory CID computed", {
+    blockCount,
+    rootCid: rootCID?.toString(),
+  });
   return rootCID.toString();
 }
