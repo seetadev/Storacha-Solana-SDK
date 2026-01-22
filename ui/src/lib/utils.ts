@@ -9,7 +9,7 @@ export const formatSOL = (amount: number): string => {
 }
 
 export const IS_DEV =
-  process.env.NODE_ENV === 'development' && 'http://localhost:5040'
+  process.env.NODE_ENV === 'development' ? 'http://localhost:5040' : undefined
 
 /**
  * Format USD amount for display
