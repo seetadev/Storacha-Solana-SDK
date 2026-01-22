@@ -2,6 +2,7 @@ import { useAuthContext } from '@/hooks/context'
 import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
 import { useSolPrice } from '@/hooks/sol-price'
 import type { State } from '@/lib/types'
+import { IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -20,9 +21,9 @@ import {
 } from '@phosphor-icons/react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import { useUpload } from '@toju.network/sol'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { useUpload } from '@toju.network/sol'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
@@ -32,7 +33,7 @@ export const Renew = () => {
   const { user, network, balance } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
-  const client = useUpload(network)
+  const client = useUpload(network, IS_DEV)
 
   const [selectedDuration, setSelectedDuration] = useState(30)
   const [customDuration, setCustomDuration] = useState('')
