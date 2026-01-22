@@ -46,7 +46,7 @@ validateEnv();
 
 const app = express();
 const corsOptions: cors.CorsOptions = {
-  origin: "*", // allow requests from any domain
+  origin: "*",
   methods: ["GET", "POST", "OPTIONS"], // OPTIONS is required for preflight requests
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Content-Length", "Content-Type"],

@@ -8,6 +8,9 @@ export const formatSOL = (amount: number): string => {
   return `${amount.toFixed(9).replace(/\.?0+$/, '')} SOL`
 }
 
+export const IS_DEV =
+  process.env.NODE_ENV === 'development' && 'http://localhost:5040'
+
 /**
  * Format USD amount for display
  */

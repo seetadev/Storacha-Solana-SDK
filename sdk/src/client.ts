@@ -42,6 +42,8 @@ export function getRpcUrl(env: Environment): string {
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
   environment: Environment;
+  /** Optional custom API endpoint (useful for local development) you may never need this */
+  endpoint?: string;
 }
 
 export interface UploadParams extends Pick<
@@ -70,7 +72,7 @@ export class Client {
 
   constructor(options: ClientOptions) {
     this.rpcUrl = getRpcUrl(options.environment);
-    this.apiEndpoint = getEndpointForRpc(this.rpcUrl);
+    this.apiEndpoint = options.endpoint || getEndpointForRpc(this.rpcUrl);
   }
 
   /**
