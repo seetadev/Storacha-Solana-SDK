@@ -9,6 +9,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:migrate:prod": "tsx scripts/migrate.ts production",
+    "db:seed": "tsx scripts/seed.ts",
     "knip": "knip",
     "dev": "nodemon --watch src --exec 'tsc -b && node dist/index.js' -e ts"
   },

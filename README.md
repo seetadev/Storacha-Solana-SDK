@@ -162,6 +162,46 @@ So we get a symlink of the built package.
 
 ---
 
+### **Database Setup**
+
+We use [Neon](https://neon.tech) for our PostgreSQL database. Each contributor should set up their own database instance.
+
+1. **Create a Neon account and project**
+   - Go to [neon.tech](https://neon.tech) and create a free account
+   - Create a new project (e.g., `toju-local-dev`)
+
+2. **Get your connection string**
+   - Copy the connection string from the Neon dashboard
+   - It should look like: `postgresql://user:pass@ep-xxx.neon.tech/neondb`
+
+3. **Configure your environment**
+   ```bash
+   cd server
+   cp .env.example .env
+   ```
+   
+   Add your connection string to `.env`:
+   ```env
+   DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb
+   ```
+
+4. **Run migrations**
+   ```bash
+   pnpm db:migrate
+   ```
+   This will create all necessary tables in your database.
+
+5. **Seed the config table**
+   ```bash
+   pnpm db:seed
+   ```
+   This initializes the config table with default values. The script will skip seeding if config already exists.
+
+   **Note:** Before seeding, make sure to set `ADMIN_KEYPAIR` in your `.env` file. You can generate an admin keypair by running:
+   ```bash
+   ./scripts/generate-admin-key.sh
+   ```
+
 ### Environment Variables
 
 To set up the server environment:
