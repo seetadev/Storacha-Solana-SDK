@@ -1,4 +1,5 @@
 import { UnknownLink } from "@storacha/client/types";
+import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
 import {
   getDepositsNeedingWarning,
@@ -133,7 +134,8 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
           status: deposit.deletionStatus,
         });
 
-        await client.remove(deposit.contentCid as unknown as UnknownLink, {
+        const cid = Link.parse(deposit.contentCid);
+        await client.remove(cid as UnknownLink, {
           shards: true,
         });
         await updateDeletionStatus(deposit.id, "deleted");
