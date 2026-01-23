@@ -90,6 +90,8 @@ app.listen(PORT, async () => {
     logger.error("Failed to initialize Solana config", {
       error: error instanceof Error ? error.message : String(error),
     });
-    process.exit(1);
+    logger.warn(
+      "Server will continue running despite Solana config initialization failure",
+    );
   }
 });

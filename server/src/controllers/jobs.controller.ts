@@ -1,4 +1,5 @@
 import { UnknownLink } from "@storacha/client/types";
+import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
 import {
   getDepositsNeedingWarning,
@@ -19,28 +20,28 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
     const depositsNeedingWarning = await getDepositsNeedingWarning();
 
     if (!depositsNeedingWarning || depositsNeedingWarning.length === 0) {
-      logger.info("No deposits need warning emails at this time");
+      logger.info("No uploads need warning emails at this time");
       return res.status(200).json({
         success: true,
-        message: "No deposits need warnings",
+        message: "No uploads need warnings",
       });
     }
 
-    logger.info("Found deposits needing warnings", {
+    logger.info("Found uploads needing warnings", {
       count: depositsNeedingWarning.length,
     });
 
     for (const deposit of depositsNeedingWarning) {
       try {
         if (!deposit.userEmail) {
-          logger.warn("Skipping deposit: no email address", {
+          logger.warn("Skipping this upload: no email address", {
             depositId: deposit.id,
           });
           continue;
         }
 
         if (!deposit.expiresAt) {
-          logger.warn("Skipping deposit: no expiration date", {
+          logger.warn("Skipping this upload: no expiration date", {
             depositId: deposit.id,
           });
           continue;
@@ -52,7 +53,7 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
           (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        logger.info("Sending warning email for deposit", {
+        logger.info("Sending warning email for this upload", {
           depositId: deposit.id,
         });
         const emailResult = await sendExpirationWarningEmail(
@@ -67,11 +68,11 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
 
         if (emailResult.success) {
           await updateWarningSentAt(deposit.id);
-          logger.info("Warning email sent for deposit", {
+          logger.info("Warning email sent for this upload", {
             depositId: deposit.id,
           });
         } else {
-          logger.error("Failed to send email for deposit", {
+          logger.error("Failed to send email for this upload", {
             depositId: deposit.id,
             error: emailResult.error,
           });
@@ -91,7 +92,7 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
       message: "Expiration warnings processed",
     });
   } catch (error) {
-    logger.error("Error in sendExpirationWarnings cron", {
+    logger.error("Error in sendExpirationWarnings job", {
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
@@ -105,27 +106,27 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
 /**
  * Deletes expired deposits from Storacha
  */
-export const deleteExpiredDeposits = async (req: Request, res: Response) => {
+export const deleteExpiredUploads = async (req: Request, res: Response) => {
   try {
-    logger.info("Running expired deposits deletion job");
+    logger.info("Running expired uploads deletion job");
     const expiredDeposits = await getExpiredDeposits();
 
     if (!expiredDeposits || expiredDeposits.length === 0) {
-      logger.info("No expired deposits to delete at this time");
+      logger.info("No expired uploads to delete at this time");
       return res.status(200).json({
         success: true,
-        message: "No expired deposits to delete",
+        message: "No expired uploads to delete",
       });
     }
 
-    logger.info("Found expired deposits to delete", {
+    logger.info("Found expired uploads to delete", {
       count: expiredDeposits.length,
     });
     const client = await initStorachaClient();
 
     for (const deposit of expiredDeposits) {
       try {
-        logger.info("Deleting expired deposit", {
+        logger.info("Deleting expired upload", {
           id: deposit.id,
           cid: deposit.contentCid,
           expiresAt: deposit.expiresAt,
@@ -133,15 +134,18 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
           status: deposit.deletionStatus,
         });
 
-        await client.remove(deposit.contentCid as unknown as UnknownLink, {
+        const cid = Link.parse(deposit.contentCid);
+        await client.remove(cid as UnknownLink, {
           shards: true,
         });
         await updateDeletionStatus(deposit.id, "deleted");
-        logger.info("Successfully deleted deposit", { depositId: deposit.id });
+        logger.info("Successfully deleted this upload", {
+          depositId: deposit.id,
+        });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        logger.error("Failed to delete deposit", {
+        logger.error("Failed to delete this upload", {
           depositId: deposit.id,
           error: errorMessage,
         });
@@ -153,12 +157,12 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
       message: "Expired deposits processed",
     });
   } catch (error) {
-    logger.error("Error in deleteExpiredDeposits job", {
+    logger.error("Error in deleteExpiredUploads job", {
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
       success: false,
-      message: "Failed to process expired deposits deletion",
+      message: "Failed to process expired uploads deletion",
       error: error instanceof Error ? error.message : "Unknown error",
     });
   }
