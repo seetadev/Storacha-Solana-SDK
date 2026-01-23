@@ -13,5 +13,5 @@ jobs.post(
 jobs.post(
   "/delete-expired",
   verifyQStashRequest,
-  jobsController.deleteExpiredDeposits,
+  jobsController.deleteExpiredUploads,
 );
