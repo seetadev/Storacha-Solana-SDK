@@ -213,7 +213,15 @@ cp .env.example .env
 ./scripts/generate-admin-key.sh
 ```
 
-Then fill in your values in `.env` for Resend API key, database credentials, Storacha keys, and paste the admin keypair from the script output. Get your Resend API key at [resend.com](https://resend.com). For logging, set `BTRSTACK_SOURCE_TOKEN` and `BTRSTACK_SOURCE_ID` to send structured logs to Betterstack.
+Then fill in your values in `.env` for Resend API key, database credentials, Storacha keys, and paste the admin keypair from the script output. Get your Resend API key at [resend.com](https://resend.com). For logging, set `BTRSTACK_SOURCE_TOKEN` and `BTRSTACK_SOURCE_ID` to send structured logs to Betterstack.'
+
+Generate `STORACHA_KEY` and `STORACHA_PROOF` (paste both into `.env`):
+
+``` bash
+storacha key create
+storacha space use <space_did>
+storacha delegation create <did_from_key_create> --base64
+```
 
 ## Testing and actually using the program
 
