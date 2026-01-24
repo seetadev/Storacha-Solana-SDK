@@ -162,6 +162,46 @@ So we get a symlink of the built package.
 
 ---
 
+### **Database Setup**
+
+We use [Neon](https://neon.tech) for our PostgreSQL database. Each contributor should set up their own database instance.
+
+1. **Create a Neon account and project**
+   - Go to [neon.tech](https://neon.tech) and create a free account
+   - Create a new project (e.g., `toju-local-dev`)
+
+2. **Get your connection string**
+   - Copy the connection string from the Neon dashboard
+   - It should look like: `postgresql://user:pass@ep-xxx.neon.tech/neondb`
+
+3. **Configure your environment**
+   ```bash
+   cd server
+   cp .env.example .env
+   ```
+   
+   Add your connection string to `.env`:
+   ```env
+   DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb
+   ```
+
+4. **Run migrations**
+   ```bash
+   pnpm db:migrate
+   ```
+   This will create all necessary tables in your database.
+
+5. **Seed the config table**
+   ```bash
+   pnpm db:seed
+   ```
+   This initializes the config table with default values. The script will skip seeding if config already exists.
+
+   **Note:** Before seeding, make sure to set `ADMIN_KEYPAIR` in your `.env` file. You can generate an admin keypair by running:
+   ```bash
+   ./scripts/generate-admin-key.sh
+   ```
+
 ### Environment Variables
 
 To set up the server environment:
@@ -173,7 +213,15 @@ cp .env.example .env
 ./scripts/generate-admin-key.sh
 ```
 
-Then fill in your values in `.env` for Resend API key, database credentials, Storacha keys, and paste the admin keypair from the script output. Get your Resend API key at [resend.com](https://resend.com). For logging, set `BTRSTACK_SOURCE_TOKEN` and `BTRSTACK_SOURCE_ID` to send structured logs to Betterstack.
+Then fill in your values in `.env` for Resend API key, database credentials, Storacha keys, and paste the admin keypair from the script output. Get your Resend API key at [resend.com](https://resend.com). For logging, set `BTRSTACK_SOURCE_TOKEN` and `BTRSTACK_SOURCE_ID` to send structured logs to Betterstack.'
+
+Generate `STORACHA_KEY` and `STORACHA_PROOF` (paste both into `.env`):
+
+``` bash
+storacha key create
+storacha space use <space_did>
+storacha delegation create <did_from_key_create> --base64
+```
 
 ## Testing and actually using the program
 
