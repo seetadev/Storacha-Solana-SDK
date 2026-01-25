@@ -36,7 +36,7 @@ export const sendBatchExpirationWarningEmail = async (
     const count = uploads.length;
     const cids = uploads.map((u) => u.contentCid).join(",");
     const response = await resend.emails.send({
-      from: `${EMAIL_CONFIG.promulgator} from toju <${EMAIL_CONFIG.from}>`,
+      from: ` <${EMAIL_CONFIG.from}>`,
       to,
       replyTo: EMAIL_CONFIG.replyTo,
       subject: `⚠️ You have ${count} file${count !== 1 ? "s" : ""} expiring soon on toju`,
@@ -161,9 +161,6 @@ function getBatchExpirationWarningEmailHtml(
   <hr style="border: none; border-top: 1px solid #1a1a1a; margin: 32px 0;">
 
   <div style="text-align: center;">
-    <p style="font-size: 14px; color: #949495; margin: 0 0 8px 0;">
-      ${EMAIL_CONFIG.promulgator} from <strong style="color: #ffffff;">toju</strong>
-    </p>
     <p style="font-size: 12px; color: #6b7280; margin: 0;">This is an automated message. Please do not reply to this email.</p>
   </div>
 
@@ -218,7 +215,7 @@ Manage storage: https://toju.network
 What happens after expiration?
 Files will be automatically deleted from storage and removed from IPFS within 30 days.
 
-${EMAIL_CONFIG.promulgator} from toju
+
 
 ---
 This is an automated message. Please do not reply to this email.
