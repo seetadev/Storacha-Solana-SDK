@@ -188,32 +188,6 @@ export const updateDeletionStatus = async (
 };
 
 /**
- * Update the warningSentAt timestamp for a deposit
- * @param depositId - The ID of the deposit
- * @returns Updated deposit record
- */
-export const updateWarningSentAt = async (depositId: number) => {
-  try {
-    const now = new Date().toISOString();
-    const updated = await db
-      .update(uploads)
-      .set({
-        warningSentAt: now,
-        deletionStatus: "warned",
-      })
-      .where(eq(uploads.id, depositId))
-      .returning();
-
-    return updated[0] || null;
-  } catch (err) {
-    logger.error("Error updating warningSentAt", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  }
-};
-
-/**
  * Batch update warningSentAt for multiple deposits
  * @param depositIds - Array of deposit IDs
  * @returns Number of updated records
