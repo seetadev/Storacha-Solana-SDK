@@ -73,9 +73,7 @@ export const getUserHistory = async (
  * @param daysUntilExpiration - Number of days before expiration to warn (default: 7)
  * @returns Array of uploads that need warning emails
  */
-export const getUploadsNeedingWarning = async (
-  daysUntilExpiration: number = 7,
-) => {
+const getUploadsNeedingWarning = async (daysUntilExpiration: number = 7) => {
   try {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
