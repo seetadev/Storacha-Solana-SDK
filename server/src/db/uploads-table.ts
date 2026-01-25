@@ -1,6 +1,6 @@
-import { and, desc, eq, lte, sql } from "drizzle-orm";
-import { logger } from "../utils/logger.js";
+import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
 import { PaginationContext } from "../types.js";
+import { logger } from "../utils/logger.js";
 import { db } from "./db.js";
 import { transaction, uploads } from "./schema.js";
 
@@ -26,17 +26,16 @@ export const getUserHistory = async (
   wallet: string,
   page = 1,
   limit = 20,
-  ctx?: PaginationContext
-
+  ctx?: PaginationContext,
 ) => {
   try {
-    const userAddress = wallet.toLowerCase()
-    const offset = (page - 1) * limit
+    const userAddress = wallet.toLowerCase();
+    const offset = (page - 1) * limit;
 
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddress))
+      .where(eq(uploads.depositKey, userAddress));
 
     const data = await db
       .select()
@@ -44,13 +43,13 @@ export const getUserHistory = async (
       .where(eq(uploads.depositKey, userAddress))
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
-      .offset(offset)
+      .offset(offset);
 
-    const total = Number(count)
-    const totalPages = Math.ceil(total / limit)
+    const total = Number(count);
+    const totalPages = Math.ceil(total / limit);
 
     const buildPageUrl = (p: number) =>
-      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`
+      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`;
 
     return {
       data,
@@ -60,23 +59,21 @@ export const getUserHistory = async (
       totalPages,
       next: page < totalPages ? buildPageUrl(page + 1) : null,
       prev: page > 1 ? buildPageUrl(page - 1) : null,
-    }
+    };
   } catch (err) {
     logger.error("Error getting user history", {
       error: err instanceof Error ? err.message : String(err),
     });
-    return null
+    return null;
   }
-}
-
-
+};
 
 /**
- * Find deposits that will expire in X days and haven't been warned yet
+ * Find uploads that will expire in X days and haven't been warned yet
  * @param daysUntilExpiration - Number of days before expiration to warn (default: 7)
- * @returns Array of deposits that need warning emails
+ * @returns Array of uploads that need warning emails
  */
-export const getDepositsNeedingWarning = async (
+export const getUploadsNeedingWarning = async (
   daysUntilExpiration: number = 7,
 ) => {
   try {
@@ -84,7 +81,7 @@ export const getDepositsNeedingWarning = async (
     targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
     const targetDateString = targetDate.toISOString().split("T")[0];
 
-    const deposits = await db
+    const results = await db
       .select()
       .from(uploads)
       .where(
@@ -93,12 +90,44 @@ export const getDepositsNeedingWarning = async (
           lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
           sql`${uploads.userEmail} IS NOT NULL`,
           sql`${uploads.userEmail} != ''`,
+          sql`${uploads.warningSentAt} IS NULL`,
         ),
       );
 
-    return deposits;
+    return results;
   } catch (err) {
-    logger.error("Error getting deposits needing warning", {
+    logger.error("Error getting uploads needing warning", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+};
+
+/**
+ * Group uploads by user email for batched expiration warnings
+ * @param daysUntilExpiration - Number of days before expiration to warn (default: 7)
+ * @returns Map of email addresses to their expiring uploads
+ */
+export const getUploadsGroupedByEmail = async (
+  daysUntilExpiration: number = 7,
+) => {
+  try {
+    const uploadsList = await getUploadsNeedingWarning(daysUntilExpiration);
+    if (!uploadsList) return null;
+
+    const grouped = new Map<string, typeof uploadsList>();
+
+    for (const upload of uploadsList) {
+      if (!upload.userEmail) continue;
+
+      const existing = grouped.get(upload.userEmail) || [];
+      existing.push(upload);
+      grouped.set(upload.userEmail, existing);
+    }
+
+    return grouped;
+  } catch (err) {
+    logger.error("Error grouping uploads by email", {
       error: err instanceof Error ? err.message : String(err),
     });
     return null;
@@ -181,6 +210,32 @@ export const updateWarningSentAt = async (depositId: number) => {
       error: err instanceof Error ? err.message : String(err),
     });
     return null;
+  }
+};
+
+/**
+ * Batch update warningSentAt for multiple deposits
+ * @param depositIds - Array of deposit IDs
+ * @returns Number of updated records
+ */
+export const batchUpdateWarningSentAt = async (depositIds: number[]) => {
+  try {
+    const now = new Date().toISOString();
+    const updated = await db
+      .update(uploads)
+      .set({
+        warningSentAt: now,
+        deletionStatus: "warned",
+      })
+      .where(inArray(uploads.id, depositIds))
+      .returning();
+
+    return updated.length;
+  } catch (err) {
+    logger.error("Error batch updating warningSentAt", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return 0;
   }
 };
 

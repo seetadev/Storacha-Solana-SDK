@@ -2,8 +2,8 @@ import { UnknownLink } from "@storacha/client/types";
 import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
 import {
-  getDepositsNeedingWarning,
   getExpiredDeposits,
+  getUploadsNeedingWarning,
   updateDeletionStatus,
   updateWarningSentAt,
 } from "../db/uploads-table.js";
@@ -17,7 +17,7 @@ import { initStorachaClient } from "../utils/storacha.js";
 export const sendExpirationWarnings = async (req: Request, res: Response) => {
   try {
     logger.info("Running expiration warning job");
-    const depositsNeedingWarning = await getDepositsNeedingWarning();
+    const depositsNeedingWarning = await getUploadsNeedingWarning();
 
     if (!depositsNeedingWarning || depositsNeedingWarning.length === 0) {
       logger.info("No uploads need warning emails at this time");
