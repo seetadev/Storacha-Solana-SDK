@@ -2,24 +2,24 @@ import { UnknownLink } from "@storacha/client/types";
 import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
 import {
+  batchUpdateWarningSentAt,
   getExpiredDeposits,
-  getUploadsNeedingWarning,
+  getUploadsGroupedByEmail,
   updateDeletionStatus,
-  updateWarningSentAt,
 } from "../db/uploads-table.js";
-import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
+import { sendBatchExpirationWarningEmail } from "../services/email/resend.service.js";
 import { logger } from "../utils/logger.js";
 import { initStorachaClient } from "../utils/storacha.js";
 
 /**
- * Checks for deposits needing expiration warnings
+ * Checks for uploads needing expiration warnings and sends batched emails
  */
 export const sendExpirationWarnings = async (req: Request, res: Response) => {
   try {
     logger.info("Running expiration warning job");
-    const depositsNeedingWarning = await getUploadsNeedingWarning();
+    const groupedUploads = await getUploadsGroupedByEmail();
 
-    if (!depositsNeedingWarning || depositsNeedingWarning.length === 0) {
+    if (!groupedUploads || groupedUploads.size === 0) {
       logger.info("No uploads need warning emails at this time");
       return res.status(200).json({
         success: true,
@@ -28,68 +28,66 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
     }
 
     logger.info("Found uploads needing warnings", {
-      count: depositsNeedingWarning.length,
+      userCount: groupedUploads.size,
+      totalUploads: Array.from(groupedUploads.values()).reduce(
+        (sum, uploads) => sum + uploads.length,
+        0,
+      ),
     });
 
-    for (const deposit of depositsNeedingWarning) {
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (const [email, uploads] of groupedUploads) {
       try {
-        if (!deposit.userEmail) {
-          logger.warn("Skipping this upload: no email address", {
-            depositId: deposit.id,
-          });
-          continue;
-        }
-
-        if (!deposit.expiresAt) {
-          logger.warn("Skipping this upload: no expiration date", {
-            depositId: deposit.id,
-          });
-          continue;
-        }
-
-        const expirationDate = new Date(deposit.expiresAt);
-        const now = new Date();
-        const daysRemaining = Math.ceil(
-          (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        );
-
-        logger.info("Sending warning email for this upload", {
-          depositId: deposit.id,
+        logger.info("Sending batched warning email", {
+          email,
+          uploadCount: uploads.length,
         });
-        const emailResult = await sendExpirationWarningEmail(
-          deposit.userEmail,
-          {
-            fileName: deposit.fileName || "Unknown File",
-            cid: deposit.contentCid,
-            expiresAt: deposit.expiresAt,
-            daysRemaining,
-          },
+
+        const emailResult = await sendBatchExpirationWarningEmail(
+          email,
+          uploads,
         );
 
         if (emailResult.success) {
-          await updateWarningSentAt(deposit.id);
-          logger.info("Warning email sent for this upload", {
-            depositId: deposit.id,
+          const uploadIds = uploads.map((u) => u.id);
+          const updated = await batchUpdateWarningSentAt(uploadIds);
+
+          logger.info("Batched warning email sent successfully", {
+            email,
+            uploadCount: uploads.length,
+            updatedCount: updated,
           });
+
+          successCount++;
         } else {
-          logger.error("Failed to send email for this upload", {
-            depositId: deposit.id,
+          logger.error("Failed to send batched email", {
+            email,
+            uploadCount: uploads.length,
             error: emailResult.error,
           });
+          failureCount++;
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        logger.error("Error processing deposit", {
-          depositId: deposit.id,
+        logger.error("Error processing batched email for user", {
+          email,
+          uploadCount: uploads.length,
           error: errorMessage,
         });
+        failureCount++;
       }
     }
 
     return res.status(200).json({
       success: true,
       message: "Expiration warnings processed",
+      stats: {
+        usersEmailed: successCount,
+        failures: failureCount,
+      },
     });
   } catch (error) {
     logger.error("Error in sendExpirationWarnings job", {
