@@ -1,6 +1,6 @@
 import { HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import { PlusIcon } from '@phosphor-icons/react'
-import type { DropzoneRootProps } from 'react-dropzone'
+import type { DropzoneRootProps, DropzoneInputProps } from 'react-dropzone'
 import type { FileWithPreview } from './file-item'
 import { FileItem } from './file-item'
 
@@ -9,6 +9,7 @@ interface FileListProps {
   onRemove: (fileId: string) => void
   onClearAll: () => void
   getRootProps: () => DropzoneRootProps
+  getInputProps: () => DropzoneInputProps
 }
 
 export const FileList = ({
@@ -16,6 +17,7 @@ export const FileList = ({
   onRemove,
   onClearAll,
   getRootProps,
+  getInputProps,
 }: FileListProps) => {
   return (
     <VStack spacing="1em" align="stretch">
@@ -37,6 +39,7 @@ export const FileList = ({
             _hover={{ color: 'var(--primary-500)' }}
             transition="color 0.2s"
           >
+            <input {...getInputProps()} />
             <PlusIcon size={14} weight="bold" />
             <Text>Add more files</Text>
           </HStack>

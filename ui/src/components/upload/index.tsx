@@ -10,12 +10,14 @@ interface FileUploadProps {
   onFilesSelected: (files: Array<File>) => void
   maxFiles?: number
   maxSize?: number
+  allowDirectories?: boolean
 }
 
 export const FileUpload = ({
   onFilesSelected,
   maxFiles = 100,
   maxSize = 1024 * 1024 * 1024,
+  allowDirectories = false,
 }: FileUploadProps) => {
   const [selectedFiles, setSelectedFiles] = useState<Array<FileWithPreview>>([])
   const [errors, setErrors] = useState<Array<string>>([])
@@ -92,14 +94,19 @@ export const FileUpload = ({
       onDrop,
       maxFiles,
       maxSize,
+      useFsAccessApi: false,
     })
+
+  const inputProps = getInputProps(
+    allowDirectories ? { webkitdirectory: 'true' } as any : {}
+  )
 
   return (
     <VStack spacing="1.5em" w="100%" align="stretch">
       {selectedFiles.length === 0 && (
         <DropZone
           getRootProps={getRootProps}
-          getInputProps={getInputProps}
+          getInputProps={() => inputProps}
           isDragActive={isDragActive}
           isDragReject={isDragReject}
           maxFiles={maxFiles}
@@ -115,6 +122,7 @@ export const FileUpload = ({
           onRemove={removeFile}
           onClearAll={clearAllFiles}
           getRootProps={getRootProps}
+          getInputProps={() => inputProps}
         />
       )}
     </VStack>
