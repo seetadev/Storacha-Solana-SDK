@@ -56,3 +56,48 @@ export const transaction = pgTable("transaction", {
   durationDays: integer("duration_days").notNull(),
   createdAt: date("created_at", { mode: "date" }).notNull().defaultNow(),
 });
+
+export const usage = pgTable("usage", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  snapshotDate: date("snapshot_date", { mode: "date" }).notNull().defaultNow(),
+  totalBytesStored: bigint("total_bytes_stored", { mode: "number" }).notNull(),
+  totalActiveUploads: integer("total_active_uploads").notNull(),
+  storachaReportedBytes: bigint("storacha_reported_bytes", { mode: "number" }),
+  storachaPlanLimit: bigint("storacha_plan_limit", { mode: "number" }),
+  utilizationPercentage: real("utilization_percentage"),
+  createdAt: date("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+// compares whatver we've stored in our db with the data (capability.usage.report) we get from storacha
+export const usageComparison = pgTable("usage_comparison", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  comparisonDate: date("comparison_date", { mode: "date" })
+    .notNull()
+    .defaultNow(),
+  ourCalculatedBytes: bigint("our_calculated_bytes", {
+    mode: "number",
+  }).notNull(),
+  storachaReportedBytes: bigint("storacha_reported_bytes", {
+    mode: "number",
+  }).notNull(),
+  discrepancyBytes: bigint("discrepancy_bytes", { mode: "number" }).notNull(),
+  discrepancyPercentage: real("discrepancy_percentage").notNull(),
+  // 'ok' | 'warning' | 'critical'
+  status: varchar("status", { length: 20 }).notNull().default("ok"),
+  notes: text("notes"),
+  createdAt: date("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const usageAlerts = pgTable("usage_alerts", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  // 'threshold_80' | 'threshold_90' | 'threshold_95' | 'comparison_discrepancy'
+  alertType: varchar("alert_type", { length: 50 }).notNull(),
+  // 'warning' | 'critical'
+  alertLevel: varchar("alert_level", { length: 20 }).notNull(),
+  utilizationPercentage: real("utilization_percentage"),
+  bytesStored: bigint("bytes_stored", { mode: "number" }),
+  planLimit: bigint("plan_limit", { mode: "number" }),
+  message: text("message").notNull(),
+  resolved: date("resolved", { mode: "date" }),
+  createdAt: date("created_at", { mode: "date" }).notNull().defaultNow(),
+});

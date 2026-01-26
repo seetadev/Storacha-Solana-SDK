@@ -8,6 +8,7 @@ import {
   updateDeletionStatus,
 } from "../db/uploads-table.js";
 import { sendBatchExpirationWarningEmail } from "../services/email/resend.service.js";
+import { UsageService } from "../services/usage/usage.service.js";
 import { logger } from "../utils/logger.js";
 import { initStorachaClient } from "../utils/storacha.js";
 
@@ -162,6 +163,58 @@ export const deleteExpiredUploads = async (req: Request, res: Response) => {
       success: false,
       message: "Failed to process expired uploads deletion",
       error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+/**
+ * daily usage snapshot job
+ * runs every day at 9am UTC
+ */
+export const dailyUsageSnapshot = async (req: Request, res: Response) => {
+  try {
+    logger.info("running daily usage snapshot job");
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+
+    await usageService.createDailySnapshot();
+
+    return res.status(200).json({
+      success: true,
+      message: "daily usage snapshot completed",
+    });
+  } catch (error) {
+    logger.error("daily usage snapshot job failed", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to create usage snapshot",
+    });
+  }
+};
+
+/**
+ * weekly usage comparison job
+ * runs every sunday at 2am UTC
+ */
+export const weeklyUsageComparison = async (req: Request, res: Response) => {
+  try {
+    logger.info("running weekly usage comparison job");
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+
+    await usageService.compareUsage();
+
+    return res.status(200).json({
+      success: true,
+      message: "weekly usage comparison completed",
+    });
+  } catch (error) {
+    logger.error("weekly usage comparison job failed", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to compare usage",
     });
   }
 };

@@ -4,7 +4,9 @@ import { isMasterChief } from "../middlewares/auth.middleware.js";
 
 export const consoleRouter = express.Router();
 
-consoleRouter.use(isMasterChief); //middleware
+consoleRouter.use(isMasterChief);
 
-consoleRouter.post("/update-rate", consoleController.updateRate);
-consoleRouter.post("/update-min-duration", consoleController.updateMinDuration);
+consoleRouter.get("/usage/history", consoleController.getUsageHistory);
+consoleRouter.get("/usage/current", consoleController.getCurrentUsage);
+consoleRouter.get("/alerts", consoleController.getUnresolvedAlerts);
+consoleRouter.post("/alerts/:id/resolve", consoleController.resolveAlert);
