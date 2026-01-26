@@ -218,8 +218,9 @@ Then fill in your values in `.env` for Resend API key, database credentials, Sto
 Generate `STORACHA_KEY` and `STORACHA_PROOF` (paste both into `.env`):
 
 ``` bash
+storacha login (once prompted, select login by email)
+storacha space create space-name
 storacha key create
-storacha space use <space_did>
 storacha delegation create <did_from_key_create> --base64
 ```
 
