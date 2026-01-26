@@ -97,9 +97,10 @@ export const FileUpload = ({
       useFsAccessApi: false,
     })
 
-  const inputProps = getInputProps(
-    allowDirectories ? { webkitdirectory: 'true' } as any : {}
-  )
+  const inputProps = {
+    ...getInputProps(),
+    ...(allowDirectories && { webkitdirectory: '' as any })
+  }
 
   return (
     <VStack spacing="1.5em" w="100%" align="stretch">

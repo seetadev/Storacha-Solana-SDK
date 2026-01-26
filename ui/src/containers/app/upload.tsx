@@ -171,7 +171,7 @@ export const Upload = () => {
   return (
     <>
       <VStack spacing="2em" align="stretch">
-        <FileUpload onFilesSelected={handleFilesSelected} />
+        <FileUpload onFilesSelected={handleFilesSelected} allowDirectories={true} />
 
         {selectedFiles.length > 0 && (
           <VStack spacing="1.5em" align="stretch">
