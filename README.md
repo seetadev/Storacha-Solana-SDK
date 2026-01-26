@@ -217,11 +217,44 @@ Then fill in your values in `.env` for Resend API key, database credentials, Sto
 
 Generate `STORACHA_KEY` and `STORACHA_PROOF` (paste both into `.env`):
 
-``` bash
-storacha login (once prompted, select login by email)
-storacha space create space-name
+```bash
+# 1. Login to Storacha (select login by email when prompted)
+storacha login
+
+# 2. Create a space for your environment
+storacha space create my-space-name
+
+# 3. Generate a new agent key for the server
 storacha key create
-storacha delegation create <did_from_key_create> --base64
+# Output: did:key:z6Mk... (this is your server agent DID)
+# Also outputs the private key - save this as STORACHA_KEY
+
+# 4. Select the space you want to delegate access to
+storacha space use did:key:z6Mk...  # your space DID from step 2
+
+# 5. Create a delegation with all required capabilities
+storacha delegation create did:key:z6Mk... \
+  --can 'space/*' \
+  --can 'blob/*' \
+  --can 'index/*' \
+  --can 'store/*' \
+  --can 'upload/*' \
+  --can 'access/*' \
+  --can 'filecoin/*' \
+  --can 'usage/*' \
+  --base64
+# Output: base64 string - save this as STORACHA_PROOF
+```
+
+**Important:** The delegation must include all capabilities listed above. Missing capabilities will cause errors:
+- `store/*` and `upload/*` - required for file uploads
+- `upload/*` - also required for deleting expired files (`upload/remove`)
+- `usage/*` - required for usage monitoring and reporting
+
+**Finding your server agent DID from an existing key:**
+```bash
+cd server
+node -e "import('@storacha/client/principal/ed25519').then(({Signer}) => console.log(Signer.parse('YOUR_STORACHA_KEY_VALUE').did()))"
 ```
 
 ## Testing and actually using the program
