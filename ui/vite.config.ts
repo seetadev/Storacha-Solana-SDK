@@ -10,7 +10,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 export default defineConfig({
   plugins: [
     nodePolyfills(),
-    devtools(),
+    devtools({ eventBusConfig: { enabled: false } }), // disable devtools server to avoid port conflicts
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
