@@ -58,6 +58,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 - [Website](https://toju.network)
 - [Documentation](https://docs.toju.network)
 - [GitHub](https://github.com/seetadev/Storacha-Solana-SDK)
+- [Production server](https://api.toju.network/health)
+- [Staging server](https://staging-api.toju.network/health)
+- [Package url](https://www.npmjs.com/package/@toju.network/sol)
 
 ## License
 
