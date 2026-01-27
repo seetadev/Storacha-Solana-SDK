@@ -1,6 +1,6 @@
 # toju (keep) - Decentralized Storage on Solana Powered by Storacha & IPFS
 
-**toju** is a pay-as-you-go decentralized storage solution on Solana. Store files on IPFS via Storacha and pay with native SOL - no credit cards, no subscriptions.
+**toju** is a pay-as-you-go decentralized storage solution for Solana that enables developers to store data on Filecoin-backed IPFS via Storacha, paying directly with native SOL — no credit cards, no subscriptions.
 
 ## Features
 
