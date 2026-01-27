@@ -4,11 +4,13 @@
 
 ## Features
 
-- Pay storage fees directly with SOL
-- No credit cards or subscriptions required
-- Files stored on IPFS via Storacha (Filecoin-backed)
-- Email notifications before storage expires
-- Automatic cleanup of expired files
+* **Native SOL payments** for storage — no credit cards, subscriptions, or off-chain billing
+* **Filecoin-backed IPFS storage via Storacha**, ensuring decentralized, verifiable persistence
+* **Pay-as-you-go pricing**, lowering friction for real storage usage and experimentation
+* **Storage lifecycle management**, including automatic cleanup of expired files
+* **Email notifications** before storage expiration to prevent unintended data loss
+* **Developer-friendly SDK and CLI**, designed for easy integration into Solana applications
+
 
 ## Quick Start
 
