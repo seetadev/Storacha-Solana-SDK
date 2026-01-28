@@ -1,14 +1,16 @@
-# toju (keep) - Decentralized Storage on Solana
+# toju (keep) - Decentralized Storage on Solana Powered by Storacha & IPFS
 
-**toju** is a pay-as-you-go decentralized storage solution on Solana. Store files on IPFS via Storacha and pay with native SOL - no credit cards, no subscriptions.
+**toju** is a pay-as-you-go decentralized storage solution for Solana that enables developers to store data on Filecoin-backed IPFS via Storacha, paying directly with native SOL — no credit cards, no subscriptions.
 
 ## Features
 
-- Pay storage fees directly with SOL
-- No credit cards or subscriptions required
-- Files stored on IPFS via Storacha (Filecoin-backed)
-- Email notifications before storage expires
-- Automatic cleanup of expired files
+* **Native SOL payments** for storage — no credit cards, subscriptions, or off-chain billing
+* **Filecoin-backed IPFS storage via Storacha**, ensuring decentralized, verifiable persistence
+* **Pay-as-you-go pricing**, lowering friction for real storage usage and experimentation
+* **Storage lifecycle management**, including automatic cleanup of expired files
+* **Email notifications** before storage expiration to prevent unintended data loss
+* **Developer-friendly SDK and CLI**, designed for easy integration into Solana applications
+
 
 ## Quick Start
 
@@ -58,6 +60,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 - [Website](https://toju.network)
 - [Documentation](https://docs.toju.network)
 - [GitHub](https://github.com/seetadev/Storacha-Solana-SDK)
+- [Production server](https://api.toju.network/health)
+- [Staging server](https://staging-api.toju.network/health)
+- [Package url](https://www.npmjs.com/package/@toju.network/sol)
 
 ## License
 
