@@ -10,8 +10,8 @@ The `getSolPrice()` method fetches the current SOL/USD exchange rate from Pyth N
 ## Basic Usage
 
 ```typescript
-import { useUpload } from 'storacha-sol';
-import { Environment } from 'storacha-sol';
+import { useUpload } from '@toju.network/sol';
+import { Environment } from '@toju.network/sol';
 
 function PriceDisplay() {
   const client = useUpload(Environment.testnet);
@@ -51,7 +51,7 @@ console.log(`1 SOL = $${solPrice}`);
 Show users how much storage will cost in both SOL and USD:
 
 ```typescript
-import { useUpload } from 'storacha-sol';
+import { useUpload } from '@toju.network/sol';
 
 type Cost = {
  sol: number
@@ -161,7 +161,7 @@ For automatic caching and revalidation in React, use [SWR](https://swr.vercel.ap
 
 ```typescript
 import useSWR from 'swr';
-import { useUpload } from 'storacha-sol';
+import { useUpload } from '@toju.network/sol';
 
 const useSolPrice = ()=> {
   const client = useUpload(Environment.testnet);
