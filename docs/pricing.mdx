@@ -1,0 +1,133 @@
+---
+title: 'Pricing'
+description: 'Simple, transparent pay-as-you-go storage pricing'
+---
+
+## How Pricing Works
+
+We use a simple formula: **pay for what you store, for how long you store it**. No subscriptions, no credit cards, no hidden fees.
+
+```
+Cost = File Size × Duration × Rate
+```
+
+Our rate is **$0.000000000003 per byte per day** (3 × 10⁻¹² USD).
+
+<Info>
+  This works out to roughly **$0.09 per GB per month** - competitive with centralized cloud storage, but with the benefits of decentralization.
+</Info>
+
+## Pricing Table
+
+| Storage | 1 Day | 7 Days | 30 Days | 90 Days | 1 Year |
+|---------|-------|--------|---------|---------|--------|
+| 1 GB    | $0.003 | $0.021 | $0.09 | $0.27 | $1.10 |
+| 10 GB   | $0.03 | $0.21 | $0.90 | $2.70 | $10.95 |
+| 100 GB  | $0.30 | $2.10 | $9.00 | $27.00 | $109.50 |
+| 1 TB    | $3.00 | $21.00 | $90.00 | $270.00 | $1,095 |
+
+## How We Compare
+
+| Provider | 1 GB / 30 days | 100 GB / 30 days | Notes |
+|----------|----------------|------------------|-------|
+| **toju** | **$0.09** | **$9.00** | Pay with SOL, no subscription |
+| Walrus | $0.016 | $1.60 | Requires Sui wallet + WAL token |
+| Storacha (direct) | $0.15 | $15.00 | Free tier available, higher overage |
+| AWS S3 Standard | ~$0.023 | ~$2.30 | Centralized, requires credit card |
+
+<Note>
+  While some providers appear cheaper, they often require specific tokens, ecosystems, or credit cards. We offer competitive pricing with the flexibility of paying with SOL (and soon FIL, USDFC, and more).
+</Note>
+
+## Why Pay-As-You-Go?
+
+<CardGroup cols={2}>
+  <Card title="No Subscriptions" icon="calendar-xmark">
+    Pay only when you upload. No recurring charges, no surprise bills.
+  </Card>
+  <Card title="No Minimums" icon="coins">
+    Store a single file or terabytes - same rate applies.
+  </Card>
+  <Card title="No Credit Card" icon="credit-card">
+    Pay directly with your crypto wallet. No KYC, no payment processors.
+  </Card>
+  <Card title="Transparent Costs" icon="receipt">
+    See exactly what you'll pay before you upload. No hidden fees.
+  </Card>
+</CardGroup>
+
+## Payment in SOL
+
+All payments are made in SOL on Solana. We convert the USD cost to SOL using real-time pricing from [Pyth](https://pyth.network/).
+
+```
+SOL Amount = USD Cost ÷ Current SOL Price
+```
+
+<Info>
+  The SOL price is fetched at the time of upload, so your cost in SOL may vary slightly based on market conditions.
+</Info>
+
+## Example Calculation
+
+Let's say you want to store a **50 MB video** for **30 days**:
+
+```
+File size: 50 MB = 52,428,800 bytes
+Duration: 30 days
+Rate: 3 × 10⁻¹² USD/byte/day
+
+Cost in USD = 52,428,800 × 30 × 0.000000000003
+           = $0.0047 (less than half a cent!)
+
+At $120/SOL:
+Cost in SOL = $0.0047 ÷ $120
+           = 0.000039 SOL
+           = 39,000 lamports
+```
+
+## Multi-Chain Payments (Coming Soon)
+
+We're expanding beyond Solana to support:
+
+- **Filecoin (FIL)** - Native payments on Filecoin
+- **USDFC** - Filecoin's native stablecoin
+- **Base (ETH)** - Ethereum L2 for lower gas fees
+
+<Check>
+  Same storage, same pricing - just pay with your preferred crypto.
+</Check>
+
+## Pricing Changes
+
+Our rate may change from time to time based on infrastructure costs, market conditions, or other factors. When this happens:
+
+- We'll announce changes in advance via our official channels
+- Existing uploads are **not affected** - you only pay once at upload time
+- Renewals will use the rate at the time of renewal
+
+<Warning>
+  Always check the current quote before uploading to see the exact cost you'll pay.
+</Warning>
+
+## Get a Quote
+
+Use the SDK to get a cost estimate before uploading:
+
+```typescript
+import { useUpload, Environment } from 'storacha-sol';
+
+const client = useUpload(Environment.testnet);
+
+// Get quote for 100MB file stored for 30 days
+const quote = await client.estimateStorageCost(
+  [file], // your file(s)
+  30 * 24 * 60 * 60 // duration in seconds
+);
+
+console.log(`Cost: ${quote.sol} SOL ($${quote.usd})`);
+```
+
+<Card title="Try It Out" icon="rocket" href="https://toju.network">
+  Upload your first file and see the pricing in action
+</Card>
