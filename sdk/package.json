@@ -36,7 +36,7 @@
     "blockchain"
   ],
   "author": "toju.network",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "description": "Decentralized storage SDK for Solana via Storacha - pay with SOL, store on IPFS",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
