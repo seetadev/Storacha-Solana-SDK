@@ -1,10 +1,10 @@
 ---
 title: 'Content Identifiers'
-description: 'How Keep uses CIDs to bind payments to specific content'
+description: 'How we use CIDs to bind payments to specific content'
 ---
 
 <Tip>
-  **TL;DR**: Keep computes your file's CID (content hash) before you pay. This prevents uploading without payment or substituting different content after paying. Think of it as a cryptographic receipt - you're committing to pay for *this specific content*, not just "some files."
+  **TL;DR**: we computes your file's CID (content hash) before you pay. This prevents uploading without payment or substituting different content after paying. Think of it as a cryptographic receipt - you're committing to pay for *this specific content*, not just "some files."
 </Tip>
 
 ## What is a CID?
@@ -13,9 +13,9 @@ A **Content Identifier (CID)** is a cryptographic hash that uniquely identifies 
 
 Example: `bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi`
 
-## Why CID Matters in Keep
+## Why CID Matters
 
-In traditional cloud storage, you pay for space regardless of what you store. With Keep, **you pay for specific content** identified by its CID. This creates a binding between your payment and your data.
+In traditional cloud storage, you pay for space regardless of what you store. With the sdk, **you pay for specific content** identified by its CID. This creates a binding between your payment and your data.
 
 ### The Problem We're Solving
 
@@ -135,7 +135,7 @@ This double-check ensures:
 
 ## Multi-File Uploads
 
-For directories with multiple files, Keep generates a **root CID** that represents all files:
+For directories with multiple files, the sdk generates a **root CID** that represents all files:
 
 ```
 Root CID (bafybei...)
@@ -196,7 +196,7 @@ await renewStorageDuration({
 
 <AccordionGroup>
   <Accordion title="CID Format & Structure">
-    Keep uses **CIDv1** with base32 encoding:
+    We use **CIDv1** with base32 encoding:
 
     ```
     bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
