@@ -73,14 +73,24 @@ export const logger = {
     log("warn", message, context),
   error: (message: string, context?: LogContext) =>
     log("error", message, context),
-  http: (context?: LogContext) => log("info", "http_request", context),
+  http: (context?: LogContext) => {
+    const method = context?.method || "HTTP";
+    const path = context?.path || "";
+    const status = context?.status || "";
+    const message = `${method} ${path} ${status}`.trim();
+    log("info", message, context);
+  },
   stream: {
     write: (message: string) => {
       const trimmed = message.trim();
       if (!trimmed) return;
       try {
         const parsed = JSON.parse(trimmed);
-        log("info", "http_request", parsed);
+        const method = parsed.method || "HTTP";
+        const path = parsed.path || "";
+        const status = parsed.status || "";
+        const logMessage = `${method} ${path} ${status}`.trim();
+        log("info", logMessage, parsed);
       } catch {
         log("info", "http_request", { message: trimmed });
       }
