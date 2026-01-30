@@ -17,7 +17,7 @@ export const Route = createFileRoute('/renew')({
   component: StorageRenewal,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      cid: (search.cid as string) || '',
+      cids: (search.cids as string) || ''
     }
   },
 })
