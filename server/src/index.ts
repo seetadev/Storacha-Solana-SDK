@@ -55,16 +55,31 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) =>
-  JSON.stringify({
+
+app.set("trust proxy", true);
+
+const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) => {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  const clientIp = forwardedFor
+    ? Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor.split(",")[0].trim()
+    : tokens["remote-addr"](req, res);
+
+  return JSON.stringify({
     method: tokens.method(req, res),
     path: tokens.url(req, res),
     status: Number(tokens.status(req, res)),
     responseTimeMs: Number(tokens["response-time"](req, res)),
     contentLength: tokens.res(req, res, "content-length"),
     userAgent: tokens["user-agent"](req, res),
-    ip: tokens["remote-addr"](req, res),
+    ip: clientIp,
+    country:
+      req.headers["cf-ipcountry"] || req.headers["x-vercel-ip-country"] || null,
+    city: req.headers["x-vercel-ip-city"] || null,
+    referer: req.headers["referer"] || null,
   });
+};
 
 app.use(morgan(requestLogFormat, { stream: logger.stream }));
 app.use(apiLimiter);
