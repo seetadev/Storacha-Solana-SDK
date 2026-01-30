@@ -56,7 +56,8 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.set("trust proxy", true);
+// prevent trivial ip-based RL bypassing
+app.set("trust proxy", 1);
 
 const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) => {
   const forwardedFor = req.headers["x-forwarded-for"];
