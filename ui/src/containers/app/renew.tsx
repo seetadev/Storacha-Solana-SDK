@@ -44,7 +44,6 @@ export const Renew = () => {
     return []
   }, [search])
 
-  /* -------------------- EMBLA -------------------- */
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
@@ -83,7 +82,7 @@ export const Renew = () => {
   const [customDuration, setCustomDuration] = useState('')
   const [state, setState] = useState<State>('idle')
 
-  const { data: fileDetails, error: fileError } =
+  const { data: fileDetails, error: fileError, isLoading: isLoadingFile } =
     useFileDetails(user || '', activeCid)
 
   const {
@@ -102,9 +101,11 @@ export const Renew = () => {
 
   const getDaysRemaining = (expiresAt?: string) => {
     if (!expiresAt) return 0
-    const diff =
-      new Date(expiresAt).getTime() - new Date().getTime()
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+    const now = new Date()
+    const expiry = new Date(expiresAt)
+    const diffTime = expiry.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return Math.max(0, diffDays)
   }
 
   const daysRemaining = getDaysRemaining(fileDetails?.expiresAt)
@@ -137,40 +138,97 @@ export const Renew = () => {
         },
       })
 
-      if (!result.success) throw new Error('Renewal failed')
-
-      toast.success(
-        `Storage renewed successfully for ${selectedDuration} more days!`,
-        { id: toastId },
-      )
-
-      navigate({ to: '/app/history' })
+      if (result.success) {
+        toast.success(
+          `Storage renewed successfully for ${selectedDuration} more days!`,
+          { id: toastId, duration: 5000 },
+        )
+        setTimeout(() => {
+          navigate({ to: '/app/history' })
+        }, 2000)
+      } else {
+        throw new Error('Renewal failed')
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to renew storage', { id: toastId })
       setState('idle')
     }
   }
 
-
-  if (!cids.length) {
+  if (isLoadingFile) {
     return (
       <Box textAlign="center" py="4em">
-        <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
-        <Text mt="1em" color="var(--text-inverse)">
-          No uploads selected
+        <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
+          Loading file details...
         </Text>
       </Box>
     )
   }
 
+  if (cids.length === 0) {
+    return (
+      <VStack spacing="2em" align="stretch">
+        <Box
+          textAlign="center"
+          py="4em"
+          bg="var(--bg-dark)"
+          border="1px solid var(--border-hover)"
+          borderRadius="var(--radius-lg)"
+        >
+          <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
+          <Text
+            mt="1em"
+            fontSize="var(--font-size-lg)"
+            fontWeight="var(--font-weight-semibold)"
+            color="var(--text-inverse)"
+          >
+            No CID Provided
+          </Text>
+          <Text mt="0.5em" color="var(--text-muted)">
+            Please select a file from your history to renew
+          </Text>
+          <Link to="/app/history">
+            <Button mt="2em" size="md">
+              Go to History
+            </Button>
+          </Link>
+        </Box>
+      </VStack>
+    )
+  }
+
   if (fileError) {
     return (
-      <Box textAlign="center" py="4em">
-        <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
-        <Text mt="1em" color="var(--text-inverse)">
-          Failed to load file
-        </Text>
-      </Box>
+      <VStack spacing="2em" align="stretch">
+        <Box
+          textAlign="center"
+          py="4em"
+          bg="var(--bg-dark)"
+          border="1px solid var(--border-hover)"
+          borderRadius="var(--radius-lg)"
+        >
+          <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
+          <Text
+            mt="1em"
+            fontSize="var(--font-size-lg)"
+            fontWeight="var(--font-weight-semibold)"
+            color="var(--text-inverse)"
+          >
+            Unable to Load File
+          </Text>
+          <Text mt="0.5em" color="var(--text-muted)">
+            {fileError instanceof Error
+              ? fileError.message
+              : 'Failed to fetch file details'}
+          </Text>
+          <Link to="/app/history">
+            <Button mt="2em" size="md">
+              Go to History
+            </Button>
+          </Link>
+        </Box>
+
+      </VStack>
     )
   }
 
@@ -189,7 +247,6 @@ export const Renew = () => {
         </HStack>
       </Link>
 
-      {/* ---------- CAROUSEL CONTROLS ---------- */}
       {cids.length > 1 && (
         <HStack justify="space-between">
           <Button
