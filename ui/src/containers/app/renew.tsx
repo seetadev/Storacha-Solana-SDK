@@ -26,6 +26,7 @@ import { useUpload } from '@toju.network/sol'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { toast } from 'sonner'
+import dayjs from 'dayjs'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
@@ -82,7 +83,7 @@ export const Renew = () => {
   const [customDuration, setCustomDuration] = useState('')
   const [state, setState] = useState<State>('idle')
 
-  const { data: fileDetails, error: fileError, isLoading: isLoadingFile } =
+  const { data: fileDetails, error: fileError } =
     useFileDetails(user || '', activeCid)
 
   const {
@@ -98,6 +99,15 @@ export const Renew = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
   }
+
+  const handleCustomDurationChange = (value: string) => {
+    setCustomDuration(value)
+    const parsed = parseInt(value, 10)
+    if (parsed > 0) {
+      setSelectedDuration(parsed)
+    }
+  }
+
 
   const getDaysRemaining = (expiresAt?: string) => {
     if (!expiresAt) return 0
@@ -153,16 +163,6 @@ export const Renew = () => {
       toast.error(err.message || 'Failed to renew storage', { id: toastId })
       setState('idle')
     }
-  }
-
-  if (isLoadingFile) {
-    return (
-      <Box textAlign="center" py="4em">
-        <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
-          Loading file details...
-        </Text>
-      </Box>
-    )
   }
 
   if (cids.length === 0) {
@@ -319,7 +319,7 @@ export const Renew = () => {
                   <Text color="var(--text-muted)">Current Expiration:</Text>
                   <Text color="var(--text-inverse)">
                     {fileDetails?.expiresAt
-                      ? new Date(fileDetails.expiresAt).toLocaleDateString()
+                      ? dayjs(fileDetails.expiresAt).format('DD/MM/YYYY')
                       : 'N/A'}
                   </Text>
                 </HStack>
@@ -422,11 +422,7 @@ export const Renew = () => {
             type="number"
             min="1"
             value={customDuration}
-            onChange={(e) => {
-              setCustomDuration(e.target.value)
-              const v = parseInt(e.target.value)
-              if (v > 0) setSelectedDuration(v)
-            }}
+            onChange={(e) => handleCustomDurationChange(e.target.value)}
             placeholder="Enter days"
             flex="1"
             h="44px"
@@ -528,7 +524,7 @@ export const Renew = () => {
               <Text color="var(--text-muted)">New Expiration:</Text>
               <Text color="var(--success)">
                 {renewalCost?.newExpirationDate
-                  ? new Date(renewalCost.newExpirationDate).toLocaleDateString()
+                  ? dayjs(renewalCost.newExpirationDate).format('DD/MM/YYYY')
                   : '—'}
               </Text>
             </HStack>
