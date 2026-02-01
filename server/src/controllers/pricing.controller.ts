@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getSolPrice } from "../services/price/sol-price.service.js";
 import { QuoteOutput } from "../types.js";
+import { logger } from "../utils/logger.js";
 import {
   getQuoteForFileUpload,
 } from "../utils/storacha.js";
@@ -25,7 +26,9 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (err) {
-    console.error("Error getting file upload quote", err);
+    logger.error("Error getting file upload quote", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(400).json({
       quoteObject: null,
       success: false,
@@ -41,7 +44,9 @@ export const getSolUsdPrice = async (_req: Request, res: Response) => {
       timestamp: Date.now,
     });
   } catch (error) {
-    console.error("Error getting SOL/USD price:", error);
+    logger.error("Error getting SOL/USD price", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({ message: "Failed to get SOL/USD price" });
   }
 };

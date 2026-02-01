@@ -4,18 +4,20 @@ import "./instrument.js";
 import * as Sentry from "@sentry/node";
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { Request, Response } from "express";
+import morgan, { FormatFn } from "morgan";
 import { apiLimiter } from "./middlewares/rate-limit.middleware.js";
 import { consoleRouter } from "./routes/console.route.js";
 import { jobs as jobsRouter } from "./routes/jobs.route.js";
+import { pricingRouter } from "./routes/pricing.route.js";
 import { serverRouter } from "./routes/server.route.js";
 import { solanaRouter } from "./routes/solana.route.js";
 import { storageRouter } from "./routes/storage.route.js";
+import { transactionsRouter } from "./routes/transactions.route.js";
 import { uploadsRouter } from "./routes/upload.route.js";
 import { userRouter } from "./routes/user.route.js";
+import { logger } from "./utils/logger.js";
 import { ensureConfigInitialized } from "./utils/solana/index.js";
-import { pricingRouter } from "./routes/pricing.route.js";
-import { transactionsRouter } from "./routes/transactions.route.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -34,7 +36,7 @@ function validateEnv() {
   const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
-    console.log(missing);
+    logger.error("Missing required environment variables", { missing });
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}`,
     );
@@ -44,23 +46,43 @@ validateEnv();
 
 const app = express();
 const corsOptions: cors.CorsOptions = {
-  origin: "*", // allow requests from any domain
+  origin: "*",
   methods: ["GET", "POST", "OPTIONS"], // OPTIONS is required for preflight requests
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-  ],
-  exposedHeaders: [
-    "Content-Length",
-    "Content-Type",
-  ],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Length", "Content-Type"],
   maxAge: 3600, // cache preflight response for 1 hour
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json());
+
+// prevent trivial ip-based RL bypassing
+app.set("trust proxy", 1);
+
+const requestLogFormat: FormatFn<Request, Response> = (tokens, req, res) => {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  const clientIp = forwardedFor
+    ? Array.isArray(forwardedFor)
+      ? forwardedFor[0]
+      : forwardedFor.split(",")[0].trim()
+    : tokens["remote-addr"](req, res);
+
+  return JSON.stringify({
+    method: tokens.method(req, res),
+    path: tokens.url(req, res),
+    status: Number(tokens.status(req, res)),
+    responseTimeMs: Number(tokens["response-time"](req, res)),
+    contentLength: tokens.res(req, res, "content-length"),
+    userAgent: tokens["user-agent"](req, res),
+    ip: clientIp,
+    country:
+      req.headers["cf-ipcountry"] || req.headers["x-vercel-ip-country"] || null,
+    city: req.headers["x-vercel-ip-city"] || null,
+    referer: req.headers["referer"] || null,
+  });
+};
+
+app.use(morgan(requestLogFormat, { stream: logger.stream }));
 app.use(apiLimiter);
 
 app.use("/console", consoleRouter);
@@ -70,18 +92,22 @@ app.use("/user", userRouter);
 app.use("/solana", solanaRouter);
 app.use("/jobs", jobsRouter);
 app.use("/health", serverRouter);
-app.use("/pricing", pricingRouter)
-app.use("/transactions", transactionsRouter)
+app.use("/pricing", pricingRouter);
+app.use("/transactions", transactionsRouter);
 
 Sentry.setupExpressErrorHandler(app);
 
 app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info("Server running", { port: PORT });
   try {
     await ensureConfigInitialized();
-    console.log("Solana config initialized successfully");
+    logger.info("Solana config initialized successfully");
   } catch (error) {
-    console.error("Failed to initialize Solana config:", error);
-    process.exit(1);
+    logger.error("Failed to initialize Solana config", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    logger.warn(
+      "Server will continue running despite Solana config initialization failure",
+    );
   }
 });

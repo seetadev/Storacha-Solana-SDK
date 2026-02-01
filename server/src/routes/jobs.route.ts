@@ -13,5 +13,17 @@ jobs.post(
 jobs.post(
   "/delete-expired",
   verifyQStashRequest,
-  jobsController.deleteExpiredDeposits,
+  jobsController.deleteExpiredUploads,
+);
+
+jobs.post(
+  "/usage/snapshot",
+  verifyQStashRequest,
+  jobsController.dailyUsageSnapshot,
+);
+
+jobs.post(
+  "/usage/compare",
+  verifyQStashRequest,
+  jobsController.weeklyUsageComparison,
 );

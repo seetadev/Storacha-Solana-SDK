@@ -1,6 +1,6 @@
 ---
 title: 'Overview'
-description: 'Getting started with the storacha-sol SDK'
+description: 'Getting started with the @toju.network/sol SDK'
 ---
 
 ## Installation
@@ -10,15 +10,15 @@ Install the SDK in your React project:
 <CodeGroup>
 
 ```bash pnpm
-pnpm add storacha-sol
+pnpm add @toju.network/sol
 ```
 
 ```bash npm
-npm install storacha-sol
+npm install @toju.network/sol
 ```
 
 ```bash yarn
-yarn add storacha-sol
+yarn add @toju.network/sol
 ```
 
 </CodeGroup>
@@ -40,9 +40,9 @@ pnpm add @solana/wallet-adapter-react @solana/web3.js
 Import and use the SDK in your React component:
 
 ```typescript
-import { useUpload } from 'storacha-sol';
+import { useUpload } from '@toju.network/sol';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Environment } from 'storacha-sol';
+import { Environment } from '@toju.network/sol';
 
 function MyComponent() {
   const client = useUpload(Environment.testnet);
@@ -117,7 +117,7 @@ import type {
   UploadHistoryResponse,
   DepositFile,
   RenewalResult,
-} from 'storacha-sol';
+} from '@toju.network/sol';
 ```
 
 ## Configuration
@@ -135,7 +135,7 @@ The environment parameter determines which Solana network to use:
 ### Checking Balance Before Upload
 
 ```typescript
-import { useUpload } from 'storacha-sol';
+import { useUpload } from '@toju.network/sol';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
@@ -238,7 +238,7 @@ export default defineConfig({
     Extend storage duration
   </Card>
   <Card title="Core Concepts" icon="book" href="/concepts/storage-payments">
-    Understand how Keep works
+    Understand how it works
   </Card>
 </CardGroup>
 
@@ -248,7 +248,7 @@ export default defineConfig({
   <Card title="GitHub Issues" icon="github" href="https://github.com/seetadev/Storacha-Solana-SDK/issues">
     Report bugs or request features
   </Card>
-  <Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/storacha-sol">
+  <Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/@toju.network/sol">
     View on npm
   </Card>
 </CardGroup>

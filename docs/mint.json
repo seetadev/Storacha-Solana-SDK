@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Keep",
+  "name": "toju",
   "logo": {
     "dark": "/logo/keep.svg",
     "light": "/logo/keep.svg"
@@ -34,7 +34,7 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["introduction", "quickstart"]
+      "pages": ["introduction", "quickstart", "pricing"]
     },
     {
       "group": "Contributing",

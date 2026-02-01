@@ -6,6 +6,7 @@ import { uploads } from "../db/schema.js";
 import { getUserHistory, saveTransaction } from "../db/uploads-table.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
 import { computeCID } from "../utils/compute-cid.js";
+import { logger } from "../utils/logger.js";
 import {
     DAY_TIME_IN_SECONDS,
     getAmountInLamportsFromUSD,
@@ -65,7 +66,9 @@ export const uploadFile = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     Sentry.captureException(error);
-    console.error("Error uploading file to Storacha:", error);
+    logger.error("Error uploading file to Storacha", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({
       message: "Error uploading file to directory",
     });
@@ -125,7 +128,9 @@ export const uploadFiles = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error("Error uploading files:", error);
+    logger.error("Error uploading files", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({ message: "Error uploading files" });
   }
 };
@@ -183,7 +188,7 @@ export const deposit = async (req: Request, res: Response) => {
       email: userEmail || undefined,
     });
 
-    console.log("Deposit calculation:", {
+    logger.info("Deposit calculation", {
       totalSize,
       ratePerBytePerDay,
       duration_days,
@@ -255,7 +260,9 @@ export const deposit = async (req: Request, res: Response) => {
     });
   } catch (error) {
     Sentry.captureException(error);
-    console.error(error);
+    logger.error("Error making a deposit", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(400).json({
       message: "Error making a deposit",
     });
@@ -340,7 +347,9 @@ export const confirmUpload = async (req: Request, res: Response) => {
     });
   } catch (err) {
     Sentry.captureException(err);
-    console.error("Error updating transaction hash:", err);
+    logger.error("Error updating transaction hash", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({
       message: "Error updating transaction hash",
     });

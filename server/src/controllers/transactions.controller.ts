@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import {
-  getTransactionsForCID,
-} from "../db/uploads-table.js";
+import { getTransactionsForCID } from "../db/uploads-table.js";
+import { logger } from "../utils/logger.js";
 
 
 /**
@@ -20,9 +19,11 @@ export const getUploadTransactions = async (req: Request, res: Response) => {
         success: true,
         transactions,
       });
-    } catch (error) {
-      console.error("Error fetching transaction history:", error);
-      return res.status(500).json({ message: "Failed to fetch transactions" });
-    }
+  } catch (error) {
+    logger.error("Error fetching transaction history", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ message: "Failed to fetch transactions" });
+  }
   };
   

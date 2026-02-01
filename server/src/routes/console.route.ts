@@ -4,7 +4,19 @@ import { isMasterChief } from "../middlewares/auth.middleware.js";
 
 export const consoleRouter = express.Router();
 
-consoleRouter.use(isMasterChief); //middleware
+consoleRouter.use(isMasterChief);
 
-consoleRouter.post("/update-rate", consoleController.updateRate);
-consoleRouter.post("/update-min-duration", consoleController.updateMinDuration);
+// usage
+consoleRouter.get("/usage/history", consoleController.getUsageHistory);
+consoleRouter.get("/usage/current", consoleController.getCurrentUsage);
+
+// alerts
+consoleRouter.get("/alerts", consoleController.getUnresolvedAlerts);
+consoleRouter.post("/alerts/:id/resolve", consoleController.resolveAlert);
+
+// escrow / withdrawals
+consoleRouter.get("/escrow/balance", consoleController.getEscrowVaultBalance);
+consoleRouter.post(
+  "/escrow/withdraw",
+  consoleController.withdrawFeesFromEscrow,
+);

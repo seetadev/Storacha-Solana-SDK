@@ -29,6 +29,20 @@
       "when": 1733947200000,
       "tag": "0003_rename_deposit_to_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1736121600000,
+      "tag": "0004_change_rate_to_real",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1737936000000,
+      "tag": "0005_add_usage_tables",
+      "breakpoints": true
     }
   ]
 }

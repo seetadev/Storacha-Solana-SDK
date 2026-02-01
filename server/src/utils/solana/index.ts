@@ -9,16 +9,28 @@ import BN from "bn.js";
 import { sha256 } from "js-sha256";
 import { db } from "../../db/db.js";
 import { configTable } from "../../db/schema.js";
+import { logger } from "../logger.js";
 import { SolanaProgram as StorachaSolProgram } from "./program.js";
 
 const CONFIG_SEED = "config";
 const DEPOSIT_SEED = "deposit";
 
-// we'll switch this interchangeably between mainnet/testnet/localnet/devnet
-const connection = new Connection(
-  "https://api.testnet.solana.com",
-  "confirmed",
-);
+interface EscrowVaultAccount {
+  totalDeposits: BN;
+  totalClaimed: BN;
+}
+
+interface ConfigAccount {
+  adminKey: web3.PublicKey;
+  ratePerBytePerDay: BN;
+  minDurationDays: number;
+  withdrawalWallet: web3.PublicKey;
+}
+
+const SOLANA_RPC_URL =
+  process.env.SOLANA_RPC_URL || "https://api.testnet.solana.com";
+
+const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
 let ADMIN_KEYPAIR: Keypair | null = null;
 let CACHED_IDL: any = null;
@@ -140,7 +152,7 @@ export async function ensureConfigInitialized(): Promise<void> {
 
   const configAccount = await connection.getAccountInfo(configPda);
   if (!configAccount) {
-    console.log("Config not found — initializing it now...");
+    logger.info("Config not found — initializing it now");
 
     const adminKeypair = await loadAdminKeypair();
 
@@ -189,13 +201,15 @@ export async function ensureConfigInitialized(): Promise<void> {
         preflightCommitment: "confirmed",
       });
       await connection.confirmTransaction(sig, "confirmed");
-      console.log(`✅ Config initialized. Tx: ${sig}`);
+      logger.info("Config initialized", { signature: sig });
     } catch (err) {
-      console.error("Failed to send init transaction:", err);
+      logger.error("Failed to send init transaction", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       throw err;
     }
   } else {
-    console.log("✅ Config already exists — no update needed.");
+    logger.info("Config already exists — no update needed");
     // NOTE: We don't update the on-chain rate because our pricing is in USD (3e-12)
     // and the backend calculates lamports dynamically based on current SOL price.
     // The on-chain program only validates that the deposit amount is sufficient.
@@ -315,4 +329,126 @@ export async function extendStorageInstruction(
       systemProgram: web3.SystemProgram.programId,
     })
     .instruction();
+}
+
+/**
+ * Gets the escrow vault balance and account data
+ */
+export async function getEscrowBalance(): Promise<{
+  totalDeposits: bigint;
+  totalClaimed: bigint;
+  availableBalance: bigint;
+  accountLamports: bigint;
+}> {
+  const { idl, programId } = await getIdlAndProgramId();
+
+  const wallet = {
+    publicKey: web3.Keypair.generate().publicKey,
+    signTransaction: async (tx: any) => tx,
+    signAllTransactions: async (txs: any[]) => txs,
+  };
+
+  const provider = new AnchorProvider(connection, wallet as any, {});
+  const program = new Program(idl as StorachaSolProgram, provider);
+
+  const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow")],
+    programId,
+  );
+
+  const escrowAccount = await (
+    program.account as unknown as {
+      escrowVault: {
+        fetch: (address: web3.PublicKey) => Promise<EscrowVaultAccount>;
+      };
+    }
+  ).escrowVault.fetch(escrowVaultPda);
+  const accountInfo = await connection.getAccountInfo(escrowVaultPda);
+
+  if (!accountInfo) {
+    throw new Error("Escrow vault account not found");
+  }
+
+  // solana expects all data stored on chain via an account to have a minimum balance to keep it alive
+  // else, it'll be nuked!
+  const rentExemptMinimum = await connection.getMinimumBalanceForRentExemption(
+    accountInfo.data.length,
+  );
+
+  const accountLamports = BigInt(accountInfo.lamports);
+  const totalDeposits = BigInt(escrowAccount.totalDeposits.toString());
+  const totalClaimed = BigInt(escrowAccount.totalClaimed.toString());
+  const availableBalance = accountLamports - BigInt(rentExemptMinimum);
+
+  return {
+    totalDeposits,
+    totalClaimed,
+    availableBalance: availableBalance > 0n ? availableBalance : 0n,
+    accountLamports,
+  };
+}
+
+export async function withdrawFees(amountLamports: bigint): Promise<string> {
+  const { idl, programId } = await getIdlAndProgramId();
+  const adminKeypair = await loadAdminKeypair();
+
+  const wallet = {
+    publicKey: adminKeypair.publicKey,
+    signTransaction: async (tx: any) => tx,
+    signAllTransactions: async (txs: any[]) => txs,
+  };
+
+  const provider = new AnchorProvider(connection, wallet as any, {});
+  const program = new Program(idl as StorachaSolProgram, provider);
+
+  const [configPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED)],
+    programId,
+  );
+  const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow")],
+    programId,
+  );
+
+  // Fetch config to get withdrawal wallet
+  const configAccount = await (
+    program.account as unknown as {
+      config: { fetch: (address: web3.PublicKey) => Promise<ConfigAccount> };
+    }
+  ).config.fetch(configPda);
+  const withdrawalWallet = configAccount.withdrawalWallet;
+
+  const withdrawIx = await program.methods
+    .withdrawFees(new BN(amountLamports.toString()))
+    .accounts({
+      escrowVault: escrowVaultPda,
+      config: configPda,
+      admin: adminKeypair.publicKey,
+      withdrawalWallet: withdrawalWallet,
+    })
+    .instruction();
+
+  const { blockhash } = await connection.getLatestBlockhash();
+
+  const tx = new Transaction();
+  tx.add(withdrawIx);
+  tx.feePayer = adminKeypair.publicKey;
+  tx.recentBlockhash = blockhash;
+
+  tx.sign(adminKeypair);
+
+  const sig = await connection.sendRawTransaction(tx.serialize(), {
+    skipPreflight: false,
+    preflightCommitment: "confirmed",
+  });
+
+  await connection.confirmTransaction(sig, "confirmed");
+
+  logger.info("Fees withdrawn", {
+    amount: amountLamports.toString(),
+    signature: sig,
+    withdrawalWallet: withdrawalWallet.toBase58(),
+  });
+
+  return sig;
 }

@@ -1,13 +1,18 @@
 import { StorageDurationSelector } from '@/components/duration-selector'
 import { StorageCostSkeleton } from '@/components/skeletons'
 import { FileUpload } from '@/components/upload'
+import {
+  type ConnectionQuality,
+  useConnectionCheck,
+} from '@/hooks/connection-check'
 import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
 import { useStorageCost } from '@/hooks/storage-cost'
+import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
 import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
 import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
 import type { State } from '@/lib/types'
-import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
+import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -27,6 +32,8 @@ import { useDeposit } from '@toju.network/sol'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+const SLOW_UPLOAD_THRESHOLD_MS = 15000
+
 export const Upload = () => {
   const { isAuthenticated, balance, refreshBalance, network } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
@@ -35,13 +42,22 @@ export const Upload = () => {
   const [storageDuration, setStorageDuration] = useState<string>('30')
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>('idle')
+  const [connectionStatus, setConnectionStatus] = useState<
+    'checking' | ConnectionQuality
+  >('unknown')
   const emailInputRef = useRef<HTMLInputElement>(null)
+  const uploadStartTime = useRef<number | null>(null)
 
   const { isOpen, onOpen: openEmailNudge, onClose } = useDisclosure()
   const {
     isOpen: isShortDurationWarningOpen,
     onOpen: openShortDurationWarning,
     onClose: closeShortDurationWarning,
+  } = useDisclosure()
+  const {
+    isOpen: isConnectionWarningOpen,
+    onOpen: openConnectionWarning,
+    onClose: closeConnectionWarning,
   } = useDisclosure()
 
   const parsedDuration = Number(storageDuration)
@@ -51,6 +67,24 @@ export const Upload = () => {
     parsedDuration > 0
 
   const client = useDeposit(network)
+
+  const apiEndpoint =
+    IS_DEV ||
+    (network === 'mainnet-beta'
+      ? import.meta.env.VITE_API_URL || 'https://api.toju.network'
+      : import.meta.env.VITE_API_URL_STAGING ||
+        'https://staging-api.toju.network')
+
+  const solanaRpcUrl =
+    network === 'mainnet-beta'
+      ? 'https://api.mainnet-beta.solana.com'
+      : 'https://api.testnet.solana.com'
+
+  const { latency, checkConnection } = useConnectionCheck({
+    apiEndpoint,
+    solanaRpcUrl,
+  })
+
   const { totalCost, isLoading: isCostLoading } = useStorageCost(
     selectedFiles,
     isValidDuration ? parsedDuration : 0,
@@ -67,8 +101,18 @@ export const Upload = () => {
   }
 
   const performUpload = async () => {
+    closeConnectionWarning()
     setState('uploading')
+    uploadStartTime.current = Date.now()
+
     const toastId = toast.loading('Uploading files to IPFS...')
+
+    const slowUploadTimer = setTimeout(() => {
+      toast.loading(
+        "Upload is taking longer than expected. Please don't close this tab - your files are still being uploaded.",
+        { id: toastId, duration: Infinity },
+      )
+    }, SLOW_UPLOAD_THRESHOLD_MS)
 
     try {
       const result = await client.createDeposit({
@@ -86,9 +130,20 @@ export const Upload = () => {
         userEmail: email || undefined,
       })
 
+      clearTimeout(slowUploadTimer)
+
       if (result.success) {
+        const uploadDuration = uploadStartTime.current
+          ? Math.round((Date.now() - uploadStartTime.current) / 1000)
+          : null
+
+        const durationNote =
+          uploadDuration && uploadDuration > 30
+            ? ` (took ${uploadDuration}s)`
+            : ''
+
         toast.success(
-          `Upload successful! ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} stored for ${storageDuration} days`,
+          `Upload successful! ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} stored for ${storageDuration} days${durationNote}`,
           { id: toastId, duration: 5000 },
         )
         await refreshBalance()
@@ -98,14 +153,27 @@ export const Upload = () => {
         throw new Error(result.error || 'Upload failed')
       }
     } catch (error) {
+      clearTimeout(slowUploadTimer)
       const errorMessage =
         error instanceof Error ? error.message : 'Upload failed'
-      toast.error(errorMessage, { id: toastId })
+
+      const isNetworkError =
+        errorMessage.toLowerCase().includes('timeout') ||
+        errorMessage.toLowerCase().includes('network') ||
+        errorMessage.toLowerCase().includes('fetch')
+
+      const displayMessage = isNetworkError
+        ? `${errorMessage}. This may be due to a slow internet connection. Please try again with a stronger connection.`
+        : errorMessage
+
+      toast.error(displayMessage, { id: toastId })
       setState('idle')
+    } finally {
+      uploadStartTime.current = null
     }
   }
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!isValidDuration) {
       toast.error('Please enter a valid number of storage days')
       return
@@ -116,7 +184,7 @@ export const Upload = () => {
       return
     }
 
-    // Show warning if duration is less than 7 days
+    // show warning if duration is less than 7 days first
     if (parsedDuration < 7) {
       openShortDurationWarning()
       return
@@ -127,29 +195,47 @@ export const Upload = () => {
       return
     }
 
+    // we should always show connection warning modal and check connection
+    // because of the risk associated with actually uploading (false-postively) stuff and it not being
+    // retrievable via any of the IPFS gateways.
+    setConnectionStatus('checking')
+    openConnectionWarning()
+
+    const quality = await checkConnection()
+    setConnectionStatus(quality)
+  }
+
+  const proceedFromConnectionWarning = () => {
+    closeConnectionWarning()
     performUpload()
   }
 
   const proceed = () => {
     onClose()
-    performUpload()
+
+    setConnectionStatus('checking')
+    openConnectionWarning()
+    checkConnection().then((quality) => {
+      setConnectionStatus(quality)
+    })
   }
 
   const proceedWithShortDuration = () => {
     closeShortDurationWarning()
-    // If no email, show email nudge, otherwise proceed with upload
+    // ff no email, show email nudge, otherwise show connection warning
     if (!email.trim()) {
       openEmailNudge()
     } else {
-      performUpload()
+      setConnectionStatus('checking')
+      openConnectionWarning()
+      checkConnection().then((quality) => {
+        setConnectionStatus(quality)
+      })
     }
   }
 
   const enterEmail = () => {
     onClose()
-    // the timeout here is needed to avoid race-conditions
-    // where the browser still hasn't figured out what to paint.
-    // in this case, the focus ring on teh input
     setTimeout(() => {
       emailInputRef.current?.focus({ preventScroll: false })
       emailInputRef.current?.scrollIntoView({
@@ -171,7 +257,10 @@ export const Upload = () => {
   return (
     <>
       <VStack spacing="2em" align="stretch">
-        <FileUpload onFilesSelected={handleFilesSelected} />
+        <FileUpload
+          onFilesSelected={handleFilesSelected}
+          allowDirectories={true}
+        />
 
         {selectedFiles.length > 0 && (
           <VStack spacing="1.5em" align="stretch">
@@ -332,6 +421,7 @@ export const Upload = () => {
             <Button
               onClick={handleUpload}
               isLoading={state === 'uploading'}
+              loadingText="Uploading..."
               disabled={isUploadDisabled}
               size="lg"
               height="48px"
@@ -376,6 +466,13 @@ export const Upload = () => {
         onClose={closeShortDurationWarning}
         onProceed={proceedWithShortDuration}
         duration={parsedDuration}
+      />
+      <ConnectionWarning
+        isOpen={isConnectionWarningOpen}
+        onClose={closeConnectionWarning}
+        onProceed={proceedFromConnectionWarning}
+        connectionStatus={connectionStatus}
+        latency={latency}
       />
     </>
   )

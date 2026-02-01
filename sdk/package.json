@@ -1,6 +1,6 @@
 {
   "name": "@toju.network/sol",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -36,7 +36,7 @@
     "blockchain"
   ],
   "author": "toju.network",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "description": "Decentralized storage SDK for Solana via Storacha - pay with SOL, store on IPFS",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {

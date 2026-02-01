@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "start": "tsc -b && node dist/index.js",
+    "start": "tsx scripts/migrate.ts production && tsc -b && node dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:migrate:prod": "tsx scripts/migrate.ts production",
+    "db:seed": "tsx scripts/seed.ts",
     "knip": "knip",
     "dev": "nodemon --watch src --exec 'tsc -b && node dist/index.js' -e ts"
   },
@@ -21,6 +22,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.0.14",
     "@types/pg": "^8.15.4",
@@ -33,6 +35,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@logtail/node": "^0.5.6",
     "@neondatabase/serverless": "^1.0.1",
     "@pythnetwork/hermes-client": "^2.1.0",
     "@sentry/node": "^10.33.0",
@@ -51,11 +54,13 @@
     "express-rate-limit": "^8.2.1",
     "ipfs-car": "^3.0.0",
     "js-sha256": "^0.11.1",
+    "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
     "resend": "^6.5.2",
     "ts-jest": "^29.4.0",
+    "tsx": "^4.19.0",
     "zod": "^4.0.5"
   },
   "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"

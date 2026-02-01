@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.4...v0.1.1) (2026-01-22)
+
+
+### Features
+
+* add environment setup ahead of mainnet launch ([#97](https://github.com/seetadev/storacha-solana-sdk/issues/97)) ([bb3ed16](https://github.com/seetadev/storacha-solana-sdk/commit/bb3ed16443123d87b1f4df2bbd9f7af30887c790))
+* add extend_storage instruction to server and SDK ([#74](https://github.com/seetadev/storacha-solana-sdk/issues/74)) ([c9dacd7](https://github.com/seetadev/storacha-solana-sdk/commit/c9dacd78aef6d047f1c4ee199018ea176df7c939))
+* add extend_storage_duration instruction to contract  ([#72](https://github.com/seetadev/storacha-solana-sdk/issues/72)) ([9d94fa3](https://github.com/seetadev/storacha-solana-sdk/commit/9d94fa3f5fea1deefde0ec5633f5e163266fbcda))
+* add renewal page skeleton and deprecate deposit terminology ([e05718a](https://github.com/seetadev/storacha-solana-sdk/commit/e05718afe55a13fffeaf4a9617ef4308c5a13cf2))
+* add renewal page skeleton and deprecate deposit terminology  ([#69](https://github.com/seetadev/storacha-solana-sdk/issues/69)) ([867e8f5](https://github.com/seetadev/storacha-solana-sdk/commit/867e8f58a6e75072201c4388fcc157a66df2cb8a))
+* add SDK methods for storage renewal ([#61](https://github.com/seetadev/storacha-solana-sdk/issues/61)) ([59e3c7c](https://github.com/seetadev/storacha-solana-sdk/commit/59e3c7cc8a8bbfcb96dc5618469e517273ec03bf))
+* add sentry setup and cover our upload and renewal context ([#112](https://github.com/seetadev/storacha-solana-sdk/issues/112)) ([92cff8c](https://github.com/seetadev/storacha-solana-sdk/commit/92cff8c6b7863cc6dede55422faf6068c2ae495d))
+* add storage renewal endpoints and database logic ([6e56bf3](https://github.com/seetadev/storacha-solana-sdk/commit/6e56bf3dce19b6abb2264c3127b59ee522ee1a3c))
+* add toast feedback for copy actions ([#102](https://github.com/seetadev/storacha-solana-sdk/issues/102)) ([54cce92](https://github.com/seetadev/storacha-solana-sdk/commit/54cce922d35b7dcfa4acdebdd1bbede9743cc00d))
+* add transaction history tracking + naming clarity improvements ([d071efa](https://github.com/seetadev/storacha-solana-sdk/commit/d071efa5b79955d80a3beaf2a16c3fcb760427bb))
+* add transaction history tracking + naming clarity improvements ([#66](https://github.com/seetadev/storacha-solana-sdk/issues/66)) ([10b5007](https://github.com/seetadev/storacha-solana-sdk/commit/10b5007290284a4799a86783c46550fe1c3417d7))
+* **docs:** setup docs with mintlify ([#87](https://github.com/seetadev/storacha-solana-sdk/issues/87)) ([3ebb3b0](https://github.com/seetadev/storacha-solana-sdk/commit/3ebb3b0bdb9594f5a201f83af3f53378dfd73d42))
+* enhance logging and add new dependencies ([#142](https://github.com/seetadev/storacha-solana-sdk/issues/142)) ([0dc618e](https://github.com/seetadev/storacha-solana-sdk/commit/0dc618ee3698db7f7bef1fde3a80291f8b7281db))
+* get realtime SOL/USD price with the hermes client ([#88](https://github.com/seetadev/storacha-solana-sdk/issues/88)) ([0045430](https://github.com/seetadev/storacha-solana-sdk/commit/00454303c7c963cc3d8d2ebb092974f1dbc3e88a))
+* grouped storage routes into the new API structure, publish new sdk  ([#134](https://github.com/seetadev/storacha-solana-sdk/issues/134)) ([c2252bf](https://github.com/seetadev/storacha-solana-sdk/commit/c2252bfdc472b2e759c5083f8f0ed8653ce79886))
+* implement rate limiting to the server ([#111](https://github.com/seetadev/storacha-solana-sdk/issues/111)) ([9f8168a](https://github.com/seetadev/storacha-solana-sdk/commit/9f8168a0f38cb4f980d813ee47f38c42be913026))
+* new UI for keep ([#75](https://github.com/seetadev/storacha-solana-sdk/issues/75)) ([36aea3d](https://github.com/seetadev/storacha-solana-sdk/commit/36aea3daee5e1813b73482dca24b2579d4675ea5))
+* run deletion job for expired file uploads ([#58](https://github.com/seetadev/storacha-solana-sdk/issues/58)) ([8caf5b5](https://github.com/seetadev/storacha-solana-sdk/commit/8caf5b5998d559e462a72c112af9517453d59082))
+* separate the upload-specific routes and update the respective sdk methods using it. ([#125](https://github.com/seetadev/storacha-solana-sdk/issues/125)) ([6b24d28](https://github.com/seetadev/storacha-solana-sdk/commit/6b24d2854691c8dc2cdd8a332c09cb40a63c5ae5)), closes [#119](https://github.com/seetadev/storacha-solana-sdk/issues/119)
+* show a nudge for users to enter their email address or proceed without it. ([#136](https://github.com/seetadev/storacha-solana-sdk/issues/136)) ([3864e08](https://github.com/seetadev/storacha-solana-sdk/commit/3864e08aa59ef100c3b70210910308bcddd11c5e)), closes [#108](https://github.com/seetadev/storacha-solana-sdk/issues/108)
+* sort user uploads by most recent first ([#113](https://github.com/seetadev/storacha-solana-sdk/issues/113)) ([7e93231](https://github.com/seetadev/storacha-solana-sdk/commit/7e93231aa439a71fdb660a3506e99d98a454f358))
+* **ui:** show a warning for storage duration less than 7 days ([#140](https://github.com/seetadev/storacha-solana-sdk/issues/140)) ([762beb8](https://github.com/seetadev/storacha-solana-sdk/commit/762beb8bef661cae3d34a0c9e0fead7ffcd9b464))
+* update config table to use our pricing model ([#90](https://github.com/seetadev/storacha-solana-sdk/issues/90)) ([3ff31b5](https://github.com/seetadev/storacha-solana-sdk/commit/3ff31b5c3d78631f414db2411ddb315491e29168))
+* use the new endpoint URLs for the sdk ([#131](https://github.com/seetadev/storacha-solana-sdk/issues/131)) ([47f1235](https://github.com/seetadev/storacha-solana-sdk/commit/47f123595db09eb086c7ea9f0d49bb9342dde047)), closes [#130](https://github.com/seetadev/storacha-solana-sdk/issues/130)
+
+
+### Bug Fixes
+
+* fixed a bug due to the recent route naming change for the uploads feature. ([1b04cbd](https://github.com/seetadev/storacha-solana-sdk/commit/1b04cbd091e6ea22e4f68fb9cc7db05d89c23425))
+* fixed a bug where the sdk tries to determine the local rpc url inappropriately ([b193a93](https://github.com/seetadev/storacha-solana-sdk/commit/b193a93782ed5745d9f4228c3fbe9c1318d7d292))
+* fixed ui deployment issue related to vite ([19d3a08](https://github.com/seetadev/storacha-solana-sdk/commit/19d3a08d19528738029b6a242bbf834b17436cbe))
+* remove unnecessary cor wildcard to fix a bug that caused the server to crash ([#141](https://github.com/seetadev/storacha-solana-sdk/issues/141)) ([2d4ea78](https://github.com/seetadev/storacha-solana-sdk/commit/2d4ea78ea11a52f9e0557c9530b3b395459e7f01))
+* resolve deployment errors in ui hooks and server dependencies ([#135](https://github.com/seetadev/storacha-solana-sdk/issues/135)) ([9157619](https://github.com/seetadev/storacha-solana-sdk/commit/915761954f97cd656a93424ff06e0117779f39e0)), closes [/github.com/seetadev/Storacha-Solana-SDK/pull/129/changes#diff-3458d39404306a61639ffa28a02284e20ecd44dd022a87540650750ad2400b25R248](https://github.com/seetadev//github.com/seetadev/Storacha-Solana-SDK/pull/129/changes/issues/diff-3458d39404306a61639ffa28a02284e20ecd44dd022a87540650750ad2400b25R248)
+* safely access NODE_ENV because the sdk requires it ([ef649fd](https://github.com/seetadev/storacha-solana-sdk/commit/ef649fd932ffb70897ad349dbe297d7906271310))
+* sdk package.json exports for vite compatibility ([#93](https://github.com/seetadev/storacha-solana-sdk/issues/93)) ([0a2166a](https://github.com/seetadev/storacha-solana-sdk/commit/0a2166a0bc10b94eadae3b95c8d3a6915f6bf9cb))
+* **solana:** return user friendly error on duplicate file upload ([#71](https://github.com/seetadev/storacha-solana-sdk/issues/71)) ([e668f4b](https://github.com/seetadev/storacha-solana-sdk/commit/e668f4b81760a2487a4ef458a5b9c4c1291e01f1))
+* **solana:** return user friendly error on duplicate file upload ([#71](https://github.com/seetadev/storacha-solana-sdk/issues/71)) ([0239aa7](https://github.com/seetadev/storacha-solana-sdk/commit/0239aa70ce1a2ebe5243eb7e54a221fb8c0cb6fe))
+* **ui:** allow custom storage durations and validate input as string ([#126](https://github.com/seetadev/storacha-solana-sdk/issues/126)) ([01507b0](https://github.com/seetadev/storacha-solana-sdk/commit/01507b0fd0fd19de5a93c0a94a9770f5526b717e))
+* **ui:** hide the large upload area and provide an alternative trigger ([#101](https://github.com/seetadev/storacha-solana-sdk/issues/101)) ([7b43326](https://github.com/seetadev/storacha-solana-sdk/commit/7b43326ca0279e683c068e3f6460e658bf6c7452))
+* vercel deployment with workspace protocol ([#92](https://github.com/seetadev/storacha-solana-sdk/issues/92)) ([9feeb91](https://github.com/seetadev/storacha-solana-sdk/commit/9feeb9119ca00ae0b2e45c463a50239032ed2356))
+
 ## [0.1.0](https://github.com/seetadev/storacha-solana-sdk/compare/v0.0.9...v0.1.0) (2026-01-08)
 
 

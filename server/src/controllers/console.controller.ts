@@ -1,48 +1,210 @@
 import { Request, Response } from "express";
-import { db } from "../db/db.js";
-import { configTable } from "../db/schema.js";
+import { UsageService } from "../services/usage/usage.service.js";
+import { logger } from "../utils/logger.js";
+import { getEscrowBalance, withdrawFees } from "../utils/solana/index.js";
+import { initStorachaClient } from "../utils/storacha.js";
 
-//All the endpoints in this Particular controller are protected using Auth middleware
-
-export const updateRate = async (req: Request, res: Response) => {
+/**
+ * get usage history
+ */
+export const getUsageHistory = async (req: Request, res: Response) => {
   try {
-    const { rate } = req.body;
-    const result = await db
-      .update(configTable)
-      .set({
-        ratePerBytePerDay: rate,
-      })
-      .returning();
+    const days = parseInt(req.query.days as string) || 30;
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+    const history = await usageService.getUsageHistory(days);
+
     return res.status(200).json({
-      message: "Successfully updated the rate per file",
-      value: result[0].ratePerBytePerDay,
+      success: true,
+      data: history,
     });
-  } catch (err) {
-    console.log("The error is", err);
-    return res.status(500).json({ error: "Failed to update rate" });
+  } catch (error) {
+    logger.error("failed to get usage history", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to fetch usage history",
+    });
   }
 };
 
 /**
- * Function to update the Minimum Duration
- * @returns
+ * get current usage
  */
-export const updateMinDuration = async (req: Request, res: Response) => {
+export const getCurrentUsage = async (req: Request, res: Response) => {
   try {
-    const { duration } = req.body; // duration should be kept in seconds easier to handle
-    const daysInSeconds = duration * 86400;
-    const result = await db
-      .update(configTable)
-      .set({
-        minDurationDays: daysInSeconds,
-      })
-      .returning();
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+
+    const [storachaUsage, internalUsage] = await Promise.all([
+      usageService.getStorachaUsage(),
+      usageService.calculateInternalUsage(),
+    ]);
+
+    const storachaBytes = storachaUsage.finalSize;
+    const planLimit = usageService["planLimitBytes"];
+    const utilization = planLimit > 0 ? (storachaBytes / planLimit) * 100 : 0;
+
     return res.status(200).json({
-      message: "Successfully updated the minimum Duration",
-      value: result[0].minDurationDays,
+      success: true,
+      data: {
+        storacha: {
+          totalBytes: storachaBytes,
+          planLimit,
+          utilizationPercentage: utilization,
+        },
+        internal: {
+          totalBytes: internalUsage.totalBytes,
+          activeUploads: internalUsage.activeUploads,
+        },
+        discrepancy: {
+          bytes: storachaBytes - internalUsage.totalBytes,
+          percentage:
+            internalUsage.totalBytes > 0
+              ? ((storachaBytes - internalUsage.totalBytes) /
+                  internalUsage.totalBytes) *
+                100
+              : 0,
+        },
+      },
     });
-  } catch (err) {
-    console.log("The error is", err);
-    return res.status(500).json({ error: "Failed to update rate" });
+  } catch (error) {
+    logger.error("failed to get current usage", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to fetch current usage",
+    });
+  }
+};
+
+/**
+ * get unresolved alerts
+ */
+export const getUnresolvedAlerts = async (req: Request, res: Response) => {
+  try {
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+    const alerts = await usageService.getUnresolvedAlerts();
+
+    return res.status(200).json({
+      success: true,
+      data: alerts,
+    });
+  } catch (error) {
+    logger.error("failed to get unresolved alerts", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to fetch alerts",
+    });
+  }
+};
+
+/**
+ * resolve an alert
+ */
+export const resolveAlert = async (req: Request, res: Response) => {
+  try {
+    const alertId = parseInt(req.params.id);
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+    await usageService.resolveAlert(alertId);
+
+    return res.status(200).json({
+      success: true,
+      message: "alert resolved",
+    });
+  } catch (error) {
+    logger.error("failed to resolve alert", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to resolve alert",
+    });
+  }
+};
+
+/**
+ * get escrow vault balance
+ */
+export const getEscrowVaultBalance = async (req: Request, res: Response) => {
+  try {
+    const balance = await getEscrowBalance();
+
+    // convert bigint to string for JSON serialization
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalDeposits: balance.totalDeposits.toString(),
+        totalClaimed: balance.totalClaimed.toString(),
+        availableBalance: balance.availableBalance.toString(),
+        accountLamports: balance.accountLamports.toString(),
+
+        availableBalanceSOL: Number(balance.availableBalance) / 1e9,
+        totalDepositsSOL: Number(balance.totalDeposits) / 1e9,
+        totalClaimedSOL: Number(balance.totalClaimed) / 1e9,
+      },
+    });
+  } catch (error) {
+    logger.error("failed to get escrow balance", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to fetch escrow balance",
+    });
+  }
+};
+
+/**
+ * withdraw fees from escrow vault
+ */
+export const withdrawFeesFromEscrow = async (req: Request, res: Response) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({
+        success: false,
+        error: "amount is required (in lamports)",
+      });
+    }
+
+    const amountBigInt = BigInt(amount);
+
+    if (amountBigInt <= 0n) {
+      return res.status(400).json({
+        success: false,
+        error: "amount must be greater than 0",
+      });
+    }
+
+    const balance = await getEscrowBalance();
+    if (amountBigInt > balance.availableBalance) {
+      return res.status(400).json({
+        success: false,
+        error: `insufficient balance. available: ${balance.availableBalance.toString()} lamports (${Number(balance.availableBalance) / 1e9} SOL)`,
+      });
+    }
+
+    const signature = await withdrawFees(amountBigInt);
+
+    logger.info("withdrawal successful", {
+      amount: amount.toString(),
+      amountSOL: Number(amountBigInt) / 1e9,
+      signature,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        amount: amount.toString(),
+        amountSOL: Number(amountBigInt) / 1e9,
+      },
+    });
+  } catch (error) {
+    logger.error("failed to withdraw fees", { error });
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "failed to withdraw fees",
+    });
   }
 };

@@ -1,85 +1,99 @@
 import { UnknownLink } from "@storacha/client/types";
+import { Link } from "@ucanto/core/schema";
 import { Request, Response } from "express";
 import {
-  getDepositsNeedingWarning,
+  batchUpdateWarningSentAt,
   getExpiredDeposits,
+  getUploadsGroupedByEmail,
   updateDeletionStatus,
-  updateWarningSentAt,
 } from "../db/uploads-table.js";
-import { sendExpirationWarningEmail } from "../services/email/resend.service.js";
+import { sendBatchExpirationWarningEmail } from "../services/email/resend.service.js";
+import { UsageService } from "../services/usage/usage.service.js";
+import { logger } from "../utils/logger.js";
 import { initStorachaClient } from "../utils/storacha.js";
 
 /**
- * Checks for deposits needing expiration warnings
+ * Checks for uploads needing expiration warnings and sends batched emails
  */
 export const sendExpirationWarnings = async (req: Request, res: Response) => {
   try {
-    console.log("Running expiration warning job...");
-    const depositsNeedingWarning = await getDepositsNeedingWarning();
+    logger.info("Running expiration warning job");
+    const groupedUploads = await getUploadsGroupedByEmail();
 
-    if (!depositsNeedingWarning || depositsNeedingWarning.length === 0) {
-      console.log("No deposits need warning emails at this time");
+    if (!groupedUploads || groupedUploads.size === 0) {
+      logger.info("No uploads need warning emails at this time");
       return res.status(200).json({
         success: true,
-        message: "No deposits need warnings",
+        message: "No uploads need warnings",
       });
     }
 
-    console.log(
-      `Found ${depositsNeedingWarning.length} deposits needing warnings`,
-    );
+    logger.info("Found uploads needing warnings", {
+      userCount: groupedUploads.size,
+      totalUploads: Array.from(groupedUploads.values()).reduce(
+        (sum, uploads) => sum + uploads.length,
+        0,
+      ),
+    });
 
-    for (const deposit of depositsNeedingWarning) {
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (const [email, uploads] of groupedUploads) {
       try {
-        if (!deposit.userEmail) {
-          console.warn(`Skipping deposit ${deposit.id}: no email address`);
-          continue;
-        }
+        logger.info("Sending batched warning email", {
+          email,
+          uploadCount: uploads.length,
+        });
 
-        if (!deposit.expiresAt) {
-          console.warn(`Skipping deposit ${deposit.id}: no expiration date`);
-          continue;
-        }
-
-        const expirationDate = new Date(deposit.expiresAt);
-        const now = new Date();
-        const daysRemaining = Math.ceil(
-          (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        );
-
-        console.log(`Sending warning email for deposit ${deposit.id}...`);
-        const emailResult = await sendExpirationWarningEmail(
-          deposit.userEmail,
-          {
-            fileName: deposit.fileName || "Unknown File",
-            cid: deposit.contentCid,
-            expiresAt: deposit.expiresAt,
-            daysRemaining,
-          },
+        const emailResult = await sendBatchExpirationWarningEmail(
+          email,
+          uploads,
         );
 
         if (emailResult.success) {
-          await updateWarningSentAt(deposit.id);
-          console.log(`Warning email sent for deposit ${deposit.id}`);
+          const uploadIds = uploads.map((u) => u.id);
+          const updated = await batchUpdateWarningSentAt(uploadIds);
+
+          logger.info("Batched warning email sent successfully", {
+            email,
+            uploadCount: uploads.length,
+            updatedCount: updated,
+          });
+
+          successCount++;
         } else {
-          console.error(
-            `Failed to send email for deposit ${deposit.id}:`,
-            emailResult.error,
-          );
+          logger.error("Failed to send batched email", {
+            email,
+            uploadCount: uploads.length,
+            error: emailResult.error,
+          });
+          failureCount++;
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error(`Error processing deposit ${deposit.id}:`, errorMessage);
+        logger.error("Error processing batched email for user", {
+          email,
+          uploadCount: uploads.length,
+          error: errorMessage,
+        });
+        failureCount++;
       }
     }
 
     return res.status(200).json({
       success: true,
       message: "Expiration warnings processed",
+      stats: {
+        usersEmailed: successCount,
+        failures: failureCount,
+      },
     });
   } catch (error) {
-    console.error("Error in sendExpirationWarnings cron:", error);
+    logger.error("Error in sendExpirationWarnings job", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       success: false,
       message: "Failed to process expiration warnings",
@@ -91,25 +105,27 @@ export const sendExpirationWarnings = async (req: Request, res: Response) => {
 /**
  * Deletes expired deposits from Storacha
  */
-export const deleteExpiredDeposits = async (req: Request, res: Response) => {
+export const deleteExpiredUploads = async (req: Request, res: Response) => {
   try {
-    console.log("Running expired deposits deletion job...");
+    logger.info("Running expired uploads deletion job");
     const expiredDeposits = await getExpiredDeposits();
 
     if (!expiredDeposits || expiredDeposits.length === 0) {
-      console.log("No expired deposits to delete at this time");
+      logger.info("No expired uploads to delete at this time");
       return res.status(200).json({
         success: true,
-        message: "No expired deposits to delete",
+        message: "No expired uploads to delete",
       });
     }
 
-    console.log(`Found ${expiredDeposits.length} expired deposits to delete`);
+    logger.info("Found expired uploads to delete", {
+      count: expiredDeposits.length,
+    });
     const client = await initStorachaClient();
 
     for (const deposit of expiredDeposits) {
       try {
-        console.log(`Deleting expired deposit:`, {
+        logger.info("Deleting expired upload", {
           id: deposit.id,
           cid: deposit.contentCid,
           expiresAt: deposit.expiresAt,
@@ -117,15 +133,21 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
           status: deposit.deletionStatus,
         });
 
-        await client.remove(deposit.contentCid as unknown as UnknownLink, {
+        const cid = Link.parse(deposit.contentCid);
+        await client.remove(cid as UnknownLink, {
           shards: true,
         });
         await updateDeletionStatus(deposit.id, "deleted");
-        console.log(`Successfully deleted deposit ${deposit.id}`);
+        logger.info("Successfully deleted this upload", {
+          depositId: deposit.id,
+        });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error(`Failed to delete deposit ${deposit.id}:`, errorMessage);
+        logger.error("Failed to delete this upload", {
+          depositId: deposit.id,
+          error: errorMessage,
+        });
       }
     }
 
@@ -134,11 +156,65 @@ export const deleteExpiredDeposits = async (req: Request, res: Response) => {
       message: "Expired deposits processed",
     });
   } catch (error) {
-    console.error("Error in deleteExpiredDeposits job:", error);
+    logger.error("Error in deleteExpiredUploads job", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       success: false,
-      message: "Failed to process expired deposits deletion",
+      message: "Failed to process expired uploads deletion",
       error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+/**
+ * daily usage snapshot job
+ * runs every day at 9am UTC
+ */
+export const dailyUsageSnapshot = async (req: Request, res: Response) => {
+  try {
+    logger.info("running daily usage snapshot job");
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+
+    await usageService.createDailySnapshot();
+
+    return res.status(200).json({
+      success: true,
+      message: "daily usage snapshot completed",
+    });
+  } catch (error) {
+    logger.error("daily usage snapshot job failed", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to create usage snapshot",
+    });
+  }
+};
+
+/**
+ * weekly usage comparison job
+ * runs every sunday at 2am UTC
+ */
+export const weeklyUsageComparison = async (req: Request, res: Response) => {
+  try {
+    logger.info("running weekly usage comparison job");
+
+    const storachaClient = await initStorachaClient();
+    const usageService = new UsageService(storachaClient);
+
+    await usageService.compareUsage();
+
+    return res.status(200).json({
+      success: true,
+      message: "weekly usage comparison completed",
+    });
+  } catch (error) {
+    logger.error("weekly usage comparison job failed", { error });
+    return res.status(500).json({
+      success: false,
+      error: "failed to compare usage",
     });
   }
 };

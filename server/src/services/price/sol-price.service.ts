@@ -5,6 +5,7 @@
  */
 
 import { HermesClient } from "@pythnetwork/hermes-client";
+import { logger } from "../../utils/logger.js";
 
 interface PriceCache {
   price: number;
@@ -54,9 +55,11 @@ export async function getSolPrice(): Promise<number> {
 
     return price;
   } catch (error) {
-    console.error("Faile to fetch SOL price", error);
+    logger.error("Failed to fetch SOL price", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     if (priceCache) {
-      console.warn("Falling back to stale price data due to an error");
+      logger.warn("Falling back to stale price data due to an error");
       return priceCache.price;
     }
 

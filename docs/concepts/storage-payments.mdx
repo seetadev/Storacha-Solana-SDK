@@ -1,11 +1,11 @@
 ---
 title: 'Storage Payments'
-description: 'How onchain payments work in Keep'
+description: 'How onchain payments work'
 ---
 
 ## Overview
 
-Keep implements a pay-as-you-go model for decentralized storage using blockchain payments. Unlike traditional cloud storage with monthly subscriptions, users pay only for what they store and for how long.
+We implement a pay-as-you-go model for decentralized storage using blockchain payments. Unlike traditional cloud storage with monthly subscriptions, users pay only for what they store and for how long.
 
 ## How It Works
 
@@ -30,7 +30,7 @@ Keep implements a pay-as-you-go model for decentralized storage using blockchain
   </Step>
   
   <Step title="Onchain Deposit">
-    A deposit is created on the Solana blockchain via the Keep smart contract
+    A deposit is created on the Solana blockchain via our smart contract
   </Step>
   
   <Step title="Storage Delegation">
@@ -58,15 +58,15 @@ The base rate is dynamically calculated to cover Storacha storage costs while ke
 sequenceDiagram
     participant User
     participant Wallet
-    participant Keep Contract
+    participant Contract
     participant Server
     participant Storacha
     
-    User->>Keep Contract: Request deposit estimate
-    Keep Contract-->>User: Return cost in SOL
+    User->>Contract: Request deposit estimate
+    Contract-->>User: Return cost in SOL
     User->>Wallet: Sign transaction
-    Wallet->>Keep Contract: Create deposit
-    Keep Contract-->>Server: Emit deposit event
+    Wallet->>Contract: Create deposit
+    Contract-->>Server: Emit deposit event
     Server->>Storacha: Upload files with UCAN
     Storacha-->>Server: Return CID
     Server-->>User: Confirm upload
@@ -76,7 +76,7 @@ sequenceDiagram
 
 When you create a deposit:
 
-1. **Funds are locked** in the Keep smart contract
+1. **Funds are locked** in the smart contract
 2. **Storage is provisioned** on Storacha immediately
 3. **Funds are released** linearly over the storage duration to service providers
 4. **No refunds** after upload (storage is already provisioned)
@@ -95,13 +95,13 @@ Every payment is recorded both:
     Permanent record on Solana blockchain with transaction signature
   </Card>
   <Card title="Database" icon="database">
-    Indexed in Keep's database for quick lookup and history tracking
+    Indexed in our database for quick lookup and history tracking
   </Card>
 </CardGroup>
 
 ## Multi-Chain Future
 
-Currently, Keep only supports payments in SOL on Solana. We're working on adding:
+Currently, we only support payments in SOL on Solana. We're working on adding:
 
 - **Filecoin (FIL)**: Native payments on the Filecoin network
 - **Base (ETH)**: Ethereum L2 payments for lower gas fees

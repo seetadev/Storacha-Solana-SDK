@@ -3,6 +3,7 @@ import {
   Container,
   Grid,
   HStack,
+  Link,
   Stack,
   Text,
   VStack,
@@ -49,8 +50,8 @@ export const HomeFooter = () => {
                 Keep.
               </Text>
               <Text color="var(--text-muted)" maxW="300px" lineHeight="1.6">
-                The decentralized storage layer for the Solana ecosystem.
-                Bank-free, permissionless, and permanent.
+                The crypto-native bridge to decentralized storage on Filecoin.
+                No credit cards, no subscriptions.
               </Text>
             </VStack>
 
@@ -99,9 +100,18 @@ export const HomeFooter = () => {
               Resources
             </Text>
             <Stack spacing="0.8em">
-              <LinkItem href="/docs">Documentation</LinkItem>
-              <LinkItem href="/sdk">SDK Reference</LinkItem>
-              <LinkItem href="/status">Network Status</LinkItem>
+              <LinkItem href="https://docs.toju.network" isExternal>
+                Documentation
+              </LinkItem>
+              <LinkItem
+                href="https://docs.toju.network/sdk/overview"
+                isExternal
+              >
+                SDK Reference
+              </LinkItem>
+              <LinkItem href="https://docs.toju.network/pricing" isExternal>
+                Pricing
+              </LinkItem>
             </Stack>
           </VStack>
 
@@ -134,7 +144,7 @@ export const HomeFooter = () => {
           gap="1em"
         >
           <Text fontSize="sm" color="var(--gray-600)">
-            &copy; {new Date().getFullYear()} Keep.
+            &copy; {new Date().getFullYear()} toju.
           </Text>
           <HStack spacing="2em">
             <Text
@@ -164,20 +174,25 @@ type LinkItemProps = {
   href: string
   children: ReactNode
   icon?: ReactElement
+  isExternal?: boolean
 }
 
-const LinkItem = ({ href, children, icon }: LinkItemProps) => (
-  <Box
-    as="a"
+const LinkItem = ({ href, children, icon, isExternal }: LinkItemProps) => (
+  <Link
     href={href}
+    isExternal={isExternal}
     color="var(--text-muted)"
     display="flex"
     alignItems="center"
     gap="0.5em"
     transition="0.2s"
-    _hover={{ color: 'var(--primary-400)', transform: 'translateX(2px)' }}
+    _hover={{
+      color: 'var(--primary-400)',
+      transform: 'translateX(2px)',
+      textDecoration: 'none',
+    }}
   >
     {icon}
     <Text fontSize="sm">{children}</Text>
-  </Box>
+  </Link>
 )

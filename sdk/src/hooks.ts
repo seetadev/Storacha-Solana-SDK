@@ -1,7 +1,10 @@
 import { Client, Environment } from './client';
 
-export const useUpload = (environment: Environment) => {
-  const client = new Client({ environment: environment || 'testnet' });
+export const useUpload = (environment: Environment, endpoint?: string) => {
+  const client = new Client({
+    environment: environment || 'testnet',
+    ...(endpoint && { endpoint }),
+  });
   return client;
 };
 
