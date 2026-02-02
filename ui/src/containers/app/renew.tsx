@@ -511,7 +511,7 @@ export const Renew = () => {
                   }
                   lineHeight="var(--line-height-tight)"
                 >
-                  {formatSOL(renewalCost?.costInSOL)} SOL
+                  {formatSOL(renewalCost?.costInSOL || 0)}
                 </Text>
                 <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
                   {solPrice
