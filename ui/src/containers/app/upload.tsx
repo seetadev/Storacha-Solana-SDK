@@ -66,7 +66,7 @@ export const Upload = () => {
     Number.isInteger(parsedDuration) &&
     parsedDuration > 0
 
-  const client = useDeposit(network)
+  const client = useDeposit(network, IS_DEV)
 
   const apiEndpoint =
     IS_DEV ||
