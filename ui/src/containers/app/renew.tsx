@@ -12,6 +12,7 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react'
+import { formatSOL, formatUSD } from '@/lib/utils'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -510,12 +511,12 @@ export const Renew = () => {
                   }
                   lineHeight="var(--line-height-tight)"
                 >
-                  {renewalCost?.costInSOL} SOL
+                  {formatSOL(renewalCost?.costInSOL || 0)}
                 </Text>
                 <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
                   {solPrice
-                    ? `≈ $${(costInSOL * Number(solPrice)).toFixed(2)} USD`
-                    : ''}
+                    ? `≈ $${formatUSD(costInSOL * Number(solPrice))} USD`
+                    : '≈ $0.00 USD'}
                 </Text>
               </VStack>
             </HStack>
