@@ -114,6 +114,17 @@ export interface DepositResult extends Pick<UploadResult, 'message' | 'error'> {
   }>;
   /** result of a successful upload */
   object: UploadResult;
+  /** metadata needed for DB insertion after transaction confirmation */
+  depositMetadata?: {
+    depositAmount: number;
+    durationDays: number;
+    depositKey: string;
+    userEmail: string | null;
+    fileName: string | null;
+    fileType: string;
+    fileSize: number;
+    expiresAt: string;
+  };
 }
 
 export interface CreateDepositArgs extends Omit<
@@ -226,19 +237,18 @@ export type DepositHistoryEntry = UploadHistory;
 
 export interface PaginationMeta {
   /** Total number of records */
-  total: number
+  total: number;
   /** Current page (1-indexed) */
-  page: number
+  page: number;
   /** Page size */
-  pageSize: number
+  pageSize: number;
   /** Total number of pages */
-  totalPages: number
+  totalPages: number;
   /** URL to fetch next page */
-  next: string | null
+  next: string | null;
   /** URL to fetch previous page */
-  prev: string | null
+  prev: string | null;
 }
-
 
 /**
  * Response from the getUserUploadHistory endpoint

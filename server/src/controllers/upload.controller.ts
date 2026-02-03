@@ -5,19 +5,16 @@ import { db } from "../db/db.js";
 import { uploads } from "../db/schema.js";
 import { getUserHistory, saveTransaction } from "../db/uploads-table.js";
 import { getSolPrice } from "../services/price/sol-price.service.js";
+import { PaginationContext } from "../types.js";
 import { computeCID } from "../utils/compute-cid.js";
-import { logger } from "../utils/logger.js";
 import {
-    DAY_TIME_IN_SECONDS,
-    getAmountInLamportsFromUSD,
+  DAY_TIME_IN_SECONDS,
+  getAmountInLamportsFromUSD,
 } from "../utils/constant.js";
 import { getExpiryDate, getPaginationParams } from "../utils/functions.js";
-import {
-    getPricingConfig,
-    initStorachaClient,
-} from "../utils/storacha.js";
+import { logger } from "../utils/logger.js";
+import { getPricingConfig, initStorachaClient } from "../utils/storacha.js";
 import { createDepositTransaction } from "./solana.controller.js";
-import { PaginationContext } from "../types.js";
 
 /**
  * Function to upload a file to storacha
@@ -224,27 +221,18 @@ export const deposit = async (req: Request, res: Response) => {
 
     const backupExpirationDate = getExpiryDate(duration_days);
 
-    const depositItem: typeof uploads.$inferInsert = {
+    // pass deposit meta later in the upload flow for db writes
+    // after a succesful confirmation
+    const depositMetadata = {
       depositAmount: amountInLamports,
       durationDays: duration_days,
-      contentCid: computedCID,
       depositKey: publicKey.toLowerCase(),
-      depositSlot: 1,
-      lastClaimedSlot: 1,
-      expiresAt: backupExpirationDate,
-      createdAt: new Date().toISOString(),
       userEmail: userEmail || null,
       fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : "directory",
       fileSize: totalSize,
-      // for now the hash isn't available to us. once confirmation happens,
-      // the column will be updated with the confirmed hash
-      transactionHash: null,
-      deletionStatus: "active",
-      warningSentAt: null,
+      expiresAt: backupExpirationDate,
     };
-
-    await db.insert(uploads).values(depositItem).returning();
 
     res.status(200).json({
       message: "Deposit instruction ready — sign to finalize upload",
@@ -257,6 +245,7 @@ export const deposit = async (req: Request, res: Response) => {
         size: f.size,
         type: f.mimetype,
       })),
+      depositMetadata,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -274,45 +263,49 @@ export const deposit = async (req: Request, res: Response) => {
  */
 export const getUploadHistory = async (req: Request, res: Response) => {
   try {
-    const userAddress = req.query.userAddress as string
+    const userAddress = req.query.userAddress as string;
 
     if (!userAddress) {
       return res.status(400).json({
-        message: 'User address is required',
-      })
+        message: "User address is required",
+      });
     }
 
-    const { page, limit } = getPaginationParams(req.query)
+    const { page, limit } = getPaginationParams(req.query);
 
     const paginationContext: PaginationContext = {
       baseUrl: req.baseUrl,
       path: req.path,
-    }
+    };
 
-    const result = await getUserHistory(userAddress, page, limit, paginationContext)
+    const result = await getUserHistory(
+      userAddress,
+      page,
+      limit,
+      paginationContext,
+    );
 
     if (!result) {
       return res.status(400).json({
-        message: 'Invalid request: unable to fetch upload history',
-      })
+        message: "Invalid request: unable to fetch upload history",
+      });
     }
 
-    return res.status(200).json(result)
+    return res.status(200).json(result);
   } catch (err) {
-    Sentry.captureException(err)
+    Sentry.captureException(err);
     return res.status(500).json({
-      message: 'Error getting the user history',
-    })
+      message: "Error getting the user history",
+    });
   }
-}
-
+};
 
 /**
- * Function to update transaction hash after transaction is confirmed
+ * Function to create DB record and save transaction hash after payment is confirmed
  */
 export const confirmUpload = async (req: Request, res: Response) => {
   try {
-    const { cid, transactionHash } = req.body;
+    const { cid, transactionHash, depositMetadata } = req.body;
 
     if (!cid || !transactionHash) {
       return res.status(400).json({
@@ -320,38 +313,88 @@ export const confirmUpload = async (req: Request, res: Response) => {
       });
     }
 
-    const updated = await db
-      .update(uploads)
-      .set({ transactionHash: transactionHash })
-      .where(eq(uploads.contentCid, cid))
-      .returning();
-
-    if (updated.length === 0) {
-      return res.status(404).json({
-        message: "Deposit not found for the given CID",
+    if (!depositMetadata) {
+      return res.status(400).json({
+        message: "Deposit metadata is required",
       });
     }
 
+    const existing = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // exists but has no transaction hash, update it
+      if (!existing[0].transactionHash) {
+        const updated = await db
+          .update(uploads)
+          .set({ transactionHash: transactionHash })
+          .where(eq(uploads.contentCid, cid))
+          .returning();
+
+        await saveTransaction({
+          depositId: updated[0].id,
+          contentCid: cid,
+          transactionHash: transactionHash,
+          transactionType: "initial_deposit",
+          amountInLamports: updated[0].depositAmount,
+          durationDays: updated[0].durationDays,
+        });
+
+        return res.status(200).json({
+          message: "Transaction hash updated successfully",
+          deposit: updated[0],
+        });
+      }
+
+      return res.status(409).json({
+        message: "This upload has already been confirmed",
+        deposit: existing[0],
+      });
+    }
+
+    const depositItem: typeof uploads.$inferInsert = {
+      depositAmount: depositMetadata.depositAmount,
+      durationDays: depositMetadata.durationDays,
+      contentCid: cid,
+      depositKey: depositMetadata.depositKey,
+      depositSlot: 1,
+      lastClaimedSlot: 1,
+      expiresAt: depositMetadata.expiresAt,
+      createdAt: new Date().toISOString(),
+      userEmail: depositMetadata.userEmail,
+      fileName: depositMetadata.fileName,
+      fileType: depositMetadata.fileType,
+      fileSize: depositMetadata.fileSize,
+      transactionHash: transactionHash,
+      deletionStatus: "active",
+      warningSentAt: null,
+    };
+
+    const inserted = await db.insert(uploads).values(depositItem).returning();
+
     await saveTransaction({
-      depositId: updated[0].id,
+      depositId: inserted[0].id,
       contentCid: cid,
       transactionHash: transactionHash,
       transactionType: "initial_deposit",
-      amountInLamports: updated[0].depositAmount,
-      durationDays: updated[0].durationDays,
+      amountInLamports: inserted[0].depositAmount,
+      durationDays: inserted[0].durationDays,
     });
 
     return res.status(200).json({
-      message: "Transaction hash updated successfully",
-      deposit: updated[0],
+      message: "Upload confirmed and saved successfully",
+      deposit: inserted[0],
     });
   } catch (err) {
     Sentry.captureException(err);
-    logger.error("Error updating transaction hash", {
+    logger.error("Error confirming upload", {
       error: err instanceof Error ? err.message : String(err),
     });
     return res.status(500).json({
-      message: "Error updating transaction hash",
+      message: "Error confirming upload",
     });
   }
 };

@@ -2,12 +2,14 @@ import { StorageDurationSelector } from '@/components/duration-selector'
 import { StorageCostSkeleton } from '@/components/skeletons'
 import { FileUpload } from '@/components/upload'
 import {
+  /* eslint-disable */
   type ConnectionQuality,
   useConnectionCheck,
 } from '@/hooks/connection-check'
 import { useAuthContext } from '@/hooks/context'
 import { useSolPrice } from '@/hooks/sol-price'
 import { useStorageCost } from '@/hooks/storage-cost'
+import { UploadSuccess } from '@/layouts/modal-layout'
 import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
 import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
 import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
@@ -59,6 +61,22 @@ export const Upload = () => {
     onOpen: openConnectionWarning,
     onClose: closeConnectionWarning,
   } = useDisclosure()
+  const {
+    isOpen: isSuccessModalOpen,
+    onOpen: openSuccessModal,
+    onClose: closeSuccessModal,
+  } = useDisclosure()
+
+  const [uploadResult, setUploadResult] = useState<{
+    cid: string
+    fileName?: string
+    fileSize: number
+    fileCount: number
+    duration: number
+    costInSOL: number
+    costInUSD: number
+    transactionHash: string
+  } | null>(null)
 
   const parsedDuration = Number(storageDuration)
   const isValidDuration =
@@ -135,22 +153,31 @@ export const Upload = () => {
       clearTimeout(slowUploadTimer)
 
       if (result.success) {
-        const uploadDuration = uploadStartTime.current
-          ? Math.round((Date.now() - uploadStartTime.current) / 1000)
-          : null
+        clearTimeout(slowUploadTimer)
+        toast.success('Upload successful!', { id: toastId, duration: 3000 })
 
-        const durationNote =
-          uploadDuration && uploadDuration > 30
-            ? ` (took ${uploadDuration}s)`
-            : ''
-
-        toast.success(
-          `Upload successful! ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} stored for ${storageDuration} days${durationNote}`,
-          { id: toastId, duration: 5000 },
+        const totalFileSize = selectedFiles.reduce(
+          (acc, file) => acc + file.size,
+          0,
         )
+        const usdCost = solPrice ? totalCost * Number(solPrice) : 0
+
+        setUploadResult({
+          cid: result.cid,
+          fileName:
+            selectedFiles.length === 1 ? selectedFiles[0].name : undefined,
+          fileSize: totalFileSize,
+          fileCount: selectedFiles.length,
+          duration: parsedDuration,
+          costInSOL: totalCost,
+          costInUSD: usdCost,
+          transactionHash: result.signature,
+        })
+
         await refreshBalance()
         setSelectedFiles([])
         setState('idle')
+        openSuccessModal()
       } else {
         throw new Error(result.error || 'Upload failed')
       }
@@ -476,6 +503,14 @@ export const Upload = () => {
         connectionStatus={connectionStatus}
         latency={latency}
       />
+
+      {uploadResult && (
+        <UploadSuccess
+          isOpen={isSuccessModalOpen}
+          onClose={closeSuccessModal}
+          uploadInfo={uploadResult}
+        />
+      )}
     </>
   )
 }
