@@ -65,7 +65,7 @@ export interface FileRoutesByFullPath {
   '/app/history': typeof LayoutAppHistoryRoute
   '/app/metrics': typeof LayoutAppMetricsRoute
   '/app/transactions': typeof LayoutAppTransactionsRoute
-  '/app': typeof LayoutAppIndexRoute
+  '/app/': typeof LayoutAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -96,7 +96,7 @@ export interface FileRouteTypes {
     | '/app/history'
     | '/app/metrics'
     | '/app/transactions'
-    | '/app'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,7 +144,7 @@ declare module '@tanstack/react-router' {
     '/_layout': {
       id: '/_layout'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -158,7 +158,7 @@ declare module '@tanstack/react-router' {
     '/_layout/app/': {
       id: '/_layout/app/'
       path: '/app'
-      fullPath: '/app'
+      fullPath: '/app/'
       preLoaderRoute: typeof LayoutAppIndexRouteImport
       parentRoute: typeof LayoutRoute
     }

@@ -122,8 +122,9 @@ export async function createDepositTxn(
       );
     }
 
+    let confirmRes;
     try {
-      await fetch(`${apiEndpoint}/upload/confirm`, {
+      confirmRes = await fetch(`${apiEndpoint}/upload/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,10 +132,21 @@ export async function createDepositTxn(
         body: JSON.stringify({
           cid: depositRes.cid,
           transactionHash: signature,
+          depositMetadata: depositRes.depositMetadata,
         }),
       });
+
+      if (!confirmRes.ok) {
+        const errorData = await confirmRes.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || 'Failed to confirm upload on server'
+        );
+      }
     } catch (err) {
-      console.warn('Failed to update transaction hash:', err);
+      console.error('Failed to confirm upload:', err);
+      throw new Error(
+        `Upload confirmation failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
 
     if (depositRes.error) {
