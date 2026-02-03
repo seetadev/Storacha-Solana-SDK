@@ -4,15 +4,18 @@
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-solana_programs = "3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n"
+[programs.mainnet]
+toju = "CSXnfQsFWxdPB5pnS73TQDA6ivK6kcFnRwtt6TgFquxH"
+
+[programs.testnet]
+toju = "CSXnfQsFWxdPB5pnS73TQDA6ivK6kcFnRwtt6TgFquxH"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "testnet"
-wallet = "~/.config/solana/storacha-sol.json"
+cluster = "mainnet"
+wallet = "./mainnet-admin-keypair.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

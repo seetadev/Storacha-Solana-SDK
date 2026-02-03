@@ -56,7 +56,6 @@ const styles = {
 }
 
 export const HomePage = () => {
-  const daysToMainnet = 14
   const { isAuthenticated } = useAuthContext()
 
   return (
@@ -93,7 +92,7 @@ export const HomePage = () => {
               color="var(--primary-200)"
               fontWeight="var(--font-weight-medium)"
             >
-              Testnet Live &mdash; Mainnet in {daysToMainnet} days
+              Live on Mainnet
             </Text>
           </Box>
 

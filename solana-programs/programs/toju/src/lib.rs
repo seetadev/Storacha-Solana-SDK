@@ -3,10 +3,10 @@ use anchor_lang::prelude::*;
 pub mod types;
 pub use types::*;
 
-declare_id!("3GNYYpxNhXLZTgNUpnvGng294XUmYLtJQrLSmbriJiVj");
+declare_id!("CSXnfQsFWxdPB5pnS73TQDA6ivK6kcFnRwtt6TgFquxH");
 
 #[program]
-pub mod solana_programs {
+pub mod toju {
     use super::*;
 
     /// Initialize the global config (admin only)

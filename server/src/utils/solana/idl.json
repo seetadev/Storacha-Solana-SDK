@@ -1,10 +1,10 @@
 {
-  "address": "3QrZkcW2REEEjGjzRy8Ccedq8GjQMPkKAoxdbi4nf88n",
+  "address": "CSXnfQsFWxdPB5pnS73TQDA6ivK6kcFnRwtt6TgFquxH",
   "metadata": {
-    "name": "solana_programs",
+    "name": "toju",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Created with Anchor"
+    "description": "toju - Payment bridge for decentralized storage on Solana"
   },
   "instructions": [
     {
@@ -157,6 +157,88 @@
         },
         {
           "name": "deposit_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "extend_storage_duration",
+      "docs": [
+        "Extend storage duration for an existing upload"
+      ],
+      "discriminator": [
+        148,
+        148,
+        225,
+        35,
+        73,
+        248,
+        5,
+        120
+      ],
+      "accounts": [
+        {
+          "name": "deposit",
+          "writable": true
+        },
+        {
+          "name": "escrow_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "content_cid",
+          "type": "string"
+        },
+        {
+          "name": "duration",
+          "type": "u32"
+        },
+        {
+          "name": "storage_extension_cost",
           "type": "u64"
         }
       ]
@@ -514,6 +596,19 @@
         88,
         121
       ]
+    },
+    {
+      "name": "StorageDurationExtended",
+      "discriminator": [
+        60,
+        98,
+        190,
+        27,
+        247,
+        190,
+        188,
+        6
+      ]
     }
   ],
   "errors": [
@@ -566,6 +661,11 @@
       "code": 6009,
       "name": "InvalidCid",
       "msg": "Invalid CID format"
+    },
+    {
+      "code": 6010,
+      "name": "UnauthorizedUser",
+      "msg": "Only the original depositor can extend the duration for this upload"
     }
   ],
   "types": [
@@ -803,6 +903,66 @@
           },
           {
             "name": "slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StorageDurationExtended",
+      "docs": [
+        "Event emitted when storage duration is extended for an existing upload"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "docs": [
+              "Public key of the user extending storage"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "content_cid",
+            "docs": [
+              "CID of the file being extended"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "duration",
+            "docs": [
+              "Additional days being added to storage duration"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "new_cost",
+            "docs": [
+              "Cost in lamports for the extension"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "extended_duration",
+            "docs": [
+              "New total duration after extension (in days)"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "total_amount",
+            "docs": [
+              "New total deposit amount in lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "slot",
+            "docs": [
+              "Solana slot when the extension occurred"
+            ],
             "type": "u64"
           }
         ]

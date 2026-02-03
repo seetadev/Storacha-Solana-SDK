@@ -1,12 +1,12 @@
 [package]
-name = "solana-programs"
+name = "toju"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "toju - Payment bridge for decentralized storage on Solana"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "solana_programs"
+name = "toju"
 
 [features]
 default = []

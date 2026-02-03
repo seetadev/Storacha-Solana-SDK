@@ -179,7 +179,7 @@ We reserve the right to:
 As an open-source project, we use GitHub for transparency and community engagement:
 
 **For bug reports and feature requests:**
-Open an issue at: [github.com/seetadev/Storacha-Solana-SDK/issues](https://github.com/seetadev/Storacha-Solana-SDK/issues)
+Open an issue [here](https://github.com/seetadev/Storacha-Solana-SDK/issues)
 
 **For documentation:**
 Visit: [docs.toju.network](https://docs.toju.network)
