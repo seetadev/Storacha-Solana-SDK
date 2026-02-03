@@ -156,11 +156,6 @@ export async function ensureConfigInitialized(): Promise<void> {
 
     const adminKeypair = await loadAdminKeypair()
 
-    const { getSolPrice } = await import(
-      '../../services/price/sol-price.service.js'
-    )
-    const { getAmountInLamportsFromUSD } = await import('../constant.js')
-
     const dbConfig = await db.select().from(configTable).limit(1)
 
     if (!dbConfig || dbConfig.length === 0) {

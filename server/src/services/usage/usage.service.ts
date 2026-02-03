@@ -10,8 +10,7 @@ import {
 } from '../../db/schema.js'
 import { logger } from '../../utils/logger.js'
 
-const { CONSOLE_URL, EMAIL_FROM, EMAIL_TO, WATCHMAN, RESEND_API_KEY } =
-  process.env!
+const { EMAIL_FROM, WATCHMAN } = process.env!
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 interface UsageReport {
@@ -26,6 +25,10 @@ export class UsageService {
   constructor(client: StorachaClient, planLimitBytes: number = 5_000_000_000) {
     this.client = client
     this.planLimitBytes = planLimitBytes // default 5GB for free plan for now, so we can test
+  }
+
+  get planLimit(): number {
+    return this.planLimitBytes
   }
 
   /**

@@ -41,7 +41,12 @@ export const getQuoteForFileUpload = async ({
       RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
     })
     .from(configTable)
-  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data?.[0]
+
+  if (!data || data.length === 0) {
+    throw new Error('Config not found in database')
+  }
+
+  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0]
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT)
 
   const solPrice = await getSolPrice()

@@ -247,6 +247,35 @@ Starts at `http://localhost:3000` with hot-reload.
    ```
 3. Add to `docs/mint.json` navigation array
 
+## Code Quality & Pre-Push Checks
+
+Before pushing code, always run these commands to avoid breaking CI:
+
+```bash
+# Format all files
+pnpm format
+
+# Run linter with auto-fix
+pnpm lint
+
+# Run both format + lint
+pnpm check
+
+# Check if code passes CI (no auto-fix)
+pnpm check:ci
+```
+
+**Important:** CI runs `pnpm check:ci` on every push. Make sure it passes locally first.
+
+### Available Scripts
+
+- `pnpm format` - Format code with Biome (auto-fix)
+- `pnpm format:check` - Check formatting without fixing
+- `pnpm lint` - Lint code with Biome (auto-fix)
+- `pnpm lint:check` - Check linting without fixing
+- `pnpm check` - Run format + lint with auto-fix
+- `pnpm check:ci` - Run CI checks (used by GitHub Actions)
+
 ## Commit Message Guidelines
 
 Use conventional commits for automatic changelog generation:

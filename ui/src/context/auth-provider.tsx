@@ -132,7 +132,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const endpoint = useMemo(() => clusterApiUrl(NETWORK), [])
   const [connection] = useState(() => new Connection(endpoint, 'confirmed'))
 
-  const refreshBalance = async () => {
+  const refreshBalance = React.useCallback(async () => {
     if (publicKey && connected) {
       dispatch({ type: 'LOADING_WALLET_BALANCE', payload: { isLoading: true } })
       try {
@@ -153,7 +153,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     } else {
       dispatch({ type: 'SET_WALLET_BALANCE', payload: { balance: null } })
     }
-  }
+  }, [publicKey, connected, connection])
 
   useEffect(() => {
     if (connected && publicKey) {
