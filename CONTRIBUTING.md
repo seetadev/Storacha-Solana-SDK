@@ -23,6 +23,13 @@ docs/             # Mintlify documentation
 - [Node.js >= 20](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation)
 - [Storacha CLI](https://storacha.network) - `npm install -g @storacha/cli`
 
+## Branch Strategy
+
+- **`main`** - Production branch (deploys to mainnet)
+- **`dev`** - Staging branch (deploys to testnet)
+
+All feature branches should be created from and merged into `dev`. After testing on staging, changes are merged from `dev` → `main`.
+
 ## Getting Started
 
 ### 1. Clone & Install Dependencies
@@ -30,6 +37,7 @@ docs/             # Mintlify documentation
 ```bash
 git clone https://github.com/seetadev/storacha-solana-sdk.git
 cd storacha-solana-sdk
+git checkout dev  # Work on the dev branch for staging/testnet
 pnpm install
 ```
 
