@@ -2,7 +2,7 @@ import { useAuthContext } from '@/hooks/context'
 import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
 import { useSolPrice } from '@/hooks/sol-price'
 import type { State } from '@/lib/types'
-import { IS_DEV } from '@/lib/utils'
+import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -12,7 +12,6 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react'
-import { formatSOL, formatUSD } from '@/lib/utils'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -24,20 +23,24 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { useUpload } from '@toju.network/sol'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
-import { toast } from 'sonner'
 import dayjs from 'dayjs'
+import useEmblaCarousel from 'embla-carousel-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
 export const Renew = () => {
   const search = useSearch({ from: '/renew' })
   const navigate = useNavigate()
-  const { user, network, balance } = useAuthContext()
-  const { publicKey, signTransaction } = useWallet();
+  const { user, balance } = useAuthContext()
+  const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
-  const client = useUpload(network, IS_DEV)
+
+  // Network is determined at build time via env var
+  const configuredNetwork =
+    import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
+  const client = useUpload(configuredNetwork, IS_DEV)
 
   const cids = useMemo(() => {
     if (typeof search.cids === 'string') {
@@ -84,8 +87,10 @@ export const Renew = () => {
   const [customDuration, setCustomDuration] = useState('')
   const [state, setState] = useState<State>('idle')
 
-  const { data: fileDetails, error: fileError } =
-    useFileDetails(user || '', activeCid)
+  const { data: fileDetails, error: fileError } = useFileDetails(
+    user || '',
+    activeCid,
+  )
 
   const {
     data: renewalCost,
@@ -109,7 +114,6 @@ export const Renew = () => {
     }
   }
 
-
   const getDaysRemaining = (expiresAt?: string) => {
     if (!expiresAt) return 0
     const now = new Date()
@@ -122,8 +126,7 @@ export const Renew = () => {
   const daysRemaining = getDaysRemaining(fileDetails?.expiresAt)
   const isExpired = daysRemaining === 0
   const costInSOL = Number(renewalCost?.costInSOL || 0)
-  const hasInsufficientBalance =
-    balance !== null && costInSOL > balance
+  const hasInsufficientBalance = balance !== null && costInSOL > balance
 
   const renewStorage = async () => {
     if (!publicKey || !signTransaction) {
@@ -228,7 +231,6 @@ export const Renew = () => {
             </Button>
           </Link>
         </Box>
-
       </VStack>
     )
   }
@@ -242,7 +244,10 @@ export const Renew = () => {
           _hover={{ color: 'var(--primary-500)' }}
         >
           <ArrowLeftIcon size={16} weight="bold" />
-          <Text fontSize="var(--font-size-sm)" fontWeight="var(--font-weight-medium)">
+          <Text
+            fontSize="var(--font-size-sm)"
+            fontWeight="var(--font-weight-medium)"
+          >
             Back to History
           </Text>
         </HStack>
@@ -291,7 +296,11 @@ export const Renew = () => {
               borderRadius="var(--radius-lg)"
             >
               <HStack spacing=".75em" mb="1.5em">
-                <FileIcon size={24} color="var(--primary-500)" weight="duotone" />
+                <FileIcon
+                  size={24}
+                  color="var(--primary-500)"
+                  weight="duotone"
+                />
                 <Text
                   fontSize="var(--font-size-lg)"
                   fontWeight="var(--font-weight-semibold)"
@@ -337,9 +346,7 @@ export const Renew = () => {
                     }
                     fontWeight="var(--font-weight-semibold)"
                   >
-                    {isExpired
-                      ? 'Expired'
-                      : `${daysRemaining} days remaining`}
+                    {isExpired ? 'Expired' : `${daysRemaining} days remaining`}
                   </Text>
                 </HStack>
               </VStack>
@@ -347,7 +354,6 @@ export const Renew = () => {
           ))}
         </HStack>
       </Box>
-
 
       <Box
         p="1.5em"
@@ -536,7 +542,9 @@ export const Renew = () => {
       <Button
         onClick={renewStorage}
         isLoading={state === 'uploading'}
-        disabled={state === 'uploading' || !renewalCost || hasInsufficientBalance}
+        disabled={
+          state === 'uploading' || !renewalCost || hasInsufficientBalance
+        }
         size="lg"
         height="48px"
         fontSize="var(--font-size-base)"

@@ -66,17 +66,19 @@ export const Upload = () => {
     Number.isInteger(parsedDuration) &&
     parsedDuration > 0
 
-  const client = useDeposit(network, IS_DEV)
+  const configuredNetwork =
+    import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
+
+  const client = useDeposit(configuredNetwork, IS_DEV)
 
   const apiEndpoint =
-    IS_DEV ||
-    (network === 'mainnet-beta'
-      ? import.meta.env.VITE_API_URL || 'https://api.toju.network'
-      : import.meta.env.VITE_API_URL_STAGING ||
-        'https://staging-api.toju.network')
+    import.meta.env.VITE_API_URL ||
+    (configuredNetwork === 'mainnet-beta'
+      ? 'https://api.toju.network'
+      : 'https://staging-api.toju.network')
 
   const solanaRpcUrl =
-    network === 'mainnet-beta'
+    configuredNetwork === 'mainnet-beta'
       ? 'https://api.mainnet-beta.solana.com'
       : 'https://api.testnet.solana.com'
 
