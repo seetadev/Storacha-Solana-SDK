@@ -107,7 +107,7 @@ export const HomePage = () => {
           >
             Keep it forever. <br />
             <Box as="span" sx={styles.gradientText}>
-              Pay with Solana.
+              Pay with crypto.
             </Box>
           </Heading>
 
