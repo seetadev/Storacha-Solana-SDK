@@ -1,20 +1,20 @@
-import { Resend } from "resend";
-import { logger } from "../../utils/logger.js";
+import { Resend } from 'resend'
+import { logger } from '../../utils/logger.js'
 
 /**
  * Initialize Resend client
  */
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 /**
  * Email configuration
  */
 const EMAIL_CONFIG = {
   from:
-    process.env.EMAIL_FROM || "Storacha Solana <noreply@storacha-solana.com>",
+    process.env.EMAIL_FROM || 'Storacha Solana <noreply@storacha-solana.com>',
   replyTo: process.env.EMAIL_REPLY_TO,
   promulgator: process.env.PROMULGATOR,
-};
+}
 
 /**
  * Send batched expiration warning email for multiple uploads
@@ -25,72 +25,72 @@ const EMAIL_CONFIG = {
 export const sendBatchExpirationWarningEmail = async (
   to: string,
   uploads: Array<{
-    id: number;
-    fileName: string | null;
-    contentCid: string;
-    expiresAt: string | null;
-    fileSize: number | null;
+    id: number
+    fileName: string | null
+    contentCid: string
+    expiresAt: string | null
+    fileSize: number | null
   }>,
 ) => {
   try {
-    const count = uploads.length;
-    const cids = uploads.map((u) => u.contentCid).join(",");
+    const count = uploads.length
+    const cids = uploads.map((u) => u.contentCid).join(',')
     const response = await resend.emails.send({
       from: ` <${EMAIL_CONFIG.from}>`,
       to,
       replyTo: EMAIL_CONFIG.replyTo,
-      subject: `⚠️ You have ${count} file${count !== 1 ? "s" : ""} expiring soon on toju`,
+      subject: `⚠️ You have ${count} file${count !== 1 ? 's' : ''} expiring soon on toju`,
       html: getBatchExpirationWarningEmailHtml(uploads, cids),
       text: getBatchExpirationWarningEmailText(uploads, cids),
-    });
+    })
 
-    return { success: true, data: response };
+    return { success: true, data: response }
   } catch (error) {
-    logger.error("Failed to send batch expiration warning email", {
+    logger.error('Failed to send batch expiration warning email', {
       error: error instanceof Error ? error.message : String(error),
-    });
+    })
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
   }
-};
+}
 
 function formatFileSize(bytes: number | null): string {
-  if (!bytes) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`
 }
 
 function getBatchExpirationWarningEmailHtml(
   uploads: Array<{
-    fileName: string | null;
-    contentCid: string;
-    expiresAt: string | null;
-    fileSize: number | null;
+    fileName: string | null
+    contentCid: string
+    expiresAt: string | null
+    fileSize: number | null
   }>,
   cids: string,
 ): string {
-  const count = uploads.length;
+  const count = uploads.length
   const uploadRows = uploads
     .map((upload) => {
       const expirationDate = upload.expiresAt
-        ? new Date(upload.expiresAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
+        ? new Date(upload.expiresAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
           })
-        : "N/A";
-      const now = new Date();
-      const expiry = upload.expiresAt ? new Date(upload.expiresAt) : now;
+        : 'N/A'
+      const now = new Date()
+      const expiry = upload.expiresAt ? new Date(upload.expiresAt) : now
       const daysRemaining = Math.ceil(
         (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      )
 
       return `
         <tr>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${upload.fileName || "Unnamed"}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${upload.fileName || 'Unnamed'}</td>
           <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${formatFileSize(upload.fileSize)}</td>
           <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${expirationDate}</td>
           <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${daysRemaining}</td>
@@ -99,9 +99,9 @@ function getBatchExpirationWarningEmailHtml(
                style="color: #f97316; text-decoration: none; font-weight: 500; cursor: pointer;">Renew →</a>
           </td>
         </tr>
-      `;
+      `
     })
-    .join("");
+    .join('')
 
   return `
 <!DOCTYPE html>
@@ -117,7 +117,7 @@ function getBatchExpirationWarningEmailHtml(
     <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
     <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Expiration Notice</h1>
     <p style="color: #949495; margin: 0; font-size: 16px;">
-      You have ${count} upload${count !== 1 ? "s" : ""} expiring soon
+      You have ${count} upload${count !== 1 ? 's' : ''} expiring soon
     </p>
   </div>
 
@@ -166,46 +166,46 @@ function getBatchExpirationWarningEmailHtml(
 
 </body>
 </html>
-  `.trim();
+  `.trim()
 }
 
 function getBatchExpirationWarningEmailText(
   uploads: Array<{
-    fileName: string | null;
-    contentCid: string;
-    expiresAt: string | null;
-    fileSize: number | null;
+    fileName: string | null
+    contentCid: string
+    expiresAt: string | null
+    fileSize: number | null
   }>,
   cids: string,
 ): string {
-  const count = uploads.length;
+  const count = uploads.length
   const uploadList = uploads
     .map((upload, index) => {
       const expirationDate = upload.expiresAt
-        ? new Date(upload.expiresAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+        ? new Date(upload.expiresAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
           })
-        : "N/A";
-      const now = new Date();
-      const expiry = upload.expiresAt ? new Date(upload.expiresAt) : now;
+        : 'N/A'
+      const now = new Date()
+      const expiry = upload.expiresAt ? new Date(upload.expiresAt) : now
       const daysRemaining = Math.ceil(
         (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      )
 
       return `
-${index + 1}. ${upload.fileName || "Unnamed"}
+${index + 1}. ${upload.fileName || 'Unnamed'}
    Size: ${formatFileSize(upload.fileSize)}
    Expires: ${expirationDate} (${daysRemaining} days remaining)
-      `.trim();
+      `.trim()
     })
-    .join("\n\n");
+    .join('\n\n')
 
   return `
 ⚠️ Expiration Notice
 
-You have ${count} upload${count !== 1 ? "s" : ""} expiring soon on toju.
+You have ${count} upload${count !== 1 ? 's' : ''} expiring soon on toju.
 
 ${uploadList}
 
@@ -219,5 +219,5 @@ Files will be automatically deleted from storage and removed from IPFS within 30
 
 ---
 This is an automated message. Please do not reply to this email.
-  `.trim();
+  `.trim()
 }

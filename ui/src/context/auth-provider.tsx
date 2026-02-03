@@ -10,9 +10,9 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets'
-import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import React, { useEffect, useMemo, useReducer, useState } from 'react'
+import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import type { Environment } from '@toju.network/sol'
+import React, { useEffect, useMemo, useReducer, useState } from 'react'
 
 import '@solana/wallet-adapter-react-ui/styles.css'
 
@@ -49,7 +49,6 @@ const getEnvironment = (network: WalletAdapterNetwork): Environment => {
       return 'mainnet' as Environment
     case WalletAdapterNetwork.Testnet:
       return 'testnet' as Environment
-    case WalletAdapterNetwork.Devnet:
     default:
       return 'local' as Environment
   }
@@ -133,7 +132,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const endpoint = useMemo(() => clusterApiUrl(NETWORK), [])
   const [connection] = useState(() => new Connection(endpoint, 'confirmed'))
 
-  const refreshBalance = async () => {
+  const refreshBalance = React.useCallback(async () => {
     if (publicKey && connected) {
       dispatch({ type: 'LOADING_WALLET_BALANCE', payload: { isLoading: true } })
       try {
@@ -154,7 +153,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     } else {
       dispatch({ type: 'SET_WALLET_BALANCE', payload: { balance: null } })
     }
-  }
+  }, [publicKey, connected, connection])
 
   useEffect(() => {
     if (connected && publicKey) {
@@ -166,7 +165,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     } else {
       dispatch({ type: 'LOGOUT' })
     }
-  }, [connected, publicKey])
+  }, [connected, publicKey, refreshBalance])
 
   const logout = () => {
     disconnect()

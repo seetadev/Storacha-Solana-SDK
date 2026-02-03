@@ -1,6 +1,3 @@
-import { useAuthContext } from '@/hooks/context'
-import { useSolPrice } from '@/hooks/sol-price'
-import { useUploadHistory } from '@/hooks/upload-history'
 import { Box, SimpleGrid, Text, VStack } from '@chakra-ui/react'
 import {
   ChartLineIcon,
@@ -10,6 +7,9 @@ import {
   HardDrivesIcon,
   WalletIcon,
 } from '@phosphor-icons/react'
+import { useAuthContext } from '@/hooks/context'
+import { useSolPrice } from '@/hooks/sol-price'
+import { useUploadHistory } from '@/hooks/upload-history'
 
 export const Metrics = () => {
   const { balance } = useAuthContext()
@@ -21,7 +21,7 @@ export const Metrics = () => {
     const k = 1024
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
+    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`
   }
 
   const expiredFiles = files.filter((f) => f.status === 'expired').length
@@ -94,11 +94,11 @@ export const Metrics = () => {
   return (
     <VStack spacing="2em" align="stretch">
       <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing="1.5em">
-        {metricCards.map((metric, index) => {
+        {metricCards.map((metric) => {
           const Icon = metric.icon
           return (
             <Box
-              key={index}
+              key={crypto.randomUUID()}
               p="1.5em"
               bg="var(--bg-dark)"
               border="1px solid var(--border-hover)"

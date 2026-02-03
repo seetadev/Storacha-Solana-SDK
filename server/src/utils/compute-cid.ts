@@ -1,9 +1,9 @@
 import {
-  createFileEncoderStream,
   CAREncoderStream,
   createDirectoryEncoderStream,
-} from "ipfs-car";
-import { logger } from "./logger.js";
+  createFileEncoderStream,
+} from 'ipfs-car'
+import { logger } from './logger.js'
 
 /**
  * pre-computes the Storacha/IPFS-compatible CID for a file/directory
@@ -16,34 +16,34 @@ export async function computeCID(
 ): Promise<string> {
   try {
     if (Object.keys(fileMap).length === 1) {
-      const [_, content] = Object.entries(fileMap)[0];
-      const file = new Blob([content]);
+      const [_, content] = Object.entries(fileMap)[0]
+      const file = new Blob([content])
 
-      let rootCID: any;
+      let rootCID: any
 
       await createFileEncoderStream(file)
         .pipeThrough(
           new TransformStream({
             transform(block, controller) {
-              rootCID = block.cid;
-              controller.enqueue(block);
+              rootCID = block.cid
+              controller.enqueue(block)
             },
           }),
         )
         .pipeThrough(new CAREncoderStream())
-        .pipeTo(new WritableStream());
+        .pipeTo(new WritableStream())
 
-      return rootCID.toString();
+      return rootCID.toString()
     }
 
-    return await computeDirectoryCID(fileMap);
+    return await computeDirectoryCID(fileMap)
   } catch (error) {
-    logger.error("Error computing CID", {
+    logger.error('Error computing CID', {
       error: error instanceof Error ? error.message : String(error),
-    });
+    })
     throw new Error(
       `Failed to compute CID: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    )
   }
 }
 
@@ -62,33 +62,33 @@ async function computeDirectoryCID(
     stream: () =>
       new ReadableStream({
         start(controller) {
-          controller.enqueue(content);
-          controller.close();
+          controller.enqueue(content)
+          controller.close()
         },
       }),
-  }));
+  }))
 
-  let rootCID: any;
-  let blockCount = 0;
+  let rootCID: any
+  let blockCount = 0
 
   await createDirectoryEncoderStream(files)
     .pipeThrough(
       new TransformStream({
         transform(block, controller) {
-          blockCount++;
+          blockCount++
           // For directories, we want the final CID that represents the directory itself
           // This is usually the last block, but we can also check if it's a directory type
-          rootCID = block.cid;
-          controller.enqueue(block);
+          rootCID = block.cid
+          controller.enqueue(block)
         },
       }),
     )
     .pipeThrough(new CAREncoderStream())
-    .pipeTo(new WritableStream());
+    .pipeTo(new WritableStream())
 
-  logger.info("Directory CID computed", {
+  logger.info('Directory CID computed', {
     blockCount,
     rootCid: rootCID?.toString(),
-  });
-  return rootCID.toString();
+  })
+  return rootCID.toString()
 }

@@ -12,16 +12,7 @@
       "docs": [
         "Service provider claims accrued rewards (linear release over time)"
       ],
-      "discriminator": [
-        4,
-        144,
-        132,
-        71,
-        116,
-        23,
-        151,
-        80
-      ],
+      "discriminator": [4, 144, 132, 71, 116, 23, 151, 80],
       "accounts": [
         {
           "name": "deposit",
@@ -34,14 +25,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               }
             ]
           }
@@ -52,14 +36,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -77,19 +54,8 @@
     },
     {
       "name": "create_deposit",
-      "docs": [
-        "User creates a deposit for file storage"
-      ],
-      "discriminator": [
-        157,
-        30,
-        11,
-        129,
-        16,
-        166,
-        115,
-        75
-      ],
+      "docs": ["User creates a deposit for file storage"],
+      "discriminator": [157, 30, 11, 129, 16, 166, 115, 75],
       "accounts": [
         {
           "name": "deposit",
@@ -102,14 +68,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               }
             ]
           }
@@ -120,14 +79,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -163,19 +115,8 @@
     },
     {
       "name": "extend_storage_duration",
-      "docs": [
-        "Extend storage duration for an existing upload"
-      ],
-      "discriminator": [
-        148,
-        148,
-        225,
-        35,
-        73,
-        248,
-        5,
-        120
-      ],
+      "docs": ["Extend storage duration for an existing upload"],
+      "discriminator": [148, 148, 225, 35, 73, 248, 5, 120],
       "accounts": [
         {
           "name": "deposit",
@@ -188,14 +129,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               }
             ]
           }
@@ -206,14 +140,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -245,19 +172,8 @@
     },
     {
       "name": "initialize_config",
-      "docs": [
-        "Initialize the global config (admin only)"
-      ],
-      "discriminator": [
-        208,
-        127,
-        21,
-        1,
-        194,
-        190,
-        196,
-        70
-      ],
+      "docs": ["Initialize the global config (admin only)"],
+      "discriminator": [208, 127, 21, 1, 194, 190, 196, 70],
       "accounts": [
         {
           "name": "config",
@@ -266,14 +182,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -285,14 +194,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               }
             ]
           }
@@ -328,19 +230,8 @@
     },
     {
       "name": "update_min_duration",
-      "docs": [
-        "Update minimum duration (admin only)"
-      ],
-      "discriminator": [
-        174,
-        164,
-        81,
-        38,
-        48,
-        254,
-        219,
-        189
-      ],
+      "docs": ["Update minimum duration (admin only)"],
+      "discriminator": [174, 164, 81, 38, 48, 254, 219, 189],
       "accounts": [
         {
           "name": "config",
@@ -349,14 +240,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -375,19 +259,8 @@
     },
     {
       "name": "update_rate",
-      "docs": [
-        "Update the rate (admin only)"
-      ],
-      "discriminator": [
-        24,
-        225,
-        53,
-        189,
-        72,
-        212,
-        225,
-        178
-      ],
+      "docs": ["Update the rate (admin only)"],
+      "discriminator": [24, 225, 53, 189, 72, 212, 225, 178],
       "accounts": [
         {
           "name": "config",
@@ -396,14 +269,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -422,19 +288,8 @@
     },
     {
       "name": "withdraw_fees",
-      "docs": [
-        "Admin withdraws accumulated fees"
-      ],
-      "discriminator": [
-        198,
-        212,
-        171,
-        109,
-        144,
-        215,
-        174,
-        89
-      ],
+      "docs": ["Admin withdraws accumulated fees"],
+      "discriminator": [198, 212, 171, 109, 144, 215, 174, 89],
       "accounts": [
         {
           "name": "escrow_vault",
@@ -443,14 +298,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
+                "value": [101, 115, 99, 114, 111, 119]
               }
             ]
           }
@@ -461,14 +309,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -493,122 +334,41 @@
   "accounts": [
     {
       "name": "Config",
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ]
+      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
     },
     {
       "name": "Deposit",
-      "discriminator": [
-        148,
-        146,
-        121,
-        66,
-        207,
-        173,
-        21,
-        227
-      ]
+      "discriminator": [148, 146, 121, 66, 207, 173, 21, 227]
     },
     {
       "name": "EscrowVault",
-      "discriminator": [
-        54,
-        84,
-        41,
-        149,
-        160,
-        181,
-        85,
-        114
-      ]
+      "discriminator": [54, 84, 41, 149, 160, 181, 85, 114]
     }
   ],
   "events": [
     {
       "name": "DepositCreated",
-      "discriminator": [
-        146,
-        225,
-        181,
-        133,
-        194,
-        173,
-        54,
-        71
-      ]
+      "discriminator": [146, 225, 181, 133, 194, 173, 54, 71]
     },
     {
       "name": "FeesWithdrawn",
-      "discriminator": [
-        234,
-        15,
-        0,
-        119,
-        148,
-        241,
-        40,
-        21
-      ]
+      "discriminator": [234, 15, 0, 119, 148, 241, 40, 21]
     },
     {
       "name": "MinDurationUpdated",
-      "discriminator": [
-        164,
-        63,
-        86,
-        59,
-        254,
-        77,
-        38,
-        77
-      ]
+      "discriminator": [164, 63, 86, 59, 254, 77, 38, 77]
     },
     {
       "name": "RateUpdated",
-      "discriminator": [
-        215,
-        212,
-        25,
-        235,
-        152,
-        203,
-        38,
-        205
-      ]
+      "discriminator": [215, 212, 25, 235, 152, 203, 38, 205]
     },
     {
       "name": "RewardsClaimed",
-      "discriminator": [
-        75,
-        98,
-        88,
-        18,
-        219,
-        112,
-        88,
-        121
-      ]
+      "discriminator": [75, 98, 88, 18, 219, 112, 88, 121]
     },
     {
       "name": "StorageDurationExtended",
-      "discriminator": [
-        60,
-        98,
-        190,
-        27,
-        247,
-        190,
-        188,
-        6
-      ]
+      "discriminator": [60, 98, 190, 27, 247, 190, 188, 6]
     }
   ],
   "errors": [
@@ -671,17 +431,13 @@
   "types": [
     {
       "name": "Config",
-      "docs": [
-        "Global configuration account - stores system-wide parameters"
-      ],
+      "docs": ["Global configuration account - stores system-wide parameters"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "admin_key",
-            "docs": [
-              "Public key of the admin who can update settings"
-            ],
+            "docs": ["Public key of the admin who can update settings"],
             "type": "pubkey"
           },
           {
@@ -700,9 +456,7 @@
           },
           {
             "name": "withdrawal_wallet",
-            "docs": [
-              "Wallet address where admin fees are withdrawn to"
-            ],
+            "docs": ["Wallet address where admin fees are withdrawn to"],
             "type": "pubkey"
           }
         ]
@@ -710,52 +464,38 @@
     },
     {
       "name": "Deposit",
-      "docs": [
-        "Individual deposit record - one per user per file"
-      ],
+      "docs": ["Individual deposit record - one per user per file"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "deposit_key",
-            "docs": [
-              "Public key of the user who made the deposit"
-            ],
+            "docs": ["Public key of the user who made the deposit"],
             "type": "pubkey"
           },
           {
             "name": "content_cid",
-            "docs": [
-              "Content Identifier (CID) of the stored file"
-            ],
+            "docs": ["Content Identifier (CID) of the stored file"],
             "type": "string"
           },
           {
             "name": "file_size",
-            "docs": [
-              "Size of the file in bytes"
-            ],
+            "docs": ["Size of the file in bytes"],
             "type": "u64"
           },
           {
             "name": "duration_days",
-            "docs": [
-              "How many days the file should be stored"
-            ],
+            "docs": ["How many days the file should be stored"],
             "type": "u32"
           },
           {
             "name": "deposit_amount",
-            "docs": [
-              "Total amount deposited in lamports"
-            ],
+            "docs": ["Total amount deposited in lamports"],
             "type": "u64"
           },
           {
             "name": "deposit_slot",
-            "docs": [
-              "Solana slot when the deposit was made"
-            ],
+            "docs": ["Solana slot when the deposit was made"],
             "type": "u64"
           },
           {
@@ -767,9 +507,7 @@
           },
           {
             "name": "total_claimed",
-            "docs": [
-              "Total amount claimed so far in lamports"
-            ],
+            "docs": ["Total amount claimed so far in lamports"],
             "type": "u64"
           }
         ]
@@ -809,24 +547,18 @@
     },
     {
       "name": "EscrowVault",
-      "docs": [
-        "Central escrow vault that holds all user deposits"
-      ],
+      "docs": ["Central escrow vault that holds all user deposits"],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "total_deposits",
-            "docs": [
-              "Total lamports deposited by all users"
-            ],
+            "docs": ["Total lamports deposited by all users"],
             "type": "u64"
           },
           {
             "name": "total_claimed",
-            "docs": [
-              "Total lamports claimed by service providers"
-            ],
+            "docs": ["Total lamports claimed by service providers"],
             "type": "u64"
           }
         ]
@@ -918,51 +650,37 @@
         "fields": [
           {
             "name": "user",
-            "docs": [
-              "Public key of the user extending storage"
-            ],
+            "docs": ["Public key of the user extending storage"],
             "type": "pubkey"
           },
           {
             "name": "content_cid",
-            "docs": [
-              "CID of the file being extended"
-            ],
+            "docs": ["CID of the file being extended"],
             "type": "string"
           },
           {
             "name": "duration",
-            "docs": [
-              "Additional days being added to storage duration"
-            ],
+            "docs": ["Additional days being added to storage duration"],
             "type": "u32"
           },
           {
             "name": "new_cost",
-            "docs": [
-              "Cost in lamports for the extension"
-            ],
+            "docs": ["Cost in lamports for the extension"],
             "type": "u64"
           },
           {
             "name": "extended_duration",
-            "docs": [
-              "New total duration after extension (in days)"
-            ],
+            "docs": ["New total duration after extension (in days)"],
             "type": "u32"
           },
           {
             "name": "total_amount",
-            "docs": [
-              "New total deposit amount in lamports"
-            ],
+            "docs": ["New total deposit amount in lamports"],
             "type": "u64"
           },
           {
             "name": "slot",
-            "docs": [
-              "Solana slot when the extension occurred"
-            ],
+            "docs": ["Solana slot when the extension occurred"],
             "type": "u64"
           }
         ]

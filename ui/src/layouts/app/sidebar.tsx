@@ -1,4 +1,3 @@
-import type { FileRouteTypes } from '@/routeTree.gen'
 import {
   Box,
   Drawer,
@@ -18,6 +17,7 @@ import {
 } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import type { FileRouteTypes } from '@/routeTree.gen'
 
 const navItems = [
   {

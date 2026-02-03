@@ -1,4 +1,4 @@
-import { ServerOptions, UploadHistoryResponse } from './types';
+import { ServerOptions, UploadHistoryResponse } from './types'
 
 /**
  * Get the upload history for a given user address from the server
@@ -26,17 +26,17 @@ export async function getUserUploadHistory(
   userAddress: string,
   apiEndpoint: string,
   options: ServerOptions & {
-    page?: number;
-    limit?: number;
-  } = {}
+    page?: number
+    limit?: number
+  } = {},
 ): Promise<UploadHistoryResponse> {
   if (!userAddress || typeof userAddress !== 'string') {
-    throw new Error('User address is required and must be a string');
+    throw new Error('User address is required and must be a string')
   }
 
-  const baseUrl = options.url || apiEndpoint;
-  const page = options.page ?? 1;
-  const limit = options.limit ?? 20;
+  const baseUrl = options.url || apiEndpoint
+  const page = options.page ?? 1
+  const limit = options.limit ?? 20
 
   try {
     const response = await fetch(
@@ -46,18 +46,18 @@ export async function getUserUploadHistory(
         headers: {
           'Content-Type': 'application/json',
         },
-      }
-    );
+      },
+    )
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = await response.json().catch(() => ({}))
       throw new Error(
         errorData.message ||
-          `Failed to fetch upload history: ${response.status} ${response.statusText}`
-      );
+          `Failed to fetch upload history: ${response.status} ${response.statusText}`,
+      )
     }
 
-    const data: UploadHistoryResponse = await response.json();
+    const data: UploadHistoryResponse = await response.json()
 
     if (
       typeof data !== 'object' ||
@@ -65,24 +65,24 @@ export async function getUserUploadHistory(
       !Array.isArray(data.data) ||
       typeof data !== 'object'
     ) {
-      throw new Error('Invalid response format from server');
+      throw new Error('Invalid response format from server')
     }
 
-    return data;
+    return data
   } catch (error) {
     if (error instanceof Error) {
-      throw error;
+      throw error
     }
-    throw new Error('Unknown error occurred while fetching upload history');
+    throw new Error('Unknown error occurred while fetching upload history')
   }
 }
 
 /**
  * @deprecated Use getUserUploadHistory instead
  */
-export { getUserUploadHistory as fetchUserUploadHistory };
+export { getUserUploadHistory as fetchUserUploadHistory }
 
 /**
  * @deprecated Use getUserUploadHistory instead
  */
-export { getUserUploadHistory as fetchUserDepositHistory };
+export { getUserUploadHistory as fetchUserDepositHistory }

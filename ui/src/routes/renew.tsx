@@ -1,7 +1,7 @@
-import { Renew } from '@/containers/app'
-import { HomeLayout } from '@/layouts/home'
 import { Center } from '@chakra-ui/react'
 import { createFileRoute } from '@tanstack/react-router'
+import { Renew } from '@/containers/app'
+import { HomeLayout } from '@/layouts/home'
 
 const StorageRenewal = () => {
   return (
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/renew')({
   component: StorageRenewal,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      cids: (search.cids as string) || ''
+      cids: (search.cids as string) || '',
     }
   },
 })

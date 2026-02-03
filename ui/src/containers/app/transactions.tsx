@@ -1,8 +1,8 @@
-import { useUploadHistory } from '@/hooks/upload-history'
-import type { UploadedFile } from '@/lib/types'
 import { Box, HStack, IconButton, Stack, Text, VStack } from '@chakra-ui/react'
 import { ArrowSquareOutIcon, CopyIcon } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { useUploadHistory } from '@/hooks/upload-history'
+import type { UploadedFile } from '@/lib/types'
 
 export const Transactions = () => {
   const { files, isLoading, stats } = useUploadHistory()

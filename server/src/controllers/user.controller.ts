@@ -1,10 +1,10 @@
-import { Capabilities } from "@storacha/client/types";
-import { DID } from "@ucanto/core";
-import * as Delegation from "@ucanto/core/delegation";
-import { Link } from "@ucanto/core/schema";
-import { Request, Response } from "express";
-import { logger } from "../utils/logger.js";
-import { initStorachaClient } from "../utils/storacha.js";
+import { Capabilities } from '@storacha/client/types'
+import { DID } from '@ucanto/core'
+import * as Delegation from '@ucanto/core/delegation'
+import { Link } from '@ucanto/core/schema'
+import { Request, Response } from 'express'
+import { logger } from '../utils/logger.js'
+import { initStorachaClient } from '../utils/storacha.js'
 
 /**
  * Function to create UCAN delegation to grant access of a space to an agent
@@ -15,18 +15,18 @@ import { initStorachaClient } from "../utils/storacha.js";
 export const createUCANDelegation = async (req: Request, res: Response) => {
   try {
     const { recipientDID, deadline, notBefore, baseCapabilities, fileCID } =
-      req.body;
-    const client = await initStorachaClient();
-    const spaceDID = client.agent.did();
-    const audience = DID.parse(recipientDID);
-    const agent = client.agent;
+      req.body
+    const client = await initStorachaClient()
+    const spaceDID = client.agent.did()
+    const audience = DID.parse(recipientDID)
+    const agent = client.agent
     const capabilities: Capabilities = baseCapabilities.map((can: string) => ({
       with: `${spaceDID}`,
       can,
       nb: {
         root: Link.parse(fileCID),
       },
-    }));
+    }))
 
     const ucan = await Delegation.delegate({
       issuer: agent.issuer,
@@ -34,21 +34,21 @@ export const createUCANDelegation = async (req: Request, res: Response) => {
       expiration: Number(deadline),
       notBefore: Number(notBefore),
       capabilities,
-    });
+    })
 
-    const archive = await ucan.archive();
+    const archive = await ucan.archive()
     if (!archive.ok) {
-      throw new Error("Failed to create delegation archive");
+      throw new Error('Failed to create delegation archive')
     }
 
     return res.status(200).json({
-      message: "Delegation created successfully",
-      delegation: Buffer.from(archive.ok).toString("base64"),
-    });
+      message: 'Delegation created successfully',
+      delegation: Buffer.from(archive.ok).toString('base64'),
+    })
   } catch (err) {
-    logger.error("Error creating UCAN delegation", {
+    logger.error('Error creating UCAN delegation', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return res.status(500).json({ error: "Failed to create delegation" });
+    })
+    return res.status(500).json({ error: 'Failed to create delegation' })
   }
-};
+}

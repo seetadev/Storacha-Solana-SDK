@@ -1,13 +1,13 @@
 export type QuoteInput = {
-  sizeInBytes: number;
-  durationInUnits: number;
-};
+  sizeInBytes: number
+  durationInUnits: number
+}
 
 export type QuoteOutput = {
-  effectiveDuration: number;
-  ratePerBytePerDay: number;
-  totalCost: number; // in SOL or lamports we'll have to decide on this
-};
+  effectiveDuration: number
+  ratePerBytePerDay: number
+  totalCost: number // in SOL or lamports we'll have to decide on this
+}
 
 export type PaginationQuery = {
   page?: number | string

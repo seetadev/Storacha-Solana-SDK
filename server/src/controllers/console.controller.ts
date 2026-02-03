@@ -1,49 +1,49 @@
-import { Request, Response } from "express";
-import { UsageService } from "../services/usage/usage.service.js";
-import { logger } from "../utils/logger.js";
-import { getEscrowBalance, withdrawFees } from "../utils/solana/index.js";
-import { initStorachaClient } from "../utils/storacha.js";
+import { Request, Response } from 'express'
+import { UsageService } from '../services/usage/usage.service.js'
+import { logger } from '../utils/logger.js'
+import { getEscrowBalance, withdrawFees } from '../utils/solana/index.js'
+import { initStorachaClient } from '../utils/storacha.js'
 
 /**
  * get usage history
  */
 export const getUsageHistory = async (req: Request, res: Response) => {
   try {
-    const days = parseInt(req.query.days as string) || 30;
+    const days = parseInt(req.query.days as string, 10) || 30
 
-    const storachaClient = await initStorachaClient();
-    const usageService = new UsageService(storachaClient);
-    const history = await usageService.getUsageHistory(days);
+    const storachaClient = await initStorachaClient()
+    const usageService = new UsageService(storachaClient)
+    const history = await usageService.getUsageHistory(days)
 
     return res.status(200).json({
       success: true,
       data: history,
-    });
+    })
   } catch (error) {
-    logger.error("failed to get usage history", { error });
+    logger.error('failed to get usage history', { error })
     return res.status(500).json({
       success: false,
-      error: "failed to fetch usage history",
-    });
+      error: 'failed to fetch usage history',
+    })
   }
-};
+}
 
 /**
  * get current usage
  */
-export const getCurrentUsage = async (req: Request, res: Response) => {
+export const getCurrentUsage = async (_req: Request, res: Response) => {
   try {
-    const storachaClient = await initStorachaClient();
-    const usageService = new UsageService(storachaClient);
+    const storachaClient = await initStorachaClient()
+    const usageService = new UsageService(storachaClient)
 
     const [storachaUsage, internalUsage] = await Promise.all([
       usageService.getStorachaUsage(),
       usageService.calculateInternalUsage(),
-    ]);
+    ])
 
-    const storachaBytes = storachaUsage.finalSize;
-    const planLimit = usageService["planLimitBytes"];
-    const utilization = planLimit > 0 ? (storachaBytes / planLimit) * 100 : 0;
+    const storachaBytes = storachaUsage.finalSize
+    const planLimit = usageService.planLimit
+    const utilization = planLimit > 0 ? (storachaBytes / planLimit) * 100 : 0
 
     return res.status(200).json({
       success: true,
@@ -67,37 +67,37 @@ export const getCurrentUsage = async (req: Request, res: Response) => {
               : 0,
         },
       },
-    });
+    })
   } catch (error) {
-    logger.error("failed to get current usage", { error });
+    logger.error('failed to get current usage', { error })
     return res.status(500).json({
       success: false,
-      error: "failed to fetch current usage",
-    });
+      error: 'failed to fetch current usage',
+    })
   }
-};
+}
 
 /**
  * get unresolved alerts
  */
-export const getUnresolvedAlerts = async (req: Request, res: Response) => {
+export const getUnresolvedAlerts = async (_req: Request, res: Response) => {
   try {
-    const storachaClient = await initStorachaClient();
-    const usageService = new UsageService(storachaClient);
-    const alerts = await usageService.getUnresolvedAlerts();
+    const storachaClient = await initStorachaClient()
+    const usageService = new UsageService(storachaClient)
+    const alerts = await usageService.getUnresolvedAlerts()
 
     return res.status(200).json({
       success: true,
       data: alerts,
-    });
+    })
   } catch (error) {
-    logger.error("failed to get unresolved alerts", { error });
+    logger.error('failed to get unresolved alerts', { error })
     return res.status(500).json({
       success: false,
-      error: "failed to fetch alerts",
-    });
+      error: 'failed to fetch alerts',
+    })
   }
-};
+}
 
 /**
  * resolve an alert
@@ -106,31 +106,32 @@ export const resolveAlert = async (req: Request, res: Response) => {
   try {
     const alertId = parseInt(
       Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
-    );
+      10,
+    )
 
-    const storachaClient = await initStorachaClient();
-    const usageService = new UsageService(storachaClient);
-    await usageService.resolveAlert(alertId);
+    const storachaClient = await initStorachaClient()
+    const usageService = new UsageService(storachaClient)
+    await usageService.resolveAlert(alertId)
 
     return res.status(200).json({
       success: true,
-      message: "alert resolved",
-    });
+      message: 'alert resolved',
+    })
   } catch (error) {
-    logger.error("failed to resolve alert", { error });
+    logger.error('failed to resolve alert', { error })
     return res.status(500).json({
       success: false,
-      error: "failed to resolve alert",
-    });
+      error: 'failed to resolve alert',
+    })
   }
-};
+}
 
 /**
  * get escrow vault balance
  */
-export const getEscrowVaultBalance = async (req: Request, res: Response) => {
+export const getEscrowVaultBalance = async (_req: Request, res: Response) => {
   try {
-    const balance = await getEscrowBalance();
+    const balance = await getEscrowBalance()
 
     // convert bigint to string for JSON serialization
     return res.status(200).json({
@@ -145,54 +146,54 @@ export const getEscrowVaultBalance = async (req: Request, res: Response) => {
         totalDepositsSOL: Number(balance.totalDeposits) / 1e9,
         totalClaimedSOL: Number(balance.totalClaimed) / 1e9,
       },
-    });
+    })
   } catch (error) {
-    logger.error("failed to get escrow balance", { error });
+    logger.error('failed to get escrow balance', { error })
     return res.status(500).json({
       success: false,
-      error: "failed to fetch escrow balance",
-    });
+      error: 'failed to fetch escrow balance',
+    })
   }
-};
+}
 
 /**
  * withdraw fees from escrow vault
  */
 export const withdrawFeesFromEscrow = async (req: Request, res: Response) => {
   try {
-    const { amount } = req.body;
+    const { amount } = req.body
 
     if (!amount) {
       return res.status(400).json({
         success: false,
-        error: "amount is required (in lamports)",
-      });
+        error: 'amount is required (in lamports)',
+      })
     }
 
-    const amountBigInt = BigInt(amount);
+    const amountBigInt = BigInt(amount)
 
     if (amountBigInt <= 0n) {
       return res.status(400).json({
         success: false,
-        error: "amount must be greater than 0",
-      });
+        error: 'amount must be greater than 0',
+      })
     }
 
-    const balance = await getEscrowBalance();
+    const balance = await getEscrowBalance()
     if (amountBigInt > balance.availableBalance) {
       return res.status(400).json({
         success: false,
         error: `insufficient balance. available: ${balance.availableBalance.toString()} lamports (${Number(balance.availableBalance) / 1e9} SOL)`,
-      });
+      })
     }
 
-    const signature = await withdrawFees(amountBigInt);
+    const signature = await withdrawFees(amountBigInt)
 
-    logger.info("withdrawal successful", {
+    logger.info('withdrawal successful', {
       amount: amount.toString(),
       amountSOL: Number(amountBigInt) / 1e9,
       signature,
-    });
+    })
 
     return res.status(200).json({
       success: true,
@@ -201,12 +202,12 @@ export const withdrawFeesFromEscrow = async (req: Request, res: Response) => {
         amount: amount.toString(),
         amountSOL: Number(amountBigInt) / 1e9,
       },
-    });
+    })
   } catch (error) {
-    logger.error("failed to withdraw fees", { error });
+    logger.error('failed to withdraw fees', { error })
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "failed to withdraw fees",
-    });
+      error: error instanceof Error ? error.message : 'failed to withdraw fees',
+    })
   }
-};
+}

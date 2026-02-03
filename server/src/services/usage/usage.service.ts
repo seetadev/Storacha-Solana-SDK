@@ -1,31 +1,34 @@
-import { Client as StorachaClient } from "@storacha/client";
-import { eq, sql } from "drizzle-orm";
-import { db } from "../../db/db.js";
+import { Client as StorachaClient } from '@storacha/client'
+import { eq, sql } from 'drizzle-orm'
+import { Resend } from 'resend'
+import { db } from '../../db/db.js'
 import {
   uploads,
   usage,
   usageAlerts,
   usageComparison,
-} from "../../db/schema.js";
-import { logger } from "../../utils/logger.js";
-import { Resend } from "resend";
+} from '../../db/schema.js'
+import { logger } from '../../utils/logger.js'
 
-const { CONSOLE_URL, EMAIL_FROM, EMAIL_TO, WATCHMAN, RESEND_API_KEY } =
-  process.env!;
-const resend = new Resend(process.env.RESEND_API_KEY);
+const { EMAIL_FROM, WATCHMAN } = process.env!
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 interface UsageReport {
-  finalSize: number;
-  initialSize: number;
+  finalSize: number
+  initialSize: number
 }
 
 export class UsageService {
-  private client: StorachaClient;
-  private planLimitBytes: number;
+  private client: StorachaClient
+  private planLimitBytes: number
 
   constructor(client: StorachaClient, planLimitBytes: number = 5_000_000_000) {
-    this.client = client;
-    this.planLimitBytes = planLimitBytes; // default 5GB for free plan for now, so we can test
+    this.client = client
+    this.planLimitBytes = planLimitBytes // default 5GB for free plan for now, so we can test
+  }
+
+  get planLimit(): number {
+    return this.planLimitBytes
   }
 
   /**
@@ -36,29 +39,29 @@ export class UsageService {
     to: Date = new Date(),
   ): Promise<UsageReport> {
     try {
-      const currentSpace = this.client.currentSpace();
-      if (!currentSpace) throw new Error("no storacha space available");
+      const currentSpace = this.client.currentSpace()
+      if (!currentSpace) throw new Error('no storacha space available')
 
-      const spaceDid = currentSpace.did();
+      const spaceDid = currentSpace.did()
       const report = await this.client.capability.usage.report(spaceDid, {
         from,
         to,
-      });
+      })
 
       // report is Record<DID, UsageData>, get the first/only entry
-      const usageData = Object.values(report)[0];
+      const usageData = Object.values(report)[0]
 
       if (!usageData) {
-        throw new Error("no usage data returned from storacha");
+        throw new Error('no usage data returned from storacha')
       }
 
       return {
         finalSize: usageData.size.final,
         initialSize: usageData.size.initial,
-      };
+      }
     } catch (error) {
-      logger.error("failed to fetch storacha usage report", { error });
-      throw new Error("failed to fetch storacha usage");
+      logger.error('failed to fetch storacha usage report', { error })
+      throw new Error('failed to fetch storacha usage')
     }
   }
 
@@ -66,8 +69,8 @@ export class UsageService {
    * calculate our internal usage sum from the uploads table
    */
   async calculateInternalUsage(): Promise<{
-    totalBytes: number;
-    activeUploads: number;
+    totalBytes: number
+    activeUploads: number
   }> {
     const result = await db
       .select({
@@ -75,12 +78,12 @@ export class UsageService {
         activeUploads: sql<number>`COUNT(*)`,
       })
       .from(uploads)
-      .where(eq(uploads.deletionStatus, "active"));
+      .where(eq(uploads.deletionStatus, 'active'))
 
     return {
       totalBytes: Number(result[0]?.totalBytes || 0),
       activeUploads: Number(result[0]?.activeUploads || 0),
-    };
+    }
   }
 
   /**
@@ -91,13 +94,13 @@ export class UsageService {
       const [storachaUsage, internalUsage] = await Promise.all([
         this.getStorachaUsage(),
         this.calculateInternalUsage(),
-      ]);
+      ])
 
-      const storachaBytes = storachaUsage.finalSize;
+      const storachaBytes = storachaUsage.finalSize
       const utilization =
         this.planLimitBytes > 0
           ? (storachaBytes / this.planLimitBytes) * 100
-          : 0;
+          : 0
 
       await db.insert(usage).values({
         totalBytesStored: internalUsage.totalBytes,
@@ -105,23 +108,23 @@ export class UsageService {
         storachaReportedBytes: storachaBytes,
         storachaPlanLimit: this.planLimitBytes,
         utilizationPercentage: utilization,
-      });
+      })
 
-      logger.info("daily usage snapshot created", {
+      logger.info('daily usage snapshot created', {
         totalBytes: internalUsage.totalBytes,
         activeUploads: internalUsage.activeUploads,
         storachaReportedBytes: storachaBytes,
         utilization: `${utilization.toFixed(2)}%`,
-      });
+      })
 
       await this.checkThresholds(
         utilization,
         storachaBytes,
         this.planLimitBytes,
-      );
+      )
     } catch (error) {
-      logger.error("failed to create daily snapshot", { error });
-      throw error;
+      logger.error('failed to create daily snapshot', { error })
+      throw error
     }
   }
 
@@ -133,21 +136,21 @@ export class UsageService {
       const [storachaUsage, internalUsage] = await Promise.all([
         this.getStorachaUsage(),
         this.calculateInternalUsage(),
-      ]);
+      ])
 
-      const storachaBytes = storachaUsage.finalSize;
-      const discrepancy = storachaBytes - internalUsage.totalBytes;
+      const storachaBytes = storachaUsage.finalSize
+      const discrepancy = storachaBytes - internalUsage.totalBytes
       const discrepancyPercentage =
         internalUsage.totalBytes > 0
           ? (Math.abs(discrepancy) / internalUsage.totalBytes) * 100
-          : 0;
+          : 0
 
       const status =
         discrepancyPercentage > 10
-          ? "critical"
+          ? 'critical'
           : discrepancyPercentage > 5
-            ? "warning"
-            : "ok";
+            ? 'warning'
+            : 'ok'
 
       await db.insert(usageComparison).values({
         ourCalculatedBytes: internalUsage.totalBytes,
@@ -156,28 +159,28 @@ export class UsageService {
         discrepancyPercentage,
         status,
         notes:
-          status !== "ok"
+          status !== 'ok'
             ? `discrepancy of ${(discrepancy / 1e9).toFixed(2)} GB (${discrepancyPercentage.toFixed(2)}%)` // 1e9 = 1GB in bytes
             : null,
-      });
+      })
 
-      logger.info("usage comparison completed", {
+      logger.info('usage comparison completed', {
         ourBytes: internalUsage.totalBytes,
         storachaBytes,
         discrepancy,
         status,
-      });
+      })
 
-      if (status !== "ok") {
+      if (status !== 'ok') {
         await this.createAlert({
-          alertType: "comparison_discrepancy",
-          alertLevel: status === "critical" ? "critical" : "warning",
+          alertType: 'comparison_discrepancy',
+          alertLevel: status === 'critical' ? 'critical' : 'warning',
           message: `usage comparison shows ${discrepancyPercentage.toFixed(2)}% discrepancy (${(Math.abs(discrepancy) / 1e9).toFixed(2)} GB difference)`,
-        });
+        })
       }
     } catch (error) {
-      logger.error("failed to compare usage", { error });
-      throw error;
+      logger.error('failed to compare usage', { error })
+      throw error
     }
   }
 
@@ -190,10 +193,10 @@ export class UsageService {
     planLimit: number,
   ): Promise<void> {
     const thresholds = [
-      { level: 80, type: "threshold_80", alertLevel: "warning" as const },
-      { level: 90, type: "threshold_90", alertLevel: "warning" as const },
-      { level: 95, type: "threshold_95", alertLevel: "critical" as const },
-    ];
+      { level: 80, type: 'threshold_80', alertLevel: 'warning' as const },
+      { level: 90, type: 'threshold_90', alertLevel: 'warning' as const },
+      { level: 95, type: 'threshold_95', alertLevel: 'critical' as const },
+    ]
 
     for (const threshold of thresholds) {
       if (utilization >= threshold.level) {
@@ -204,7 +207,7 @@ export class UsageService {
           .where(
             sql`${usageAlerts.alertType} = ${threshold.type} AND ${usageAlerts.resolved} IS NULL`,
           )
-          .limit(1);
+          .limit(1)
 
         if (existingAlert.length === 0) {
           await this.createAlert({
@@ -214,13 +217,13 @@ export class UsageService {
             bytesStored,
             planLimit,
             message: `usage at ${utilization.toFixed(2)}% (${(bytesStored / 1e9).toFixed(2)} GB / ${(planLimit / 1e9).toFixed(2)} GB)`,
-          });
+          })
 
           logger.warn(`usage threshold alert: ${threshold.level}%`, {
             utilization: `${utilization.toFixed(2)}%`,
             bytesStored,
             planLimit,
-          });
+          })
         }
       }
     }
@@ -230,25 +233,25 @@ export class UsageService {
    * create usage alert and send email
    */
   private async createAlert(alert: {
-    alertType: string;
-    alertLevel: "warning" | "critical";
-    utilizationPercentage?: number;
-    bytesStored?: number;
-    planLimit?: number;
-    message: string;
+    alertType: string
+    alertLevel: 'warning' | 'critical'
+    utilizationPercentage?: number
+    bytesStored?: number
+    planLimit?: number
+    message: string
   }): Promise<void> {
-    await db.insert(usageAlerts).values(alert);
-    logger.info("usage alert created", alert);
+    await db.insert(usageAlerts).values(alert)
+    logger.info('usage alert created', alert)
 
     try {
       await resend.emails.send({
         from: EMAIL_FROM as string,
         to: WATCHMAN as string | string[],
-        subject: `🚨 [${alert.alertLevel.toUpperCase()}] storage alert - ${alert.alertType.replace(/_/g, " ")}`,
+        subject: `🚨 [${alert.alertLevel.toUpperCase()}] storage alert - ${alert.alertType.replace(/_/g, ' ')}`,
         html: `
           <div style="font-family: Inter, sans-serif; max-width: 600px; background: #080808; color: #fff; padding: 32px; border-radius: 12px;">
-            <h2 style="color: ${alert.alertLevel === "critical" ? "#ef4444" : "#f59e0b"}; margin-bottom: 16px;">
-              ${alert.alertLevel === "critical" ? "🔴" : "⚠️"} storage ${alert.alertLevel} alert
+            <h2 style="color: ${alert.alertLevel === 'critical' ? '#ef4444' : '#f59e0b'}; margin-bottom: 16px;">
+              ${alert.alertLevel === 'critical' ? '🔴' : '⚠️'} storage ${alert.alertLevel} alert
             </h2>
             <p style="color: #949495; margin-bottom: 24px; font-size: 16px;">${alert.message}</p>
             
@@ -257,7 +260,7 @@ export class UsageService {
                 ? `
               <div style="background: #100f0f; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #141414;">
                 <p style="color: #949495; font-size: 14px; margin-bottom: 8px;">utilization</p>
-                <p style="font-size: 32px; font-weight: 600; color: ${alert.alertLevel === "critical" ? "#ef4444" : "#f59e0b"}; margin: 0;">
+                <p style="font-size: 32px; font-weight: 600; color: ${alert.alertLevel === 'critical' ? '#ef4444' : '#f59e0b'}; margin: 0;">
                   ${alert.utilizationPercentage.toFixed(2)}%
                 </p>
                 ${
@@ -267,11 +270,11 @@ export class UsageService {
                     ${(alert.bytesStored / 1e9).toFixed(2)} GB / ${(alert.planLimit / 1e9).toFixed(2)} GB
                   </p>
                 `
-                    : ""
+                    : ''
                 }
               </div>
             `
-                : ""
+                : ''
             }
             
             <p style="color: #949495; font-size: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #141414;">
@@ -281,14 +284,14 @@ export class UsageService {
           </div>
         `,
         text: `${alert.alertLevel.toUpperCase()} STORAGE ALERT\n\n${alert.message}\n\nAlert Type: ${alert.alertType}`,
-      });
+      })
 
-      logger.info("alert email sent", {
+      logger.info('alert email sent', {
         to: WATCHMAN,
         alertType: alert.alertType,
-      });
+      })
     } catch (error) {
-      logger.error("failed to send alert email", { error });
+      logger.error('failed to send alert email', { error })
       // don't throw - alert is already in DB
     }
   }
@@ -301,7 +304,7 @@ export class UsageService {
       .select()
       .from(usage)
       .orderBy(sql`${usage.snapshotDate} DESC`)
-      .limit(days);
+      .limit(days)
   }
 
   /**
@@ -312,7 +315,7 @@ export class UsageService {
       .select()
       .from(usageAlerts)
       .where(sql`${usageAlerts.resolved} IS NULL`)
-      .orderBy(sql`${usageAlerts.createdAt} DESC`);
+      .orderBy(sql`${usageAlerts.createdAt} DESC`)
   }
 
   /**
@@ -322,8 +325,8 @@ export class UsageService {
     await db
       .update(usageAlerts)
       .set({ resolved: new Date() })
-      .where(eq(usageAlerts.id, alertId));
+      .where(eq(usageAlerts.id, alertId))
 
-    logger.info("usage alert resolved", { alertId });
+    logger.info('usage alert resolved', { alertId })
   }
 }

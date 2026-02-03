@@ -1,7 +1,7 @@
-import { useAuthContext } from '@/hooks/context'
-import { IS_DEV } from '@/lib/utils'
 import { useUpload } from '@toju.network/sol'
 import useSWR from 'swr'
+import { useAuthContext } from '@/hooks/context'
+import { IS_DEV } from '@/lib/utils'
 
 export const useRenewalCost = (cid: string, duration: number) => {
   const { network } = useAuthContext()

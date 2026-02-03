@@ -1,7 +1,7 @@
-import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useNavigate } from '@tanstack/react-router'
+import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import { ModalLayout } from './modal'
 
 interface UploadSuccessProps {

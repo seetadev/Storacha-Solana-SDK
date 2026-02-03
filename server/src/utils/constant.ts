@@ -1,7 +1,7 @@
-export const DAY_TIME_IN_SECONDS = 86400;
+export const DAY_TIME_IN_SECONDS = 86400
 
 /** 1 SOL in Lamports */
-export const ONE_BILLION_LAMPORTS = 1_000_000_000;
+export const ONE_BILLION_LAMPORTS = 1_000_000_000
 
 /**
  * Computes the new expiration date based on teh duration provided
@@ -16,15 +16,15 @@ export const getNewStorageExpirationDate = (
 ): string => {
   const uploadExpirationDate = expirationDate
     ? new Date(expirationDate)
-    : new Date();
+    : new Date()
 
-  const today = new Date();
-  const baseDate = uploadExpirationDate > today ? uploadExpirationDate : today;
-  baseDate.setUTCDate(baseDate.getDate() + duration);
-  const newStorageExpirationDate = baseDate.toISOString().split("T")[0];
+  const today = new Date()
+  const baseDate = uploadExpirationDate > today ? uploadExpirationDate : today
+  baseDate.setUTCDate(baseDate.getDate() + duration)
+  const newStorageExpirationDate = baseDate.toISOString().split('T')[0]
 
-  return newStorageExpirationDate;
-};
+  return newStorageExpirationDate
+}
 
 /**
  * Calculates storage cost in lamports from USD rate
@@ -41,13 +41,13 @@ export const getAmountInLamportsFromUSD = (
   duration: number,
   solPriceUSD: number,
 ): number => {
-  const costInUSD = fileSize * duration * rateInUSD;
+  const costInUSD = fileSize * duration * rateInUSD
 
-  const costInSOL = costInUSD / solPriceUSD;
-  const amountInLamports = costInSOL * ONE_BILLION_LAMPORTS;
+  const costInSOL = costInUSD / solPriceUSD
+  const amountInLamports = costInSOL * ONE_BILLION_LAMPORTS
 
-  return Math.ceil(amountInLamports);
-};
+  return Math.ceil(amountInLamports)
+}
 
 /**
  *
@@ -55,4 +55,4 @@ export const getAmountInLamportsFromUSD = (
  * @returns The SOL equivalent
  */
 export const getAmountInSOL = (lamports: number): number =>
-  lamports / ONE_BILLION_LAMPORTS;
+  lamports / ONE_BILLION_LAMPORTS

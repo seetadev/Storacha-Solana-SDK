@@ -1,20 +1,3 @@
-import { StorageDurationSelector } from '@/components/duration-selector'
-import { StorageCostSkeleton } from '@/components/skeletons'
-import { FileUpload } from '@/components/upload'
-import {
-  /* eslint-disable */
-  type ConnectionQuality,
-  useConnectionCheck,
-} from '@/hooks/connection-check'
-import { useAuthContext } from '@/hooks/context'
-import { useSolPrice } from '@/hooks/sol-price'
-import { useStorageCost } from '@/hooks/storage-cost'
-import { UploadSuccess } from '@/layouts/modal-layout'
-import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
-import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
-import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
-import type { State } from '@/lib/types'
-import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -33,6 +16,23 @@ import type { Transaction } from '@solana/web3.js'
 import { useDeposit } from '@toju.network/sol'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { StorageDurationSelector } from '@/components/duration-selector'
+import { StorageCostSkeleton } from '@/components/skeletons'
+import { FileUpload } from '@/components/upload'
+import {
+  /* eslint-disable */
+  type ConnectionQuality,
+  useConnectionCheck,
+} from '@/hooks/connection-check'
+import { useAuthContext } from '@/hooks/context'
+import { useSolPrice } from '@/hooks/sol-price'
+import { useStorageCost } from '@/hooks/storage-cost'
+import { UploadSuccess } from '@/layouts/modal-layout'
+import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
+import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
+import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
+import type { State } from '@/lib/types'
+import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 
 const SLOW_UPLOAD_THRESHOLD_MS = 15000
 
@@ -114,7 +114,7 @@ export const Upload = () => {
     if (isAuthenticated) {
       refreshBalance()
     }
-  }, [isAuthenticated, selectedFiles.length])
+  }, [isAuthenticated, refreshBalance])
 
   const handleFilesSelected = (files: Array<File>) => {
     setSelectedFiles(files)

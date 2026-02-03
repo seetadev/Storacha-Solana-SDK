@@ -1,8 +1,8 @@
-import termsContent from '@/content/terms.md?raw'
-import { HomeLayout } from '@/layouts/home'
 import { Container } from '@chakra-ui/react'
 import { createFileRoute } from '@tanstack/react-router'
 import ReactMarkdown from 'react-markdown'
+import termsContent from '@/content/terms.md?raw'
+import { HomeLayout } from '@/layouts/home'
 
 export const Route = createFileRoute('/terms')({
   component: TermsPage,
