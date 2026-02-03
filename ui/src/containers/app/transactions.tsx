@@ -7,13 +7,20 @@ import { toast } from 'sonner'
 export const Transactions = () => {
   const { files, isLoading, stats } = useUploadHistory()
 
+  // Network is determined at build time via env var
+  const configuredNetwork =
+    import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success('Transaction hash copied to clipboard')
   }
 
-  const openExplorer = (signature: string, network: string) => {
-    const cluster = network === 'mainnet' ? '' : `?cluster=${network}`
+  const openExplorer = (signature: string) => {
+    const cluster =
+      configuredNetwork === 'mainnet-beta'
+        ? ''
+        : `?cluster=${configuredNetwork}`
     window.open(
       `https://explorer.solana.com/tx/${signature}${cluster}`,
       '_blank',
@@ -183,7 +190,7 @@ export const Transactions = () => {
                         bg: 'var(--lght-grey)',
                         color: 'var(--primary-500)',
                       }}
-                      onClick={() => openExplorer(file.signature, 'testnet')}
+                      onClick={() => openExplorer(file.signature)}
                     />
                   </HStack>
                 </VStack>

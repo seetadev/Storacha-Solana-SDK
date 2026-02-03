@@ -45,7 +45,8 @@ console.log(`File CID: ${result.cid}`);
 
 ### Using the Web App
 
-Visit [toju.network](https://toju.network) to upload files directly from your browser.
+- **Production (Mainnet):** [toju.network](https://toju.network)
+- **Staging (Testnet):** [staging.toju.network](https://staging.toju.network)
 
 ## Documentation
 
@@ -57,12 +58,18 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 
 ## Links
 
+**Production (Mainnet):**
 - [Website](https://toju.network)
+- [API](https://api.toju.network/health)
+
+**Staging (Testnet):**
+- [Website](https://staging.toju.network)
+- [API](https://staging-api.toju.network/health)
+
+**Resources:**
 - [Documentation](https://docs.toju.network)
 - [GitHub](https://github.com/seetadev/Storacha-Solana-SDK)
-- [Production server](https://api.toju.network/health)
-- [Staging server](https://staging-api.toju.network/health)
-- [Package url](https://www.npmjs.com/package/@toju.network/sol)
+- [NPM Package](https://www.npmjs.com/package/@toju.network/sol)
 
 ## License
 
