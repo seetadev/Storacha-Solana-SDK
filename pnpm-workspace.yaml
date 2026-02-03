@@ -1,5 +1,5 @@
 packages:
-  - 'sdk'
+  - 'packages/*'
   - 'ui'
   - 'server'
   - 'docs'

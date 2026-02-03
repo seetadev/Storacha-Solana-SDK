@@ -24,10 +24,10 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
-        run: cd server && pnpm knip
+        run: pnpm --filter server knip
 
-  sdk:
-    name: sdk - knip!
+  solana-sdk:
+    name: solana sdk - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
-        run: cd sdk && pnpm knip
+        run: pnpm --filter @toju.network/sol knip
 
   frontend:
     name: ui - knip!
@@ -64,4 +64,4 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       
       - name: Run knip
-        run: cd ui && pnpm knip
+        run: pnpm --filter ui knip

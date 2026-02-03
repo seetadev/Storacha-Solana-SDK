@@ -5,11 +5,14 @@ Thanks for your interest in contributing to Toju! This guide will help you get s
 ## Monorepo Structure
 
 ```
-ui/               # React frontend (Vite + Chakra UI)
-solana-programs/  # Solana payment contract (Anchor framework)
-server/           # Node.js backend (Express + Drizzle)
-sdk/              # TypeScript SDK (@toju.network/sol)
-docs/             # Mintlify documentation
+packages/
+  ├── sol/            # Solana SDK (@toju.network/sol)
+  ├── fil/            # Filecoin SDK (@toju.network/fil) - in development
+  └── eth/            # Ethereum/Base SDK (@toju.network/eth) - planned
+ui/                   # React frontend (Vite + Chakra UI)
+solana-programs/      # Solana payment contract (Anchor framework)
+server/               # Node.js backend (Express + Drizzle)
+docs/                 # Mintlify documentation
 ```
 
 ## Prerequisites
@@ -46,10 +49,11 @@ pnpm install
 This is a pnpm workspace monorepo. Use the `-F` (or `--filter`) flag to install in specific packages:
 
 ```bash
-pnpm add <package-name> -F server    # server workspace
-pnpm add <package-name> -F ui        # UI workspace
-pnpm add <package-name> -F sdk       # SDK workspace
-pnpm add -D <package-name> -F server # dev dependencies
+pnpm add <package-name> -F server         # server workspace
+pnpm add <package-name> -F ui             # UI workspace
+pnpm add <package-name> -F @toju.network/sol  # Solana SDK
+pnpm add <package-name> -F @toju.network/fil  # Filecoin SDK
+pnpm add -D <package-name> -F server      # dev dependencies
 ```
 
 **Don't install at root** unless it's a shared dev tool (like TypeScript or ESLint).
@@ -179,10 +183,25 @@ pnpm dev
 
 ## SDK Development
 
-### Build the SDK
+### Package Structure
+
+Each blockchain integration has its own package in `packages/`:
+
+- `packages/sol/` - Solana SDK (live on mainnet)
+- `packages/fil/` - Filecoin SDK (in development)
+- `packages/eth/` - Ethereum/Base SDK (planned)
+
+Each package is independently versioned and published to npm.
+
+### Build an SDK
 
 ```bash
-cd sdk
+# Build Solana SDK
+cd packages/sol
+pnpm build
+
+# Build Filecoin SDK (when ready)
+cd packages/fil
 pnpm build
 ```
 
@@ -191,7 +210,7 @@ pnpm build
 The UI is already configured to use the workspace SDK. Changes to the SDK are reflected after rebuilding:
 
 ```bash
-cd sdk
+cd packages/sol
 pnpm build
 ```
 
@@ -228,6 +247,20 @@ Starts at `http://localhost:3000` with hot-reload.
    ```
 3. Add to `docs/mint.json` navigation array
 
+## Commit Message Guidelines
+
+Use conventional commits for automatic changelog generation:
+
+```bash
+feat: add new feature
+fix: resolve bug
+chore: update dependencies
+feat(sol): add transaction retry logic
+fix(fil): resolve USDFC decimals issue
+```
+
+See [VERSIONING.md](./VERSIONING.md) for commit message format.
+
 ## Notes
 
 - **Program IDL:** Generated at `target/idl/solana_programs.json` after build
@@ -240,4 +273,4 @@ Starts at `http://localhost:3000` with hot-reload.
 1. Install [Phantom wallet](https://phantom.app/) browser extension
 2. Enable testnet in Settings > Developer Settings
 3. Get test SOL from [Solana Faucet](https://faucet.solana.com/)
-4. Try the app at [toju.network](https://toju.network)
+4. Try the app in prod (where you'll need real SOL) [here](https://toju.network) and on (staging](https://staging.toju.network) where you can use testnet SOL.
