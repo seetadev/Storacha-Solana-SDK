@@ -20,6 +20,8 @@
 npm install @toju.network/sol
 ```
 
+#### Direct Usage (Node.js / Server-side)
+
 ```typescript
 import { Client, Environment } from '@toju.network/sol';
 
@@ -41,6 +43,38 @@ const result = await client.createDeposit({
 });
 
 console.log(`File CID: ${result.cid}`);
+```
+
+#### React Hook
+
+```typescript
+import { useDeposit } from '@toju.network/sol';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+function UploadComponent() {
+  const { publicKey, signTransaction } = useWallet();
+  const client = useDeposit('mainnet-beta', false);
+
+  const handleUpload = async (files: File[]) => {
+    const cost = await client.estimateStorageCost(files, 30 * 86400);
+    
+    const result = await client.createDeposit({
+      payer: publicKey,
+      file: files,
+      durationDays: 30,
+      signTransaction,
+    });
+
+    console.log(`Uploaded: ${result.cid}`);
+    console.log("cost", cost)
+  };
+
+  return (
+    <button onClick={() => handleUpload([file])}>
+      Upload
+    </button>
+  );
+}
 ```
 
 ### Using the Web App
