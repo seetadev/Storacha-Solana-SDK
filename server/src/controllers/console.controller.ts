@@ -9,7 +9,7 @@ import { initStorachaClient } from "../utils/storacha.js";
  */
 export const getUsageHistory = async (req: Request, res: Response) => {
   try {
-    const days = parseInt(req.query.days as string) || 30;
+    const days = parseInt(req.query.days as string, 10) || 30;
 
     const storachaClient = await initStorachaClient();
     const usageService = new UsageService(storachaClient);
@@ -31,7 +31,7 @@ export const getUsageHistory = async (req: Request, res: Response) => {
 /**
  * get current usage
  */
-export const getCurrentUsage = async (req: Request, res: Response) => {
+export const getCurrentUsage = async (_req: Request, res: Response) => {
   try {
     const storachaClient = await initStorachaClient();
     const usageService = new UsageService(storachaClient);
@@ -80,7 +80,7 @@ export const getCurrentUsage = async (req: Request, res: Response) => {
 /**
  * get unresolved alerts
  */
-export const getUnresolvedAlerts = async (req: Request, res: Response) => {
+export const getUnresolvedAlerts = async (_req: Request, res: Response) => {
   try {
     const storachaClient = await initStorachaClient();
     const usageService = new UsageService(storachaClient);
@@ -106,6 +106,7 @@ export const resolveAlert = async (req: Request, res: Response) => {
   try {
     const alertId = parseInt(
       Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+      10,
     );
 
     const storachaClient = await initStorachaClient();
@@ -128,7 +129,7 @@ export const resolveAlert = async (req: Request, res: Response) => {
 /**
  * get escrow vault balance
  */
-export const getEscrowVaultBalance = async (req: Request, res: Response) => {
+export const getEscrowVaultBalance = async (_req: Request, res: Response) => {
   try {
     const balance = await getEscrowBalance();
 

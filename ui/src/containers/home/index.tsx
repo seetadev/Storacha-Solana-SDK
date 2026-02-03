@@ -1,10 +1,9 @@
-import { useAuthContext } from '@/hooks/context'
 import {
   Box,
   Button,
   Container,
-  HStack,
   Heading,
+  HStack,
   SimpleGrid,
   Stack,
   Text,
@@ -19,6 +18,7 @@ import {
 } from '@phosphor-icons/react'
 import { RocketLaunchIcon } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@tanstack/react-router'
+import { useAuthContext } from '@/hooks/context'
 
 const styles = {
   beam: {

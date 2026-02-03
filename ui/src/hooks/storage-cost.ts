@@ -1,8 +1,8 @@
-import { useAuthContext } from '@/hooks/context'
-import { IS_DEV } from '@/lib/utils'
 import { useDeposit } from '@toju.network/sol'
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
+import { useAuthContext } from '@/hooks/context'
+import { IS_DEV } from '@/lib/utils'
 
 export const useStorageCost = (files: Array<File>, durationDays: number) => {
   const { network } = useAuthContext()

@@ -1,8 +1,8 @@
-import { ConnectWallet } from '@/components/connect-wallet'
-import { useAuthContext } from '@/hooks/context/auth'
 import { Box, HStack, IconButton, Text } from '@chakra-ui/react'
 import { LinkBreakIcon, ListIcon, WalletIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
+import { ConnectWallet } from '@/components/connect-wallet'
+import { useAuthContext } from '@/hooks/context/auth'
 
 interface HeaderProps {
   onMenuOpen: () => void

@@ -1,0 +1,27 @@
+name: Biome Check
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  biome:
+    name: format + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      
+      - name: Run Biome CI
+        run: pnpm check:ci

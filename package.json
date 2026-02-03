@@ -1,14 +1,21 @@
 {
-	"name": "keep",
-	"private": false,
-	"scripts": {
-		"prepare": "husky install",
-		"docs:dev": "cd docs && npx mintlify dev",
-		"docs:install": "npm install -g mintlify"
-	},
-	"devDependencies": {
-		"husky": "^9.1.7",
-		"tsx": "^4.21.0"
-	},
-	"packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+  "name": "keep",
+  "private": false,
+  "scripts": {
+    "prepare": "husky install",
+    "docs:dev": "cd docs && npx mintlify dev",
+    "docs:install": "npm install -g mintlify",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint --write .",
+    "lint:check": "biome lint .",
+    "check": "biome check --write .",
+    "check:ci": "biome ci ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
+    "husky": "^9.1.7",
+    "tsx": "^4.21.0"
+  },
+  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
 }

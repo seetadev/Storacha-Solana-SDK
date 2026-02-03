@@ -1,4 +1,3 @@
-import { ConnectWallet } from '@/components/connect-wallet'
 import {
   Box,
   Button,
@@ -14,6 +13,7 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { ConnectWallet } from '@/components/connect-wallet'
 import { useAuthContext } from '../../hooks/context/auth'
 
 export const HomeHeader = () => {

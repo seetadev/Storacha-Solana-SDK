@@ -1,8 +1,3 @@
-import { useAuthContext } from '@/hooks/context'
-import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
-import { useSolPrice } from '@/hooks/sol-price'
-import type { State } from '@/lib/types'
-import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -27,6 +22,11 @@ import dayjs from 'dayjs'
 import useEmblaCarousel from 'embla-carousel-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useAuthContext } from '@/hooks/context'
+import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
+import { useSolPrice } from '@/hooks/sol-price'
+import type { State } from '@/lib/types'
+import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
@@ -103,7 +103,7 @@ export const Renew = () => {
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
+    return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`
   }
 
   const handleCustomDurationChange = (value: string) => {

@@ -2,7 +2,8 @@ import { Button, HStack, Stack, Text } from '@chakra-ui/react'
 import type { ModalLayoutProps } from './modal'
 import { ModalLayout } from './modal'
 
-interface ShortDurationWarningProps extends Pick<ModalLayoutProps, 'isOpen' | 'onClose'> {
+interface ShortDurationWarningProps
+  extends Pick<ModalLayoutProps, 'isOpen' | 'onClose'> {
   onProceed: () => void
   duration: number
 }
@@ -24,8 +25,9 @@ export const ShortDurationWarning = ({
     >
       <Stack spacing="1em" mt="-1em">
         <Text fontSize="var(--font-size-sm)" color="var(--text-muted)">
-          You've selected a storage duration of {duration} day{duration !== 1 ? 's' : ''}. 
-          We won't send reminder emails for uploads stored for less than 7 days.
+          You've selected a storage duration of {duration} day
+          {duration !== 1 ? 's' : ''}. We won't send reminder emails for uploads
+          stored for less than 7 days.
         </Text>
 
         <HStack spacing="0.75em">

@@ -1,28 +1,28 @@
-import express from "express";
-import multer from "multer";
-import * as uploadsController from "../controllers/upload.controller.js";
-import { uploadLimiter } from "../middlewares/rate-limit.middleware.js";
+import express from 'express'
+import multer from 'multer'
+import * as uploadsController from '../controllers/upload.controller.js'
+import { uploadLimiter } from '../middlewares/rate-limit.middleware.js'
 
-const upload = multer();
+const upload = multer()
 
-export const uploadsRouter = express.Router();
+export const uploadsRouter = express.Router()
 
 uploadsRouter.post(
-  "/deposit",
-  upload.fields([{ name: "file" }]),
+  '/deposit',
+  upload.fields([{ name: 'file' }]),
   uploadsController.deposit,
-);
+)
 uploadsRouter.post(
-  "/file",
+  '/file',
   uploadLimiter,
-  upload.single("file"),
+  upload.single('file'),
   uploadsController.uploadFile,
-);
+)
 uploadsRouter.post(
-  "/files",
+  '/files',
   uploadLimiter,
-  upload.array("file"),
+  upload.array('file'),
   uploadsController.uploadFiles,
-);
-uploadsRouter.get("/history", uploadsController.getUploadHistory);
-uploadsRouter.post("/confirm", uploadsController.confirmUpload);
+)
+uploadsRouter.get('/history', uploadsController.getUploadHistory)
+uploadsRouter.post('/confirm', uploadsController.confirmUpload)

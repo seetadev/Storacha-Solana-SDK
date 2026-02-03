@@ -241,12 +241,8 @@
           "name": "transaction_deposit_id_deposit_id_fk",
           "tableFrom": "transaction",
           "tableTo": "deposit",
-          "columnsFrom": [
-            "deposit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["deposit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -256,9 +252,7 @@
         "transaction_transaction_hash_unique": {
           "name": "transaction_transaction_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "transaction_hash"
-          ]
+          "columns": ["transaction_hash"]
         }
       },
       "policies": {},

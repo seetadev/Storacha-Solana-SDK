@@ -1,7 +1,7 @@
-import { useAuthContext } from '@/hooks/context'
-import type { DashboardStats, UploadedFile } from '@/lib/types'
 import { useDeposit } from '@toju.network/sol'
 import useSWR from 'swr'
+import { useAuthContext } from '@/hooks/context'
+import type { DashboardStats, UploadedFile } from '@/lib/types'
 
 export function useUploadHistory() {
   const { user, network } = useAuthContext()

@@ -1,11 +1,11 @@
-import { formatFileSize } from '@/lib/utils'
 import { Box, HStack, IconButton, Text, VStack } from '@chakra-ui/react'
 import {
-    FileIcon,
-    ImageIcon,
-    TrashIcon,
-    VideoIcon,
+  FileIcon,
+  ImageIcon,
+  TrashIcon,
+  VideoIcon,
 } from '@phosphor-icons/react'
+import { formatFileSize } from '@/lib/utils'
 
 export type FileWithPreview = File & {
   preview?: string

@@ -1,0 +1,29 @@
+# Build outputs
+dist
+build
+.next
+coverage
+target
+
+# Dependencies
+node_modules
+pnpm-lock.yaml
+
+# Generated files
+*.generated.*
+*.d.ts
+*.min.js
+*.gen.ts
+routeTree.gen.ts
+
+# Solana programs (Rust code, not TS)
+solana-programs
+solana-programs/**
+
+# IDL and auto-generated
+server/src/utils/solana/idl.json
+
+# Config
+.env
+.env.local
+.env.production

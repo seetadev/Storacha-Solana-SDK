@@ -1,4 +1,3 @@
-import { formatFileSize } from '@/lib/utils'
 import { Box, Center, HStack, Text, VStack } from '@chakra-ui/react'
 import {
   CheckCircleIcon,
@@ -6,6 +5,7 @@ import {
   XCircleIcon,
 } from '@phosphor-icons/react'
 import type { DropzoneInputProps, DropzoneRootProps } from 'react-dropzone'
+import { formatFileSize } from '@/lib/utils'
 
 interface DropZoneProps {
   getRootProps: () => DropzoneRootProps

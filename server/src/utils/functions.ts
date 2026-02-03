@@ -1,13 +1,13 @@
-import { PaginationQuery } from "../types.js";
+import { PaginationQuery } from '../types.js'
 
 export const getExpiryDate = (duration: number) => {
-  const today = new Date();
-  const future = new Date(today);
-  future.setDate(today.getUTCDate() + Number(duration));
+  const today = new Date()
+  const future = new Date(today)
+  future.setDate(today.getUTCDate() + Number(duration))
 
-  const expiryDate = future.toISOString();
-  return expiryDate;
-};
+  const expiryDate = future.toISOString()
+  return expiryDate
+}
 
 export function getPaginationParams(query: PaginationQuery) {
   const page = Math.max(Number(query.page ?? 1), 1)

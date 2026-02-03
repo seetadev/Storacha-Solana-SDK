@@ -1,19 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": [
-    "src/main.tsx",
-    "vite.config.ts",
-    "src/routes/**/*.tsx"
-  ],
-  "project": [
-    "src/**/*.{ts,tsx}"
-  ],
-  "ignore": [
-    "src/routeTree.gen.ts"
-  ],
-  "ignoreDependencies": [
-    "storacha-sol"
-  ],
+  "entry": ["src/main.tsx", "vite.config.ts", "src/routes/**/*.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/routeTree.gen.ts"],
+  "ignoreDependencies": ["storacha-sol"],
   "vite": {
     "config": "vite.config.ts"
   },

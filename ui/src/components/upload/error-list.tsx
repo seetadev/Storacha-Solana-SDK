@@ -17,8 +17,8 @@ export const ErrorList = ({ errors }: ErrorListProps) => {
       border="1px solid rgba(239, 68, 68, 0.2)"
       borderRadius="var(--radius-md)"
     >
-      {errors.map((error, index) => (
-        <HStack key={index} spacing="0.75em">
+      {errors.map((error) => (
+        <HStack key={crypto.randomUUID()} spacing="0.75em">
           <WarningCircleIcon size={18} color="var(--error)" weight="fill" />
           <Text
             fontSize="var(--font-size-sm)"

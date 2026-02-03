@@ -1,6 +1,3 @@
-import { useUploadHistory } from '@/hooks/upload-history'
-import type { Filter } from '@/lib/types'
-import { formatFileSize } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -22,6 +19,9 @@ import {
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useUploadHistory } from '@/hooks/upload-history'
+import type { Filter } from '@/lib/types'
+import { formatFileSize } from '@/lib/utils'
 
 export const UploadHistory = () => {
   const { files, isLoading } = useUploadHistory()

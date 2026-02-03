@@ -1,6 +1,6 @@
-import express from "express";
-import * as transactionsController from "../controllers/transactions.controller.js";
+import express from 'express'
+import * as transactionsController from '../controllers/transactions.controller.js'
 
-export const transactionsRouter = express.Router();
+export const transactionsRouter = express.Router()
 
-transactionsRouter.get("/", transactionsController.getUploadTransactions);
+transactionsRouter.get('/', transactionsController.getUploadTransactions)

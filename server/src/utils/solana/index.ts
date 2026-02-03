@@ -1,40 +1,40 @@
-import { AnchorProvider, Idl, Program, web3 } from "@coral-xyz/anchor";
+import { AnchorProvider, Idl, Program, web3 } from '@coral-xyz/anchor'
 import {
   Connection,
   Keypair,
   Transaction,
   TransactionInstruction,
-} from "@solana/web3.js";
-import BN from "bn.js";
-import { sha256 } from "js-sha256";
-import { db } from "../../db/db.js";
-import { configTable } from "../../db/schema.js";
-import { logger } from "../logger.js";
-import { SolanaProgram as StorachaSolProgram } from "./program.js";
+} from '@solana/web3.js'
+import BN from 'bn.js'
+import { sha256 } from 'js-sha256'
+import { db } from '../../db/db.js'
+import { configTable } from '../../db/schema.js'
+import { logger } from '../logger.js'
+import { SolanaProgram as StorachaSolProgram } from './program.js'
 
-const CONFIG_SEED = "config";
-const DEPOSIT_SEED = "deposit";
+const CONFIG_SEED = 'config'
+const DEPOSIT_SEED = 'deposit'
 
 interface EscrowVaultAccount {
-  totalDeposits: BN;
-  totalClaimed: BN;
+  totalDeposits: BN
+  totalClaimed: BN
 }
 
 interface ConfigAccount {
-  adminKey: web3.PublicKey;
-  ratePerBytePerDay: BN;
-  minDurationDays: number;
-  withdrawalWallet: web3.PublicKey;
+  adminKey: web3.PublicKey
+  ratePerBytePerDay: BN
+  minDurationDays: number
+  withdrawalWallet: web3.PublicKey
 }
 
 const SOLANA_RPC_URL =
-  process.env.SOLANA_RPC_URL || "https://api.testnet.solana.com";
+  process.env.SOLANA_RPC_URL || 'https://api.testnet.solana.com'
 
-const connection = new Connection(SOLANA_RPC_URL, "confirmed");
+const connection = new Connection(SOLANA_RPC_URL, 'confirmed')
 
-let ADMIN_KEYPAIR: Keypair | null = null;
-let CACHED_IDL: any = null;
-let PROGRAM_ID: web3.PublicKey | null = null;
+let ADMIN_KEYPAIR: Keypair | null = null
+let CACHED_IDL: any = null
+let PROGRAM_ID: web3.PublicKey | null = null
 
 /**
  * Loads the IDL and sets up the program ID
@@ -42,46 +42,46 @@ let PROGRAM_ID: web3.PublicKey | null = null;
 async function getIdlAndProgramId() {
   if (!CACHED_IDL) {
     if (!process.env.SOLANA_PROGRAM_IDL) {
-      throw new Error("❌ SOLANA_PROGRAM_IDL environment variable is not set");
+      throw new Error('❌ SOLANA_PROGRAM_IDL environment variable is not set')
     }
 
     try {
-      CACHED_IDL = JSON.parse(process.env.SOLANA_PROGRAM_IDL) as Idl;
+      CACHED_IDL = JSON.parse(process.env.SOLANA_PROGRAM_IDL) as Idl
     } catch (err) {
       throw new Error(
         `❌ Failed to parse SOLANA_PROGRAM_IDL: ${(err as Error).message}`,
-      );
+      )
     }
 
-    PROGRAM_ID = new web3.PublicKey((CACHED_IDL as any).address);
+    PROGRAM_ID = new web3.PublicKey((CACHED_IDL as any).address)
   }
 
-  return { idl: CACHED_IDL!, programId: PROGRAM_ID! };
+  return { idl: CACHED_IDL!, programId: PROGRAM_ID! }
 }
 
 /**
  * Loads the admin keypair (used for program init)
  */
 async function loadAdminKeypair(): Promise<Keypair> {
-  if (ADMIN_KEYPAIR) return ADMIN_KEYPAIR;
+  if (ADMIN_KEYPAIR) return ADMIN_KEYPAIR
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === 'production') {
     if (!process.env.ADMIN_KEYPAIR) {
-      throw new Error("ADMIN_KEYPAIR env var not set in production");
+      throw new Error('ADMIN_KEYPAIR env var not set in production')
     }
-    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR));
-    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey);
+    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR))
+    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey)
   } else {
     if (!process.env.ADMIN_KEYPAIR) {
       throw new Error(
-        "ADMIN_KEYPAIR env var not set. Generate one with: solana-keygen new --outfile admin.json",
-      );
+        'ADMIN_KEYPAIR env var not set. Generate one with: solana-keygen new --outfile admin.json',
+      )
     }
-    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR));
-    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey);
+    const secretKey = Uint8Array.from(JSON.parse(process.env.ADMIN_KEYPAIR))
+    ADMIN_KEYPAIR = Keypair.fromSecretKey(secretKey)
   }
 
-  return ADMIN_KEYPAIR;
+  return ADMIN_KEYPAIR
 }
 
 /**
@@ -94,7 +94,7 @@ async function createInitializeConfigInstruction(
   minDurationDays: number,
   withdrawalWallet: web3.PublicKey,
 ): Promise<TransactionInstruction> {
-  const { idl, programId } = await getIdlAndProgramId();
+  const { idl, programId } = await getIdlAndProgramId()
 
   // the anchor provider needs a wallet arg. doesn't really do much
   // without it, the constructor breaks. we basically just need for the admin I/O
@@ -102,20 +102,20 @@ async function createInitializeConfigInstruction(
     publicKey: web3.Keypair.generate().publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
-  };
+  }
 
-  const provider = new AnchorProvider(connection, wallet as any, {});
-  const program = new Program(idl as StorachaSolProgram, provider);
+  const provider = new AnchorProvider(connection, wallet as any, {})
+  const program = new Program(idl as StorachaSolProgram, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
-  );
+  )
 
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow")],
+    [Buffer.from('escrow')],
     programId,
-  );
+  )
 
   // Create instruction with required accounts per IDL:
   // 1. config (writable, pda)
@@ -136,39 +136,40 @@ async function createInitializeConfigInstruction(
       admin: adminPubkey,
       systemProgram: web3.SystemProgram.programId,
     })
-    .instruction();
+    .instruction()
 }
 
 /**
  * Check if config is initialized, and initialize it if not
  */
 export async function ensureConfigInitialized(): Promise<void> {
-  const { programId } = await getIdlAndProgramId();
+  const { programId } = await getIdlAndProgramId()
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
-  );
+  )
 
-  const configAccount = await connection.getAccountInfo(configPda);
+  const configAccount = await connection.getAccountInfo(configPda)
   if (!configAccount) {
-    logger.info("Config not found — initializing it now");
+    logger.info('Config not found — initializing it now')
 
-    const adminKeypair = await loadAdminKeypair();
+    const adminKeypair = await loadAdminKeypair()
 
-    const { getSolPrice } =
-      await import("../../services/price/sol-price.service.js");
-    const { getAmountInLamportsFromUSD } = await import("../constant.js");
+    const { getSolPrice } = await import(
+      '../../services/price/sol-price.service.js'
+    )
+    const { getAmountInLamportsFromUSD } = await import('../constant.js')
 
-    const dbConfig = await db.select().from(configTable).limit(1);
+    const dbConfig = await db.select().from(configTable).limit(1)
 
     if (!dbConfig || dbConfig.length === 0) {
       throw new Error(
-        "Database config not found. Please seed the config table first.",
-      );
+        'Database config not found. Please seed the config table first.',
+      )
     }
 
-    const config = dbConfig[0];
+    const config = dbConfig[0]
 
     // Set on-chain rate to 0 to disable validation
     // we should let the server calculate the actual cost dynamically based on:
@@ -177,39 +178,39 @@ export async function ensureConfigInitialized(): Promise<void> {
     // - File size and duration
     // We can't store fractional lamports on-chain, and the rate changes with SOL price,
     // so the on-chain program trusts the backend's calculation.
-    const rateInLamports = 0;
+    const rateInLamports = 0
 
     const initIx = await createInitializeConfigInstruction(
       new web3.PublicKey(config.adminKey),
       rateInLamports,
       config.minDurationDays,
       new web3.PublicKey(config.withdrawalWallet),
-    );
+    )
 
-    const { blockhash } = await connection.getLatestBlockhash();
+    const { blockhash } = await connection.getLatestBlockhash()
 
-    const tx = new Transaction();
-    tx.add(initIx);
-    tx.feePayer = adminKeypair.publicKey;
-    tx.recentBlockhash = blockhash;
+    const tx = new Transaction()
+    tx.add(initIx)
+    tx.feePayer = adminKeypair.publicKey
+    tx.recentBlockhash = blockhash
 
-    tx.sign(adminKeypair);
+    tx.sign(adminKeypair)
 
     try {
       const sig = await connection.sendRawTransaction(tx.serialize(), {
         skipPreflight: false,
-        preflightCommitment: "confirmed",
-      });
-      await connection.confirmTransaction(sig, "confirmed");
-      logger.info("Config initialized", { signature: sig });
+        preflightCommitment: 'confirmed',
+      })
+      await connection.confirmTransaction(sig, 'confirmed')
+      logger.info('Config initialized', { signature: sig })
     } catch (err) {
-      logger.error("Failed to send init transaction", {
+      logger.error('Failed to send init transaction', {
         error: err instanceof Error ? err.message : String(err),
-      });
-      throw err;
+      })
+      throw err
     }
   } else {
-    logger.info("Config already exists — no update needed");
+    logger.info('Config already exists — no update needed')
     // NOTE: We don't update the on-chain rate because our pricing is in USD (3e-12)
     // and the backend calculates lamports dynamically based on current SOL price.
     // The on-chain program only validates that the deposit amount is sufficient.
@@ -226,36 +227,36 @@ export async function createDepositInstruction(
   duration: number,
   depositAmountLamports: number,
 ): Promise<TransactionInstruction> {
-  const { idl, programId } = await getIdlAndProgramId();
+  const { idl, programId } = await getIdlAndProgramId()
   const dummyWallet = {
     publicKey: web3.Keypair.generate().publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
-  };
-  const provider = new AnchorProvider(connection, dummyWallet as any, {});
-  const program = new Program(idl as Idl, provider);
+  }
+  const provider = new AnchorProvider(connection, dummyWallet as any, {})
+  const program = new Program(idl as Idl, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
-  );
+  )
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow")],
+    [Buffer.from('escrow')],
     programId,
-  );
+  )
 
-  const cidHash = Buffer.from(sha256.digest(cid));
+  const cidHash = Buffer.from(sha256.digest(cid))
   const [depositPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
     programId,
-  );
+  )
 
-  const durationNum = Number(duration);
+  const durationNum = Number(duration)
   if (!Number.isFinite(durationNum)) {
-    throw new Error("Invalid duration");
+    throw new Error('Invalid duration')
   }
 
-  const depositAmountLamportsBN = new BN(depositAmountLamports.toString());
+  const depositAmountLamportsBN = new BN(depositAmountLamports.toString())
 
   return await program.methods
     .createDeposit(
@@ -271,7 +272,7 @@ export async function createDepositInstruction(
       user: userPubkey,
       systemProgram: web3.SystemProgram.programId,
     })
-    .instruction();
+    .instruction()
 }
 
 /**
@@ -283,37 +284,37 @@ export async function extendStorageInstruction(
   extensionCost: number,
   userPubkey: web3.PublicKey,
 ): Promise<TransactionInstruction> {
-  const { idl, programId } = await getIdlAndProgramId();
+  const { idl, programId } = await getIdlAndProgramId()
   const wallet = {
     publicKey: web3.Keypair.generate().publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
-  };
+  }
 
-  const provider = new AnchorProvider(connection, wallet as any, {});
-  const program = new Program(idl as Idl, provider);
+  const provider = new AnchorProvider(connection, wallet as any, {})
+  const program = new Program(idl as Idl, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
-  );
+  )
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow")],
+    [Buffer.from('escrow')],
     programId,
-  );
+  )
 
-  const cidHash = Buffer.from(sha256.digest(cid));
+  const cidHash = Buffer.from(sha256.digest(cid))
   const [depositPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(DEPOSIT_SEED), userPubkey.toBuffer(), cidHash],
     programId,
-  );
+  )
 
-  const durationNum = Number(duration);
+  const durationNum = Number(duration)
   if (!Number.isFinite(durationNum)) {
-    throw new Error("Invalid duration");
+    throw new Error('Invalid duration')
   }
 
-  const storageRenewalCostBN = new BN(extensionCost.toString());
+  const storageRenewalCostBN = new BN(extensionCost.toString())
 
   return await program.methods
     .extendStorageDuration(
@@ -328,95 +329,95 @@ export async function extendStorageInstruction(
       user: userPubkey,
       systemProgram: web3.SystemProgram.programId,
     })
-    .instruction();
+    .instruction()
 }
 
 /**
  * Gets the escrow vault balance and account data
  */
 export async function getEscrowBalance(): Promise<{
-  totalDeposits: bigint;
-  totalClaimed: bigint;
-  availableBalance: bigint;
-  accountLamports: bigint;
+  totalDeposits: bigint
+  totalClaimed: bigint
+  availableBalance: bigint
+  accountLamports: bigint
 }> {
-  const { idl, programId } = await getIdlAndProgramId();
+  const { idl, programId } = await getIdlAndProgramId()
 
   const wallet = {
     publicKey: web3.Keypair.generate().publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
-  };
+  }
 
-  const provider = new AnchorProvider(connection, wallet as any, {});
-  const program = new Program(idl as StorachaSolProgram, provider);
+  const provider = new AnchorProvider(connection, wallet as any, {})
+  const program = new Program(idl as StorachaSolProgram, provider)
 
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow")],
+    [Buffer.from('escrow')],
     programId,
-  );
+  )
 
   const escrowAccount = await (
     program.account as unknown as {
       escrowVault: {
-        fetch: (address: web3.PublicKey) => Promise<EscrowVaultAccount>;
-      };
+        fetch: (address: web3.PublicKey) => Promise<EscrowVaultAccount>
+      }
     }
-  ).escrowVault.fetch(escrowVaultPda);
-  const accountInfo = await connection.getAccountInfo(escrowVaultPda);
+  ).escrowVault.fetch(escrowVaultPda)
+  const accountInfo = await connection.getAccountInfo(escrowVaultPda)
 
   if (!accountInfo) {
-    throw new Error("Escrow vault account not found");
+    throw new Error('Escrow vault account not found')
   }
 
   // solana expects all data stored on chain via an account to have a minimum balance to keep it alive
   // else, it'll be nuked!
   const rentExemptMinimum = await connection.getMinimumBalanceForRentExemption(
     accountInfo.data.length,
-  );
+  )
 
-  const accountLamports = BigInt(accountInfo.lamports);
-  const totalDeposits = BigInt(escrowAccount.totalDeposits.toString());
-  const totalClaimed = BigInt(escrowAccount.totalClaimed.toString());
-  const availableBalance = accountLamports - BigInt(rentExemptMinimum);
+  const accountLamports = BigInt(accountInfo.lamports)
+  const totalDeposits = BigInt(escrowAccount.totalDeposits.toString())
+  const totalClaimed = BigInt(escrowAccount.totalClaimed.toString())
+  const availableBalance = accountLamports - BigInt(rentExemptMinimum)
 
   return {
     totalDeposits,
     totalClaimed,
     availableBalance: availableBalance > 0n ? availableBalance : 0n,
     accountLamports,
-  };
+  }
 }
 
 export async function withdrawFees(amountLamports: bigint): Promise<string> {
-  const { idl, programId } = await getIdlAndProgramId();
-  const adminKeypair = await loadAdminKeypair();
+  const { idl, programId } = await getIdlAndProgramId()
+  const adminKeypair = await loadAdminKeypair()
 
   const wallet = {
     publicKey: adminKeypair.publicKey,
     signTransaction: async (tx: any) => tx,
     signAllTransactions: async (txs: any[]) => txs,
-  };
+  }
 
-  const provider = new AnchorProvider(connection, wallet as any, {});
-  const program = new Program(idl as StorachaSolProgram, provider);
+  const provider = new AnchorProvider(connection, wallet as any, {})
+  const program = new Program(idl as StorachaSolProgram, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
     programId,
-  );
+  )
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow")],
+    [Buffer.from('escrow')],
     programId,
-  );
+  )
 
   // Fetch config to get withdrawal wallet
   const configAccount = await (
     program.account as unknown as {
-      config: { fetch: (address: web3.PublicKey) => Promise<ConfigAccount> };
+      config: { fetch: (address: web3.PublicKey) => Promise<ConfigAccount> }
     }
-  ).config.fetch(configPda);
-  const withdrawalWallet = configAccount.withdrawalWallet;
+  ).config.fetch(configPda)
+  const withdrawalWallet = configAccount.withdrawalWallet
 
   const withdrawIx = await program.methods
     .withdrawFees(new BN(amountLamports.toString()))
@@ -426,29 +427,29 @@ export async function withdrawFees(amountLamports: bigint): Promise<string> {
       admin: adminKeypair.publicKey,
       withdrawalWallet: withdrawalWallet,
     })
-    .instruction();
+    .instruction()
 
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getLatestBlockhash()
 
-  const tx = new Transaction();
-  tx.add(withdrawIx);
-  tx.feePayer = adminKeypair.publicKey;
-  tx.recentBlockhash = blockhash;
+  const tx = new Transaction()
+  tx.add(withdrawIx)
+  tx.feePayer = adminKeypair.publicKey
+  tx.recentBlockhash = blockhash
 
-  tx.sign(adminKeypair);
+  tx.sign(adminKeypair)
 
   const sig = await connection.sendRawTransaction(tx.serialize(), {
     skipPreflight: false,
-    preflightCommitment: "confirmed",
-  });
+    preflightCommitment: 'confirmed',
+  })
 
-  await connection.confirmTransaction(sig, "confirmed");
+  await connection.confirmTransaction(sig, 'confirmed')
 
-  logger.info("Fees withdrawn", {
+  logger.info('Fees withdrawn', {
     amount: amountLamports.toString(),
     signature: sig,
     withdrawalWallet: withdrawalWallet.toBase58(),
-  });
+  })
 
-  return sig;
+  return sig
 }

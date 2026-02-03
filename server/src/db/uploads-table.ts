@@ -1,17 +1,17 @@
-import { and, desc, eq, inArray, lte, sql } from "drizzle-orm";
-import { PaginationContext } from "../types.js";
-import { logger } from "../utils/logger.js";
-import { db } from "./db.js";
-import { transaction, uploads } from "./schema.js";
+import { and, desc, eq, inArray, lte, sql } from 'drizzle-orm'
+import { PaginationContext } from '../types.js'
+import { logger } from '../utils/logger.js'
+import { db } from './db.js'
+import { transaction, uploads } from './schema.js'
 
 type TransactionData = {
-  depositId: number;
-  contentCid: string;
-  transactionHash: string;
-  transactionType: "initial_deposit" | "renewal";
-  amountInLamports: number;
-  durationDays: number;
-};
+  depositId: number
+  contentCid: string
+  transactionHash: string
+  transactionType: 'initial_deposit' | 'renewal'
+  amountInLamports: number
+  durationDays: number
+}
 
 /**
  * Get transactions related to a user addresss
@@ -29,13 +29,13 @@ export const getUserHistory = async (
   ctx?: PaginationContext,
 ) => {
   try {
-    const userAddress = wallet.toLowerCase();
-    const offset = (page - 1) * limit;
+    const userAddress = wallet.toLowerCase()
+    const offset = (page - 1) * limit
 
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddress));
+      .where(eq(uploads.depositKey, userAddress))
 
     const data = await db
       .select()
@@ -43,13 +43,13 @@ export const getUserHistory = async (
       .where(eq(uploads.depositKey, userAddress))
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
 
-    const total = Number(count);
-    const totalPages = Math.ceil(total / limit);
+    const total = Number(count)
+    const totalPages = Math.ceil(total / limit)
 
     const buildPageUrl = (p: number) =>
-      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`;
+      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`
 
     return {
       data,
@@ -59,14 +59,14 @@ export const getUserHistory = async (
       totalPages,
       next: page < totalPages ? buildPageUrl(page + 1) : null,
       prev: page > 1 ? buildPageUrl(page - 1) : null,
-    };
+    }
   } catch (err) {
-    logger.error("Error getting user history", {
+    logger.error('Error getting user history', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Find uploads that will expire in X days and haven't been warned yet
@@ -75,31 +75,31 @@ export const getUserHistory = async (
  */
 const getUploadsNeedingWarning = async (daysUntilExpiration: number = 7) => {
   try {
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + daysUntilExpiration);
-    const targetDateString = targetDate.toISOString().split("T")[0];
+    const targetDate = new Date()
+    targetDate.setDate(targetDate.getDate() + daysUntilExpiration)
+    const targetDateString = targetDate.toISOString().split('T')[0]
 
     const results = await db
       .select()
       .from(uploads)
       .where(
         and(
-          eq(uploads.deletionStatus, "active"),
+          eq(uploads.deletionStatus, 'active'),
           lte(sql`DATE(${uploads.expiresAt})`, sql`DATE(${targetDateString})`),
           sql`${uploads.userEmail} IS NOT NULL`,
           sql`${uploads.userEmail} != ''`,
           sql`${uploads.warningSentAt} IS NULL`,
         ),
-      );
+      )
 
-    return results;
+    return results
   } catch (err) {
-    logger.error("Error getting uploads needing warning", {
+    logger.error('Error getting uploads needing warning', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Group uploads by user email for batched expiration warnings
@@ -110,27 +110,27 @@ export const getUploadsGroupedByEmail = async (
   daysUntilExpiration: number = 7,
 ) => {
   try {
-    const uploadsList = await getUploadsNeedingWarning(daysUntilExpiration);
-    if (!uploadsList) return null;
+    const uploadsList = await getUploadsNeedingWarning(daysUntilExpiration)
+    if (!uploadsList) return null
 
-    const grouped = new Map<string, typeof uploadsList>();
+    const grouped = new Map<string, typeof uploadsList>()
 
     for (const upload of uploadsList) {
-      if (!upload.userEmail) continue;
+      if (!upload.userEmail) continue
 
-      const existing = grouped.get(upload.userEmail) || [];
-      existing.push(upload);
-      grouped.set(upload.userEmail, existing);
+      const existing = grouped.get(upload.userEmail) || []
+      existing.push(upload)
+      grouped.set(upload.userEmail, existing)
     }
 
-    return grouped;
+    return grouped
   } catch (err) {
-    logger.error("Error grouping uploads by email", {
+    logger.error('Error grouping uploads by email', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Find deposits that have already expired
@@ -138,7 +138,7 @@ export const getUploadsGroupedByEmail = async (
  */
 export const getExpiredDeposits = async () => {
   try {
-    const now = new Date().toISOString().split("T")[0];
+    const now = new Date().toISOString().split('T')[0]
 
     const deposits = await db
       .select()
@@ -148,16 +148,16 @@ export const getExpiredDeposits = async () => {
           sql`DATE(${uploads.expiresAt}) < DATE(${now})`,
           sql`${uploads.deletionStatus} IN ('active', 'warned')`,
         ),
-      );
+      )
 
-    return deposits;
+    return deposits
   } catch (err) {
-    logger.error("Error getting expired deposits", {
+    logger.error('Error getting expired deposits', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Update the deletion status of a deposit
@@ -167,23 +167,23 @@ export const getExpiredDeposits = async () => {
  */
 export const updateDeletionStatus = async (
   depositId: number,
-  status: "active" | "warned" | "deleted",
+  status: 'active' | 'warned' | 'deleted',
 ) => {
   try {
     const updated = await db
       .update(uploads)
       .set({ deletionStatus: status })
       .where(eq(uploads.id, depositId))
-      .returning();
+      .returning()
 
-    return updated[0] || null;
+    return updated[0] || null
   } catch (err) {
-    logger.error("Error updating deletion status", {
+    logger.error('Error updating deletion status', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Batch update warningSentAt for multiple deposits
@@ -192,24 +192,24 @@ export const updateDeletionStatus = async (
  */
 export const batchUpdateWarningSentAt = async (depositIds: number[]) => {
   try {
-    const now = new Date().toISOString();
+    const now = new Date().toISOString()
     const updated = await db
       .update(uploads)
       .set({
         warningSentAt: now,
-        deletionStatus: "warned",
+        deletionStatus: 'warned',
       })
       .where(inArray(uploads.id, depositIds))
-      .returning();
+      .returning()
 
-    return updated.length;
+    return updated.length
   } catch (err) {
-    logger.error("Error batch updating warningSentAt", {
+    logger.error('Error batch updating warningSentAt', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return 0;
+    })
+    return 0
   }
-};
+}
 
 /**
  *
@@ -223,44 +223,43 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
       .select()
       .from(uploads)
       .where(eq(uploads.contentCid, cid))
-      .limit(1);
+      .limit(1)
 
     if (!existingUpload || existingUpload.length === 0) {
-      logger.warn("File upload with CID does not exist", { cid });
-      return null;
+      logger.warn('File upload with CID does not exist', { cid })
+      return null
     }
 
-    const deposit = existingUpload[0];
+    const deposit = existingUpload[0]
 
     const uploadExpirationDate = deposit.expiresAt
       ? new Date(deposit.expiresAt)
-      : new Date();
-    const today = new Date();
-    const baseDate =
-      uploadExpirationDate > today ? uploadExpirationDate : today;
-    baseDate.setUTCDate(baseDate.getDate() + duration);
-    const newStorageExpirationDate = baseDate.toISOString().split("T")[0];
+      : new Date()
+    const today = new Date()
+    const baseDate = uploadExpirationDate > today ? uploadExpirationDate : today
+    baseDate.setUTCDate(baseDate.getDate() + duration)
+    const newStorageExpirationDate = baseDate.toISOString().split('T')[0]
 
-    const newDuration = deposit.durationDays + duration;
+    const newDuration = deposit.durationDays + duration
     const deposits = await db
       .update(uploads)
       .set({
         durationDays: newDuration,
-        deletionStatus: "active",
+        deletionStatus: 'active',
         warningSentAt: null,
         expiresAt: newStorageExpirationDate,
       })
       .where(eq(uploads.contentCid, cid))
-      .returning();
+      .returning()
 
-    return deposits[0] || null;
+    return deposits[0] || null
   } catch (error) {
-    logger.error("Failed to renew storage duration", {
+    logger.error('Failed to renew storage duration', {
       error: error instanceof Error ? error.message : String(error),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Save a transaction for an upload
@@ -277,16 +276,16 @@ export const saveTransaction = async (data: TransactionData) => {
         amountInLamports: data.amountInLamports,
         durationDays: data.durationDays,
       })
-      .returning();
+      .returning()
 
-    return result[0] || null;
+    return result[0] || null
   } catch (err) {
-    logger.error("Error saving transaction", {
+    logger.error('Error saving transaction', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Get all transactions for an upload (by deposit ID)
@@ -298,16 +297,16 @@ const getUploadTransactions = async (depositId: number) => {
       .select()
       .from(transaction)
       .where(eq(transaction.depositId, depositId))
-      .orderBy(transaction.createdAt);
+      .orderBy(transaction.createdAt)
 
-    return transactions;
+    return transactions
   } catch (err) {
-    logger.error("Error getting upload transactions", {
+    logger.error('Error getting upload transactions', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
 
 /**
  * Get all transactions for a specific CID
@@ -318,15 +317,15 @@ export const getTransactionsForCID = async (cid: string) => {
       .select()
       .from(uploads)
       .where(eq(uploads.contentCid, cid))
-      .limit(1);
+      .limit(1)
 
-    if (!deposit || deposit.length === 0) return null;
+    if (!deposit || deposit.length === 0) return null
 
-    return await getUploadTransactions(deposit[0].id);
+    return await getUploadTransactions(deposit[0].id)
   } catch (err) {
-    logger.error("Error getting transactions for CID", {
+    logger.error('Error getting transactions for CID', {
       error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
+    })
+    return null
   }
-};
+}
