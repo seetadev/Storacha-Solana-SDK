@@ -104,7 +104,9 @@ export const getUnresolvedAlerts = async (req: Request, res: Response) => {
  */
 export const resolveAlert = async (req: Request, res: Response) => {
   try {
-    const alertId = parseInt(req.params.id);
+    const alertId = parseInt(
+      Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
+    );
 
     const storachaClient = await initStorachaClient();
     const usageService = new UsageService(storachaClient);
