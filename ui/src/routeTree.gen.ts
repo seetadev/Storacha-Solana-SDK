@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as RenewRouteImport } from './routes/renew'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as LayoutAppTransactionsRouteImport } from './routes/_layout/app/
 import { Route as LayoutAppMetricsRouteImport } from './routes/_layout/app/metrics'
 import { Route as LayoutAppHistoryRouteImport } from './routes/_layout/app/history'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RenewRoute = RenewRouteImport.update({
   id: '/renew',
   path: '/renew',
@@ -55,6 +61,7 @@ const LayoutAppHistoryRoute = LayoutAppHistoryRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/renew': typeof RenewRoute
+  '/terms': typeof TermsRoute
   '/app/history': typeof LayoutAppHistoryRoute
   '/app/metrics': typeof LayoutAppMetricsRoute
   '/app/transactions': typeof LayoutAppTransactionsRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/renew': typeof RenewRoute
+  '/terms': typeof TermsRoute
   '/app/history': typeof LayoutAppHistoryRoute
   '/app/metrics': typeof LayoutAppMetricsRoute
   '/app/transactions': typeof LayoutAppTransactionsRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_layout': typeof LayoutRouteWithChildren
   '/renew': typeof RenewRoute
+  '/terms': typeof TermsRoute
   '/_layout/app/history': typeof LayoutAppHistoryRoute
   '/_layout/app/metrics': typeof LayoutAppMetricsRoute
   '/_layout/app/transactions': typeof LayoutAppTransactionsRoute
@@ -83,6 +92,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/renew'
+    | '/terms'
     | '/app/history'
     | '/app/metrics'
     | '/app/transactions'
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/renew'
+    | '/terms'
     | '/app/history'
     | '/app/metrics'
     | '/app/transactions'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_layout'
     | '/renew'
+    | '/terms'
     | '/_layout/app/history'
     | '/_layout/app/metrics'
     | '/_layout/app/transactions'
@@ -110,10 +122,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LayoutRoute: typeof LayoutRouteWithChildren
   RenewRoute: typeof RenewRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/renew': {
       id: '/renew'
       path: '/renew'
@@ -187,6 +207,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LayoutRoute: LayoutRouteWithChildren,
   RenewRoute: RenewRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

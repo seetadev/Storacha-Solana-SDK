@@ -47,7 +47,7 @@ export const HomeFooter = () => {
                 bgGradient="linear(to-r, #fff, var(--gray-500))"
                 bgClip="text"
               >
-                Keep.
+                toju.
               </Text>
               <Text color="var(--text-muted)" maxW="300px" lineHeight="1.6">
                 The crypto-native bridge to decentralized storage on Filecoin.
@@ -120,7 +120,11 @@ export const HomeFooter = () => {
               Community
             </Text>
             <Stack spacing="0.8em">
-              <LinkItem href="#" icon={<GithubLogoIcon />}>
+              <LinkItem
+                href="https://github.com/seetadev/storacha-solana-sdk"
+                isExternal
+                icon={<GithubLogoIcon />}
+              >
                 GitHub
               </LinkItem>
               <LinkItem href="#" icon={<TwitterLogoIcon />}>
@@ -147,22 +151,14 @@ export const HomeFooter = () => {
             &copy; {new Date().getFullYear()} toju.
           </Text>
           <HStack spacing="2em">
-            <Text
+            <Link
+              href="/terms"
               fontSize="sm"
               color="var(--gray-600)"
-              cursor="pointer"
-              _hover={{ color: 'var(--text-muted)' }}
-            >
-              Privacy
-            </Text>
-            <Text
-              fontSize="sm"
-              color="var(--gray-600)"
-              cursor="pointer"
-              _hover={{ color: 'var(--text-muted)' }}
+              _hover={{ color: 'var(--text-muted)', textDecor: 'none' }}
             >
               Terms
-            </Text>
+            </Link>
           </HStack>
         </Box>
       </Container>
