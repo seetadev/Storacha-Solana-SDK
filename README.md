@@ -95,6 +95,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 **Production (Mainnet):**
 - [Website](https://toju.network)
 - [API](https://api.toju.network/health)
+- [Mainnet Demo](https://youtu.be/H6Ihbspmb6o)
 
 **Staging (Testnet):**
 - [Website](https://staging.toju.network)
