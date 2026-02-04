@@ -1,3 +1,8 @@
+import { useAuthContext } from '@/hooks/context'
+import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
+import { useSolPrice } from '@/hooks/sol-price'
+import type { State } from '@/lib/types'
+import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -22,11 +27,6 @@ import dayjs from 'dayjs'
 import useEmblaCarousel from 'embla-carousel-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { useAuthContext } from '@/hooks/context'
-import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
-import { useSolPrice } from '@/hooks/sol-price'
-import type { State } from '@/lib/types'
-import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
@@ -48,7 +48,7 @@ export const Renew = () => {
       : 'https://staging-api.toju.network')
 
   const shouldUseProxy = !IS_DEV && configuredNetwork === 'mainnet-beta'
-  const rpc = shouldUseProxy ? `${apiEndpoint}/solana/rpc` : undefined
+  const rpc = shouldUseProxy ? import.meta.env.VITE_HELIUS_PROXY_URL : undefined
 
   const client = useUpload(
     configuredNetwork,
