@@ -65,9 +65,12 @@ export const uploadFile = async (req: Request, res: Response) => {
     Sentry.captureException(error)
     logger.error('Error uploading file to Storacha', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      cause: error?.cause,
     })
     res.status(400).json({
       message: 'Error uploading file to directory',
+      error: error instanceof Error ? error.message : String(error),
     })
   }
 }
@@ -123,12 +126,17 @@ export const uploadFiles = async (req: Request, res: Response) => {
       cid: uploadedCID,
       object: uploadObject,
     })
-  } catch (error) {
+  } catch (error: any) {
     Sentry.captureException(error)
     logger.error('Error uploading files', {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      cause: error?.cause,
     })
-    res.status(400).json({ message: 'Error uploading files' })
+    res.status(400).json({
+      message: 'Error uploading files',
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
 }
 

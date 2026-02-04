@@ -87,16 +87,24 @@ export const Upload = () => {
   const configuredNetwork =
     import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
 
-  const client = useDeposit(configuredNetwork, IS_DEV)
-
   const apiEndpoint =
     import.meta.env.VITE_API_URL ||
     (configuredNetwork === 'mainnet-beta'
       ? 'https://api.toju.network'
       : 'https://staging-api.toju.network')
 
-  const solanaRpcUrl =
-    configuredNetwork === 'mainnet-beta'
+  const shouldUseProxy = !IS_DEV && configuredNetwork === 'mainnet-beta'
+  const rpcUrl = shouldUseProxy ? `${apiEndpoint}/solana/rpc` : undefined
+
+  const client = useDeposit(
+    configuredNetwork,
+    IS_DEV ? apiEndpoint : undefined,
+    rpcUrl,
+  )
+
+  const solanaRpcUrl = shouldUseProxy
+    ? rpcUrl!
+    : configuredNetwork === 'mainnet-beta'
       ? 'https://api.mainnet-beta.solana.com'
       : 'https://api.testnet.solana.com'
 

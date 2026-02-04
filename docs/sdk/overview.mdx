@@ -130,6 +130,36 @@ The environment parameter determines which Solana network to use:
 - `testnet`: Public testing with test SOL
 - `mainnet`: Production with real SOL
 
+### Custom RPC URL (Optional)
+
+By default, the SDK uses public Solana RPC endpoints. For production applications, you should use your own RPC provider (like [Helius](https://helius.dev) or [QuickNode](https://quicknode.com)) to avoid rate limits:
+
+```typescript
+import { useUpload } from '@toju.network/sol';
+
+// With custom RPC URL
+const client = useUpload(
+  Environment.mainnet,
+  undefined, // API endpoint (optional)
+  'https://mainnet.helius-rpc.com/?api-key=YOUR_API_KEY' // Custom RPC URL
+);
+```
+
+<Warning>
+  **Security Note:** If you're using a paid RPC provider, don't expose your API key in frontend code! Instead, create a proxy endpoint on your backend that forwards RPC requests to your provider.
+</Warning>
+
+For backend/server-side usage:
+
+```typescript
+import { Client, Environment } from '@toju.network/sol';
+
+const client = new Client({
+  environment: Environment.mainnet,
+  rpcUrl: process.env.SOLANA_RPC_URL, // From environment variable
+});
+```
+
 ## Common Patterns
 
 ### Checking Balance Before Upload

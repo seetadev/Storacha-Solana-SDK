@@ -42,6 +42,8 @@ export function getRpcUrl(env: Environment): string {
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
   environment: Environment
+  /** Optional custom RPC URL (overrides default public RPC) */
+  rpcUrl?: string
   /** Optional custom API endpoint (useful for local development) you may never need this */
   endpoint?: string
 }
@@ -69,7 +71,7 @@ export class Client {
   private apiEndpoint: string
 
   constructor(options: ClientOptions) {
-    this.rpcUrl = getRpcUrl(options.environment)
+    this.rpcUrl = options.rpcUrl || getRpcUrl(options.environment)
     this.apiEndpoint = options.endpoint || getEndpointForRpc(this.rpcUrl)
   }
 
