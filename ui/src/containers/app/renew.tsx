@@ -48,7 +48,7 @@ export const Renew = () => {
       : 'https://staging-api.toju.network')
 
   const shouldUseProxy = !IS_DEV && configuredNetwork === 'mainnet-beta'
-  const rpc = shouldUseProxy ? `${apiEndpoint}/solana/rpc` : undefined
+  const rpc = shouldUseProxy ? import.meta.env.VITE_HELIUS_PROXY_URL : undefined
 
   const client = useUpload(
     configuredNetwork,

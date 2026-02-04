@@ -94,7 +94,9 @@ export const Upload = () => {
       : 'https://staging-api.toju.network')
 
   const shouldUseProxy = !IS_DEV && configuredNetwork === 'mainnet-beta'
-  const rpcUrl = shouldUseProxy ? `${apiEndpoint}/solana/rpc` : undefined
+  const rpcUrl = shouldUseProxy
+    ? import.meta.env.VITE_HELIUS_PROXY_URL
+    : undefined
 
   const client = useDeposit(
     configuredNetwork,
