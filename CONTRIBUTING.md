@@ -274,6 +274,7 @@ pnpm check:ci
 - `pnpm lint` - Lint code with Biome (auto-fix)
 - `pnpm lint:check` - Check linting without fixing
 - `pnpm check` - Run format + lint with auto-fix
+- `pnpm fix` - Fix all issues including unsafe fixes (import sorting, etc.)
 - `pnpm check:ci` - Run CI checks (used by GitHub Actions)
 
 ## Commit Message Guidelines
