@@ -127,10 +127,18 @@ export const HomeFooter = () => {
               >
                 GitHub
               </LinkItem>
-              <LinkItem href="#" icon={<TwitterLogoIcon />}>
+              <LinkItem
+                href="https://x.com/usetoju"
+                isExternal
+                icon={<TwitterLogoIcon />}
+              >
                 Twitter
               </LinkItem>
-              <LinkItem href="#" icon={<DiscordLogoIcon />}>
+              <LinkItem
+                href="https://discord.gg/5YPxMnAf"
+                isExternal
+                icon={<DiscordLogoIcon />}
+              >
                 Discord
               </LinkItem>
             </Stack>
