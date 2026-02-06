@@ -37,15 +37,11 @@ pub struct Deposit {
     pub deposit_amount: u64, // 8 bytes
     /// Solana slot when the deposit was made
     pub deposit_slot: u64, // 8 bytes
-    /// Last slot when rewards were claimed (for linear release calculation)
-    pub last_claimed_slot: u64, // 8 bytes
-    /// Total amount claimed so far in lamports
-    pub total_claimed: u64, // 8 bytes
 }
 
 impl Deposit {
     pub fn len(content_cid: &str) -> usize {
-        8 + 32 + 4 + content_cid.len() + 8 + 4 + 8 + 8 + 8 + 8
+        8 + 32 + 4 + content_cid.len() + 8 + 4 + 8 + 8
     }
 }
 
@@ -54,12 +50,10 @@ impl Deposit {
 pub struct EscrowVault {
     /// Total lamports deposited by all users
     pub total_deposits: u64, // 8 bytes
-    /// Total lamports claimed by service providers
-    pub total_claimed: u64, // 8 bytes
 }
 
 impl EscrowVault {
-    pub const LEN: usize = 8 + 8 + 8; // discriminator + fields
+    pub const LEN: usize = 8 + 8; // discriminator + fields
 }
 
 // ============================================================================
@@ -146,25 +140,6 @@ pub struct ExtendStorageDuration<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/// Context for service provider claiming rewards
-#[derive(Accounts)]
-pub struct ClaimRewards<'info> {
-    #[account(mut)]
-    pub deposit: Account<'info, Deposit>,
-
-    #[account(mut, seeds = [b"escrow"], bump)]
-    pub escrow_vault: Account<'info, EscrowVault>,
-
-    #[account(seeds = [b"config"], bump)]
-    pub config: Account<'info, Config>,
-
-    pub service_provider: Signer<'info>,
-
-    /// CHECK: This can be any wallet address provided by the service provider
-    #[account(mut)]
-    pub service_provider_wallet: UncheckedAccount<'info>,
-}
-
 /// Context for admin withdrawing accumulated fees
 #[derive(Accounts)]
 pub struct WithdrawFees<'info> {
@@ -224,14 +199,6 @@ pub struct StorageDurationExtended {
 }
 
 #[event]
-pub struct RewardsClaimed {
-    pub deposit_key: Pubkey,
-    pub service_provider: Pubkey,
-    pub amount: u64,
-    pub slot: u64,
-}
-
-#[event]
 pub struct RateUpdated {
     pub old_rate: u64,
     pub new_rate: u64,
@@ -265,9 +232,6 @@ pub enum StorachaError {
     #[msg("Only the program admin can perform this action")]
     UnauthorizedAdmin,
 
-    #[msg("No rewards are available to claim at this time")]
-    NothingToClaim,
-
     #[msg("Storage duration has expired")]
     StorageExpired,
 
@@ -288,4 +252,7 @@ pub enum StorachaError {
 
     #[msg("Only the original depositor can extend the duration for this upload")]
     UnauthorizedUser,
+
+    #[msg("Withdrawal wallet does not match the configured withdrawal wallet")]
+    InvalidWithdrawalWallet,
 }

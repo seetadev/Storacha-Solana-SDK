@@ -25,7 +25,6 @@ pub mod toju {
 
         let escrow = &mut ctx.accounts.escrow_vault;
         escrow.total_deposits = 0;
-        escrow.total_claimed = 0;
 
         Ok(())
     }
@@ -46,8 +45,12 @@ pub mod toju {
             StorachaError::DurationTooShort
         );
 
-        // Calculate required amount
-        let required_amount = file_size * duration_days as u64 * config.rate_per_byte_per_day;
+        let size_duration = file_size
+            .checked_mul(duration_days as u64)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
+        let required_amount = size_duration
+            .checked_mul(config.rate_per_byte_per_day)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
 
         require!(
             deposit_amount >= required_amount,
@@ -74,14 +77,13 @@ pub mod toju {
         deposit.duration_days = duration_days;
         deposit.deposit_amount = deposit_amount;
         deposit.deposit_slot = Clock::get()?.slot;
-        deposit.last_claimed_slot = Clock::get()?.slot;
-        deposit.total_claimed = 0;
 
-        // Update escrow vault totals
         let escrow = &mut ctx.accounts.escrow_vault;
-        escrow.total_deposits = escrow.total_deposits.checked_add(deposit_amount).unwrap();
+        escrow.total_deposits = escrow
+            .total_deposits
+            .checked_add(deposit_amount)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
 
-        // Emit event
         emit!(DepositCreated {
             user: ctx.accounts.user.key(),
             content_cid,
@@ -106,7 +108,14 @@ pub mod toju {
 
         require!(duration > 0, StorachaError::InvalidDuration);
 
-        let required_cost = deposit.file_size * duration as u64 * config.rate_per_byte_per_day;
+        let size_duration = deposit
+            .file_size
+            .checked_mul(duration as u64)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
+        let required_cost = size_duration
+            .checked_mul(config.rate_per_byte_per_day)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
+
         require!(
             storage_extension_cost >= required_cost,
             StorachaError::InsufficientDeposit
@@ -123,17 +132,20 @@ pub mod toju {
             anchor_lang::system_program::transfer(cpi_ctx, storage_extension_cost)?;
         }
 
-        deposit.duration_days = deposit.duration_days.checked_add(duration).unwrap();
+        deposit.duration_days = deposit
+            .duration_days
+            .checked_add(duration)
+            .ok_or(StorachaError::ArithmeticOverflow)?;
         deposit.deposit_amount = deposit
             .deposit_amount
             .checked_add(storage_extension_cost)
-            .unwrap();
+            .ok_or(StorachaError::ArithmeticOverflow)?;
 
         let escrow = &mut ctx.accounts.escrow_vault;
         escrow.total_deposits = escrow
             .total_deposits
             .checked_add(storage_extension_cost)
-            .unwrap();
+            .ok_or(StorachaError::ArithmeticOverflow)?;
 
         emit!(StorageDurationExtended {
             content_cid,
@@ -143,58 +155,6 @@ pub mod toju {
             slot: Clock::get()?.slot,
             extended_duration: deposit.duration_days,
             total_amount: deposit.deposit_amount
-        });
-        
-        Ok(())
-    }
-
-    /// Service provider claims accrued rewards (linear release over time)
-    pub fn claim_rewards(ctx: Context<ClaimRewards>) -> Result<()> {
-        let deposit = &mut ctx.accounts.deposit;
-        let current_slot = Clock::get()?.slot;
-
-        // Calculate slots elapsed since last claim
-        let slots_since_last_claim = current_slot.saturating_sub(deposit.last_claimed_slot);
-
-        // Calculate total slots for the entire duration (assuming ~2.5 slots per second, ~86400 seconds per day)
-        let slots_per_day = 216_000; // Approximate
-        let total_slots = deposit.duration_days as u64 * slots_per_day;
-
-        // Calculate claimable amount (linear release)
-        let claimable_per_slot = deposit.deposit_amount / total_slots;
-        let claimable_amount = claimable_per_slot * slots_since_last_claim;
-
-        // Ensure we don't claim more than deposited
-        let remaining_amount = deposit.deposit_amount.saturating_sub(deposit.total_claimed);
-        let actual_claim = claimable_amount.min(remaining_amount);
-
-        require!(actual_claim > 0, StorachaError::NothingToClaim);
-
-        // Transfer from escrow vault to service provider
-        **ctx
-            .accounts
-            .escrow_vault
-            .to_account_info()
-            .try_borrow_mut_lamports()? -= actual_claim;
-        **ctx
-            .accounts
-            .service_provider_wallet
-            .to_account_info()
-            .try_borrow_mut_lamports()? += actual_claim;
-
-        // Update deposit state
-        deposit.last_claimed_slot = current_slot;
-        deposit.total_claimed += actual_claim;
-
-        // Update escrow vault
-        let escrow = &mut ctx.accounts.escrow_vault;
-        escrow.total_claimed = escrow.total_claimed.checked_add(actual_claim).unwrap();
-
-        emit!(RewardsClaimed {
-            deposit_key: deposit.deposit_key,
-            service_provider: ctx.accounts.service_provider.key(),
-            amount: actual_claim,
-            slot: current_slot,
         });
 
         Ok(())
@@ -207,7 +167,19 @@ pub mod toju {
             StorachaError::UnauthorizedAdmin
         );
 
-        // Transfer from escrow vault to withdrawal wallet
+        // validate withdrawal wallet
+        require!(
+            ctx.accounts.withdrawal_wallet.key() == ctx.accounts.config.withdrawal_wallet,
+            StorachaError::InvalidWithdrawalWallet
+        );
+
+        // ensure escrow has sufficient funds
+        let escrow_balance = ctx.accounts.escrow_vault.to_account_info().lamports();
+        require!(
+            escrow_balance >= amount,
+            StorachaError::InsufficientEscrowFunds
+        );
+
         **ctx
             .accounts
             .escrow_vault
