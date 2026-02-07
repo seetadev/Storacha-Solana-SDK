@@ -1,6 +1,3 @@
-<a href="https://filecoin.drips.network/app/projects/github/seetadev/Storacha-Solana-SDK" target="_blank"><img src="https://filecoin.drips.network/api/embed/project/https%3A%2F%2Fgithub.com%2Fseetadev%2FStoracha-Solana-SDK/support.png?background=dark&style=drips&text=me&stat=support" alt="Support Storacha-Solana-SDK on drips.network" height="32"></a>
-
-
 # toju (keep) - Decentralized Storage on Solana Powered by Storacha & IPFS
 
 **toju** is a pay-as-you-go decentralized storage solution for Solana that enables developers to store data on Filecoin-backed IPFS via Storacha, paying directly with native SOL — no credit cards, no subscriptions.
@@ -115,4 +112,6 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 ## License
 
 Apache-2.0
+
+<a href="https://filecoin.drips.network/app/projects/github/seetadev/Storacha-Solana-SDK" target="_blank"><img src="https://filecoin.drips.network/api/embed/project/https%3A%2F%2Fgithub.com%2Fseetadev%2FStoracha-Solana-SDK/support.png?background=dark&style=drips&text=me&stat=support" alt="Support Storacha-Solana-SDK on drips.network" height="32"></a>
 
