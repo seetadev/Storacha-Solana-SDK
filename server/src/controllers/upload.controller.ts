@@ -234,7 +234,7 @@ export const deposit = async (req: Request, res: Response) => {
     const depositMetadata = {
       depositAmount: amountInLamports,
       durationDays: duration_days,
-      depositKey: publicKey.toLowerCase(),
+      depositKey: publicKey,
       userEmail: userEmail || null,
       fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',

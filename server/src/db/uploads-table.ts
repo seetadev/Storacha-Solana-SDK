@@ -29,7 +29,7 @@ export const getUserHistory = async (
   ctx?: PaginationContext,
 ) => {
   try {
-    const userAddress = wallet.toLowerCase()
+    const userAddress = wallet
     const offset = (page - 1) * limit
 
     const [{ count }] = await db
