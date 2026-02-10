@@ -6,6 +6,9 @@
     "ethers": "^6.16.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "knip": "^5.72.0",
+    "standard-version": "^9.5.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   }
 }
