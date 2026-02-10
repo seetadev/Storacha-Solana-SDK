@@ -145,36 +145,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
  */
 export const deposit = async (req: Request, res: Response) => {
   try {
-    // we're handling both single file and multiple files here as opposed to previous approach
-    const files = req.files as
-      | Express.Multer.File[]
-      | { [fieldname: string]: Express.Multer.File[] }
-    let fileArray: Express.Multer.File[] = []
-
-    if (Array.isArray(files)) {
-      fileArray = files
-    } else if (files && typeof files === 'object') {
-      const fileField = files.file || files.files
-      if (fileField && Array.isArray(fileField)) {
-        fileArray = fileField
-      } else {
-        return res.status(400).json({ message: 'No files selected' })
-      }
-    } else {
-      return res.status(400).json({ message: 'No files selected' })
-    }
-
-    if (fileArray.length === 0) {
-      return res.status(400).json({ message: 'No files selected' })
-    }
-
-    const fileMap: Record<string, Uint8Array> = {}
-    let totalSize = 0
-
-    for (const file of fileArray) {
-      fileMap[file.originalname] = new Uint8Array(file.buffer)
-      totalSize += file.size
-    }
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
     const { publicKey, duration, userEmail } = req.body
     const durationInSeconds = parseInt(duration as string, 10)
@@ -262,6 +233,152 @@ export const deposit = async (req: Request, res: Response) => {
     })
     res.status(400).json({
       message: 'Error making a deposit',
+    })
+  }
+}
+
+/** the return type  */
+type FileMeta = {
+  totalSize: number
+  fileArray: Express.Multer.File[]
+  fileMap: Record<string, Uint8Array>
+}
+
+/**
+ * Processes uploaded files from multer into a file map and calculates total size
+ * Handles both single file and multiple file uploads
+ *
+ * @param files - Multer files (array or object with file fields)
+ * @returns `FileMeta` containing fileMap (filename -> buffer), totalSize in bytes, and fileArray
+ * @throws Error if no files are provided
+ */
+const fileBuilder = (
+  files:
+    | Express.Multer.File[]
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined,
+): FileMeta => {
+  let fileArray: Express.Multer.File[] = []
+
+  if (Array.isArray(files)) {
+    fileArray = files
+  } else if (files && typeof files === 'object') {
+    const fileField = files.file || files.files
+    if (fileField && Array.isArray(fileField)) {
+      fileArray = fileField
+    } else {
+      throw new Error('No files selected')
+    }
+  } else {
+    throw new Error('No files selected')
+  }
+
+  if (fileArray.length === 0) throw new Error('No files selected')
+
+  const fileMap: Record<string, Uint8Array> = {}
+  let totalSize = 0
+
+  for (const file of fileArray) {
+    fileMap[file.originalname] = new Uint8Array(file.buffer)
+    totalSize += file.size
+  }
+
+  return {
+    fileMap,
+    totalSize,
+    fileArray,
+  }
+}
+
+/**
+ * Builds the USDFC payment metadata for upload transaction.
+ */
+export const depositUsdFC = async (req: Request, res: Response) => {
+  try {
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
+
+    const { walletAddress, duration, userEmail } = req.body
+    const durationInSeconds = parseInt(duration as string, 10)
+    const { ratePerBytePerDay } = await getPricingConfig()
+    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS)
+
+    const costUSD = totalSize * ratePerBytePerDay * duration_days
+
+    // TODO: verify USDFC uses 18 decimals (ERC-20 standard assumption)
+    // i think this is accurate though since USDFC is by design a ERC-20 token.
+    // contract: 0x80B98d3aa09ffff255c3ba4A241111Ff1262F045
+    const amountInUSDFC = BigInt(Math.floor(costUSD * 1e18))
+
+    Sentry.setUser({
+      id: walletAddress,
+      email: userEmail || undefined,
+    })
+
+    logger.info('USDFC deposit calculation', {
+      totalSize,
+      ratePerBytePerDay,
+      duration_days,
+      costUSD,
+      amountInUSDFC: amountInUSDFC.toString(),
+    })
+
+    const computedCID = await computeCID(fileMap)
+
+    Sentry.setContext('fil-upload', {
+      totalSize,
+      fileCount: fileArray.length,
+      duration: duration_days,
+      cid: computedCID,
+      chain: 'FIL',
+    })
+
+    Sentry.setTag('operation', 'deposit-usdfc')
+    Sentry.setTag('file_count', fileArray.length)
+    Sentry.setTag('payment_chain', 'fil')
+
+    // this is a reference to what i've seen in the filecoin-pin repo.
+    // javascript has another number type, apparently — BigNum/Int
+    if (amountInUSDFC <= 0n)
+      throw new Error(`Invalid deposit amount calculated: ${amountInUSDFC}`)
+
+    const durationNum = Number(duration)
+    if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
+
+    const backupExpirationDate = getExpiryDate(duration_days)
+
+    const depositMetadata = {
+      depositAmount: amountInUSDFC.toString(),
+      durationDays: duration_days,
+      depositKey: walletAddress,
+      userEmail: userEmail || null,
+      fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
+      fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
+      fileSize: totalSize,
+      expiresAt: backupExpirationDate,
+      paymentChain: 'fil',
+      paymentToken: 'USDFC',
+    }
+
+    res.status(200).json({
+      message: 'Payment details ready — transfer USDFC to proceed with upload',
+      cid: computedCID,
+      amountUSDFC: amountInUSDFC.toString(),
+      fileCount: fileArray.length,
+      totalSize: totalSize,
+      files: fileArray.map((f) => ({
+        name: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+      })),
+      depositMetadata,
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error making USDFC deposit', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    res.status(400).json({
+      message: 'Error making USDFC deposit',
     })
   }
 }
