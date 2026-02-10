@@ -11,10 +11,14 @@ export interface DepositMetadata {
   paymentToken: 'USDFC'
 }
 
+export type PaymentChain = 'sol' | 'fil'
+export type PaymentToken = 'SOL' | 'USDFC'
+
 export interface DepositResponse {
   message: string
   cid: string
   amountUSDFC: string
+  recipientAddress: string
   fileCount: number
   totalSize: number
   files: Array<{ name: string; size: number; type: string }>

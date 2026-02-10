@@ -89,11 +89,10 @@ export async function createDepositTxn(
           log.includes('already in use'),
         )
 
-        if (isDuplicateUpload) {
+        if (isDuplicateUpload)
           throw new Error(
             'This file has already been uploaded. You can find it in your dashboard.',
           )
-        }
 
         throw new Error(
           'Transaction failed during simulation. Please try again.',

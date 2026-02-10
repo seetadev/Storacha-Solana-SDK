@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
-import { uploads } from '../db/schema.js'
+import { configTable, uploads } from '../db/schema.js'
 import { getUserHistory, saveTransaction } from '../db/uploads-table.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
@@ -299,8 +299,13 @@ export const depositUsdFC = async (req: Request, res: Response) => {
 
     const { walletAddress, duration, userEmail } = req.body
     const durationInSeconds = parseInt(duration as string, 10)
+    const config = await db.select().from(configTable)
     const { ratePerBytePerDay } = await getPricingConfig()
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS)
+
+    if (!config[0].filecoinWallet) {
+      throw new Error('Filecoin wallet not configured')
+    }
 
     const costUSD = totalSize * ratePerBytePerDay * duration_days
 
@@ -363,6 +368,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       message: 'Payment details ready — transfer USDFC to proceed with upload',
       cid: computedCID,
       amountUSDFC: amountInUSDFC.toString(),
+      recipientAddress: config[0].filecoinWallet,
       fileCount: fileArray.length,
       totalSize: totalSize,
       files: fileArray.map((f) => ({
@@ -520,6 +526,127 @@ export const confirmUpload = async (req: Request, res: Response) => {
     })
     return res.status(500).json({
       message: 'Error confirming upload',
+    })
+  }
+}
+
+/**
+ * Verifies USDFC payment transaction and saves upload to database.
+ * Called by SDK after user signs and broadcasts USDFC transfer transaction.
+ *
+ * @param req.body.cid - Content identifier of the uploaded files
+ * @param req.body.transactionHash - Filecoin transaction hash of the USDFC transfer
+ * @param req.body.depositMetadata - Metadata from depositUsdFC response
+ * @returns Confirmation message with deposit record
+ *
+ * @remarks
+ * Transaction verification will be implemented with indexer (see #176).
+ * SDK handles file upload to Storacha separately via /upload/file(s) endpoints.
+ */
+export const verifyUsdFcPayment = async (req: Request, res: Response) => {
+  try {
+    const { cid, transactionHash, depositMetadata } = req.body
+
+    if (!cid || !transactionHash)
+      return res.status(400).json({
+        message: 'The CID and transaction hash are required',
+      })
+    if (!depositMetadata)
+      return res.status(400).json({
+        message: 'Deposit metadata for this USDFC transaction is required',
+      })
+
+    const existing = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
+      .limit(1)
+
+    if (existing.length > 0) {
+      if (!existing[0].transactionHash) {
+        const updated = await db
+          .update(uploads)
+          .set({ transactionHash: transactionHash })
+          .where(eq(uploads.contentCid, cid))
+          .returning()
+
+        await saveTransaction({
+          depositId: updated[0].id,
+          contentCid: cid,
+          transactionHash: transactionHash,
+          transactionType: 'initial_deposit',
+          amountInLamports: updated[0].depositAmount,
+          durationDays: updated[0].durationDays,
+        })
+
+        return res.status(200).json({
+          message: 'Transaction hash updated successfully',
+          deposit: updated[0],
+        })
+      }
+
+      return res.status(409).json({
+        message: 'This upload has already been confirmed',
+        deposit: existing[0],
+      })
+    }
+
+    const config = await db.select().from(configTable)
+    if (!config[0].filecoinWallet)
+      throw new Error('Filecoin wallet not configured')
+
+    // TODO: implement transaction verification with ethers.js
+    // 1. fetch transaction receipt from Filecoin RPC
+    // 2. verify: tx.to === config.filecoinWallet
+    // 3. verify: tx.value >= depositMetadata.depositAmount
+    // 4. verify: tx.status === 1 (successful)
+    // throw error if verification fails
+    // proper transaction verification/reconciliation would happen
+    // when we have the indexer setup. see https://github.com/seetadev/Storacha-Solana-SDK/issues/176
+    // for context.
+
+    const depositItem: typeof uploads.$inferInsert = {
+      depositAmount: depositMetadata.depositAmount,
+      durationDays: depositMetadata.durationDays,
+      contentCid: cid,
+      depositKey: depositMetadata.depositKey,
+      depositSlot: 0,
+      lastClaimedSlot: 0,
+      expiresAt: depositMetadata.expiresAt,
+      createdAt: new Date().toISOString(),
+      userEmail: depositMetadata.userEmail,
+      fileName: depositMetadata.fileName,
+      fileType: depositMetadata.fileType,
+      fileSize: depositMetadata.fileSize,
+      transactionHash: transactionHash,
+      deletionStatus: 'active',
+      warningSentAt: null,
+      paymentChain: 'fil',
+      paymentToken: 'USDFC',
+    }
+
+    const inserted = await db.insert(uploads).values(depositItem).returning()
+
+    await saveTransaction({
+      depositId: inserted[0].id,
+      contentCid: cid,
+      transactionHash: transactionHash,
+      transactionType: 'initial_deposit',
+      amountInLamports: Number(depositMetadata.depositAmount),
+      durationDays: inserted[0].durationDays,
+    })
+
+    return res.status(200).json({
+      message: 'USDFC payment verified and upload confirmed successfully',
+      deposit: inserted[0],
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error verifying USDFC payment', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res.status(500).json({
+      message: 'Error verifying USDFC payment',
     })
   }
 }
