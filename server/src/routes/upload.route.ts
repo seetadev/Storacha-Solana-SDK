@@ -13,6 +13,11 @@ uploadsRouter.post(
   uploadsController.deposit,
 )
 uploadsRouter.post(
+  '/deposit-usdfc',
+  upload.fields([{ name: 'file' }]),
+  uploadsController.depositUsdFC,
+)
+uploadsRouter.post(
   '/file',
   uploadLimiter,
   upload.single('file'),
