@@ -1,51 +1,11 @@
 {
   "name": "@toju.network/fil",
-  "version": "0.1.4",
+  "version": "0.0.0",
   "type": "module",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "!dist/**/*.js.map"
-  ],
-  "scripts": {
-    "build": "tsup src/index.ts --minify",
-    "dev": "pnpm build --watch",
-    "pack:local": "pnpm build && pnpm pack",
-    "knip": "knip"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/seetadev/storacha-solana-sdk.git"
-  },
-  "keywords": [
-    "solana",
-    "storacha",
-    "typescript",
-    "web3",
-    "ipfs",
-    "filecoin",
-    "decentralized-storage",
-    "blockchain"
-  ],
-  "author": "toju.network",
-  "license": "Apache-2.0",
-  "description": "Decentralized storage SDK for Filcoin via Storacha - pay with USDFC, store on IPFS",
-  "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "ethers": "^6.16.0",
-    "standard-version": "^9.5.0"
+    "ethers": "^6.16.0"
   },
   "devDependencies": {
-    "knip": "^5.72.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }
