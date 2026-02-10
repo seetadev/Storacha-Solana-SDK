@@ -1,6 +1,6 @@
-export const USDFC_ADDRESS = {
-  mainnet: '0xdc84FD2D9a8DCd7118Cd11A7577c818c4BF5a417',
-  calibration: '0xdc84FD2D9a8DCd7118Cd11A7577c818c4BF5a417',
+export const USDFC_CONTRACT_ADDRESS = {
+  mainnet: '0x80B98d3aa09ffff255c3ba4A241111Ff1262F045',
+  calibration: '0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0',
 } as const
 
 export const FILECOIN_RPC = {

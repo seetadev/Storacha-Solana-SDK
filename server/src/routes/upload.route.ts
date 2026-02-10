@@ -31,3 +31,4 @@ uploadsRouter.post(
 )
 uploadsRouter.get('/history', uploadsController.getUploadHistory)
 uploadsRouter.post('/confirm', uploadsController.confirmUpload)
+uploadsRouter.post('/fil/verify-payment', uploadsController.verifyUsdFcPayment)

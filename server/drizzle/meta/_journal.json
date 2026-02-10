@@ -50,6 +50,13 @@
       "when": 1739145600000,
       "tag": "0006_add_payment_chain_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1739232000000,
+      "tag": "0007_add_filecoin_wallet",
+      "breakpoints": true
     }
   ]
 }

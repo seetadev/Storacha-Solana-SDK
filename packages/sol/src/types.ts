@@ -5,6 +5,9 @@ import {
   Transaction as SolanaTransaction,
 } from '@solana/web3.js'
 
+export type PaymentChain = 'sol' | 'fil'
+export type PaymentToken = 'SOL' | 'USDFC'
+
 export interface ServerOptions {
   /** URL pointing to the server (mostly Storacha's) */
   url?: string

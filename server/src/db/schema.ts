@@ -16,6 +16,7 @@ export const configTable = pgTable('config', {
   ratePerBytePerDay: real('rate_per_byte_per_day').notNull(),
   minDurationDays: integer('min_duration_days').notNull(),
   withdrawalWallet: varchar('withdrawal_wallet', { length: 255 }).notNull(),
+  filecoinWallet: varchar('filecoin_wallet', { length: 42 }),
 })
 
 export const uploads = pgTable('uploads', {
@@ -40,6 +41,8 @@ export const uploads = pgTable('uploads', {
     .notNull()
     .default('active'),
   warningSentAt: date('warning_sent_at'),
+  paymentChain: varchar('payment_chain', { length: 10 }).default('sol'),
+  paymentToken: varchar('payment_token', { length: 10 }).default('SOL'),
 })
 
 export const transaction = pgTable('transaction', {
@@ -55,6 +58,8 @@ export const transaction = pgTable('transaction', {
   amountInLamports: bigint('amount_in_lamports', { mode: 'number' }).notNull(),
   durationDays: integer('duration_days').notNull(),
   createdAt: date('created_at', { mode: 'date' }).notNull().defaultNow(),
+  paymentChain: varchar('payment_chain', { length: 10 }).default('sol'),
+  paymentToken: varchar('payment_token', { length: 10 }).default('SOL'),
 })
 
 export const usage = pgTable('usage', {
