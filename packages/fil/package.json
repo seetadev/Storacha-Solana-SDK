@@ -1,0 +1,11 @@
+{
+  "name": "@toju.network/fil",
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "ethers": "^6.16.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
