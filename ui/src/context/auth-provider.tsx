@@ -66,7 +66,7 @@ const getEnvironment = (network: WalletAdapterNetwork): Environment => {
   }
 }
 
-const initialState: AuthContextValues = {
+const createInitialState = (): AuthContextValues => ({
   user: null,
   isAuthenticated: false,
   balance: null,
@@ -76,7 +76,7 @@ const initialState: AuthContextValues = {
   network: getEnvironment(
     getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK),
   ),
-}
+})
 
 const authReducer = (
   state: AuthContextValues,
@@ -142,9 +142,12 @@ export function WalletProviders({ children }: WalletProvidersProps) {
 
 const AuthProvider = ({ children }: AuthProviderProps) => {
   const { connected, publicKey, disconnect } = useWallet()
-  const [state, dispatch] = useReducer(authReducer, initialState)
+  const [state, dispatch] = useReducer(authReducer, null, createInitialState)
 
-  const endpoint = useMemo(() => clusterApiUrl(NETWORK), [])
+  const endpoint = useMemo(
+    () => clusterApiUrl(getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)),
+    [],
+  )
   const [connection] = useState(() => new Connection(endpoint, 'confirmed'))
 
   const refreshBalance = React.useCallback(async () => {
@@ -190,7 +193,7 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
     ...state,
     logout,
     refreshBalance,
-    network: getEnvironment(NETWORK),
+    network: getEnvironment(import.meta.env.VITE_SOLANA_NETWORK || NETWORK),
   }
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>
