@@ -117,7 +117,8 @@ interface WalletProvidersProps {
 }
 
 export function WalletProviders({ children }: WalletProvidersProps) {
-  const endpoint = useMemo(() => clusterApiUrl(NETWORK), [])
+  const network = getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)
+  const endpoint = useMemo(() => clusterApiUrl(network), [network])
 
   const wallets = useMemo(
     () => [
