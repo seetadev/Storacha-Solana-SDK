@@ -1,21 +1,21 @@
-import { Connection, PublicKey } from '@solana/web3.js'
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   DAY_TIME_IN_SECONDS,
   getEndpointForRpc,
   ONE_BILLION_LAMPORTS,
-} from './constants'
+} from './constants';
 import {
   createDepositTxn,
   getStorageRenewalCost,
   renewStorageTxn,
-} from './payment'
+} from './payment';
 import {
   CreateDepositArgs,
   StorageRenewalCost,
   StorageRenewalParams,
   UploadResult,
-} from './types'
-import { getUserUploadHistory } from './upload-history'
+} from './types';
+import { getUserUploadHistory } from './upload-history';
 
 export enum Environment {
   mainnet = 'mainnet-beta',
@@ -27,52 +27,61 @@ export enum Environment {
 export function getRpcUrl(env: Environment): string {
   switch (env) {
     case Environment.mainnet:
-      return 'https://api.mainnet-beta.solana.com'
+      return 'https://api.mainnet-beta.solana.com';
     case Environment.testnet:
-      return 'https://api.testnet.solana.com'
+      return 'https://api.testnet.solana.com';
     case Environment.devnet:
-      return 'https://api.devnet.solana.com'
+      return 'https://api.devnet.solana.com';
     case Environment.local:
-      return 'http://localhost:5040'
+      return 'http://localhost:5040';
     default:
-      throw new Error(`Unsupported environment: ${env}`)
+      throw new Error(`Unsupported environment: ${env}`);
   }
 }
 
 export interface ClientOptions {
   /** Solana RPC endpoint to use for chain interactions */
-  environment: Environment
+  environment: Environment;
   /** Optional custom RPC URL (overrides default public RPC) */
-  rpcUrl?: string
+  rpcUrl?: string;
   /** Optional custom API endpoint (useful for local development) you may never need this */
-  endpoint?: string
+  endpoint?: string;
 }
 
-export interface UploadParams
-  extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail'> {
+export interface UploadParams extends Pick<
+  CreateDepositArgs,
+  'signTransaction' | 'userEmail'
+> {
   /** Wallet public key of the payer */
-  payer: PublicKey
+  payer: PublicKey;
   /** File(s) to be stored */
-  file: File[]
+  file: File[];
   /** Duration in days to store the data */
-  durationDays: number
+  durationDays: number;
 }
 
 /**
  * @deprecated Use {@link UploadParams} instead.
  */
-export type DepositParams = UploadParams
+export type DepositParams = UploadParams;
 
 /**
  * Solana Storage Client — simplified (no fee estimation)
  */
 export class Client {
-  private rpcUrl: string
-  private apiEndpoint: string
+  private rpcUrl: string;
+  private apiEndpoint: string;
 
   constructor(options: ClientOptions) {
-    this.rpcUrl = options.rpcUrl || getRpcUrl(options.environment)
-    this.apiEndpoint = options.endpoint || getEndpointForRpc(this.rpcUrl)
+    this.rpcUrl = options.rpcUrl || getRpcUrl(options.environment);
+    this.apiEndpoint = options.endpoint || getEndpointForRpc(this.rpcUrl);
+
+    console.log('[Client] Initialized:', {
+      environment: options.environment,
+      rpcUrl: this.rpcUrl,
+      apiEndpoint: this.apiEndpoint,
+      customEndpoint: options.endpoint,
+    });
   }
 
   /**
@@ -103,7 +112,7 @@ export class Client {
     signTransaction,
     userEmail,
   }: UploadParams): Promise<UploadResult> {
-    console.log('Creating deposit transaction with environment:', this.rpcUrl)
+    console.log('Creating deposit transaction with environment:', this.rpcUrl);
     // HTTP-only connection because proxies don't support WebSocket)
     // and disable WebSocket
     const connection = new Connection(this.rpcUrl, {
@@ -111,7 +120,7 @@ export class Client {
       wsEndpoint: '',
       // confirming the blockhash times out prematurely. increasing this reasonably.
       confirmTransactionInitialTimeout: 120000,
-    })
+    });
 
     return await createDepositTxn(
       {
@@ -122,8 +131,8 @@ export class Client {
         signTransaction,
         userEmail,
       },
-      this.apiEndpoint,
-    )
+      this.apiEndpoint
+    );
   }
 
   /**
@@ -132,31 +141,31 @@ export class Client {
    * @param {number} duration - how long (in seconds) the file should be stored for
    */
   async estimateStorageCost(file: File[], duration: number) {
-    const fileSizeInBytes = file.reduce((acc, f) => acc + f.size, 0)
-    const durationInDays = Math.floor(duration / 86400) // convert seconds to day
+    const fileSizeInBytes = file.reduce((acc, f) => acc + f.size, 0);
+    const durationInDays = Math.floor(duration / 86400); // convert seconds to day
 
     const response = await fetch(
-      `${this.apiEndpoint}/pricing/quote?size=${fileSizeInBytes}&duration=${durationInDays}`,
-    )
+      `${this.apiEndpoint}/pricing/quote?size=${fileSizeInBytes}&duration=${durationInDays}`
+    );
 
-    if (!response.ok) throw new Error('Failed to get storage cost estimate')
+    if (!response.ok) throw new Error('Failed to get storage cost estimate');
 
-    const { quote } = await response.json()
-    const totalLamports = quote.totalCost
-    const totalSOL = totalLamports / ONE_BILLION_LAMPORTS
+    const { quote } = await response.json();
+    const totalLamports = quote.totalCost;
+    const totalSOL = totalLamports / ONE_BILLION_LAMPORTS;
 
     return {
       sol: totalSOL,
       lamports: totalLamports,
-    }
+    };
   }
 
   async getUserUploadHistory(userAddress: string, page: number, limit: number) {
     const response = await getUserUploadHistory(userAddress, this.apiEndpoint, {
       page,
       limit,
-    })
-    return response
+    });
+    return response;
   }
 
   /**
@@ -173,9 +182,9 @@ export class Client {
    */
   async getStorageRenewalCost(
     cid: string,
-    duration: number,
+    duration: number
   ): Promise<StorageRenewalCost | null> {
-    return await getStorageRenewalCost(cid, duration, this.apiEndpoint)
+    return await getStorageRenewalCost(cid, duration, this.apiEndpoint);
   }
 
   /**
@@ -208,7 +217,7 @@ export class Client {
       commitment: 'confirmed',
       wsEndpoint: '',
       confirmTransactionInitialTimeout: 120000,
-    })
+    });
 
     return await renewStorageTxn(
       {
@@ -218,8 +227,8 @@ export class Client {
         connection,
         signTransaction,
       },
-      this.apiEndpoint,
-    )
+      this.apiEndpoint
+    );
   }
 
   /**
@@ -232,9 +241,9 @@ export class Client {
    * @returns {Promise<{ price: number }>} Current SOL price in USD
    */
   async getSolPrice(): Promise<number> {
-    const request = await fetch(`${this.apiEndpoint}/pricing/sol`)
-    if (!request.ok) throw new Error("Couldn't fetch SOL price")
-    const data = await request.json()
-    return data.price
+    const request = await fetch(`${this.apiEndpoint}/pricing/sol`);
+    if (!request.ok) throw new Error("Couldn't fetch SOL price");
+    const data = await request.json();
+    return data.price;
   }
 }
