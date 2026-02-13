@@ -43,6 +43,18 @@ export const AuthContext = createAuthContext()
 
 const NETWORK = WalletAdapterNetwork.Testnet
 
+const getNetworkFromEnv = (networkString?: string): WalletAdapterNetwork => {
+  switch (networkString) {
+    case 'mainnet-beta':
+      return WalletAdapterNetwork.Mainnet
+    case 'testnet':
+    case 'devnet':
+      return WalletAdapterNetwork.Testnet
+    default:
+      return NETWORK
+  }
+}
+
 const getEnvironment = (network: WalletAdapterNetwork): Environment => {
   switch (network) {
     case WalletAdapterNetwork.Mainnet:
@@ -61,7 +73,9 @@ const initialState: AuthContextValues = {
   isLoadingBalance: false,
   logout: () => {},
   refreshBalance: async () => {},
-  network: getEnvironment(import.meta.env.VITE_SOLANA_NETWORK || NETWORK),
+  network: getEnvironment(
+    getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK),
+  ),
 }
 
 const authReducer = (
