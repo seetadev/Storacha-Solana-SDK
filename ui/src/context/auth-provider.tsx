@@ -117,8 +117,13 @@ interface WalletProvidersProps {
 }
 
 export function WalletProviders({ children }: WalletProvidersProps) {
-  const network = getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)
-  const endpoint = useMemo(() => clusterApiUrl(network), [network])
+  const endpoint = useMemo(() => {
+    const network = getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)
+    const rpc = import.meta.env.VITE_HELIUS_PROXY_URL
+    if (network === WalletAdapterNetwork.Mainnet && rpc) return rpc
+
+    return clusterApiUrl(network)
+  }, [])
 
   const wallets = useMemo(
     () => [
