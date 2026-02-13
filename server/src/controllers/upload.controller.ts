@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
-import { uploads } from '../db/schema.js'
+import { configTable, uploads } from '../db/schema.js'
 import { getUserHistory, saveTransaction } from '../db/uploads-table.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
@@ -145,36 +145,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
  */
 export const deposit = async (req: Request, res: Response) => {
   try {
-    // we're handling both single file and multiple files here as opposed to previous approach
-    const files = req.files as
-      | Express.Multer.File[]
-      | { [fieldname: string]: Express.Multer.File[] }
-    let fileArray: Express.Multer.File[] = []
-
-    if (Array.isArray(files)) {
-      fileArray = files
-    } else if (files && typeof files === 'object') {
-      const fileField = files.file || files.files
-      if (fileField && Array.isArray(fileField)) {
-        fileArray = fileField
-      } else {
-        return res.status(400).json({ message: 'No files selected' })
-      }
-    } else {
-      return res.status(400).json({ message: 'No files selected' })
-    }
-
-    if (fileArray.length === 0) {
-      return res.status(400).json({ message: 'No files selected' })
-    }
-
-    const fileMap: Record<string, Uint8Array> = {}
-    let totalSize = 0
-
-    for (const file of fileArray) {
-      fileMap[file.originalname] = new Uint8Array(file.buffer)
-      totalSize += file.size
-    }
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
     const { publicKey, duration, userEmail } = req.body
     const durationInSeconds = parseInt(duration as string, 10)
@@ -262,6 +233,158 @@ export const deposit = async (req: Request, res: Response) => {
     })
     res.status(400).json({
       message: 'Error making a deposit',
+    })
+  }
+}
+
+/** the return type  */
+type FileMeta = {
+  totalSize: number
+  fileArray: Express.Multer.File[]
+  fileMap: Record<string, Uint8Array>
+}
+
+/**
+ * Processes uploaded files from multer into a file map and calculates total size
+ * Handles both single file and multiple file uploads
+ *
+ * @param files - Multer files (array or object with file fields)
+ * @returns `FileMeta` containing fileMap (filename -> buffer), totalSize in bytes, and fileArray
+ * @throws Error if no files are provided
+ */
+const fileBuilder = (
+  files:
+    | Express.Multer.File[]
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined,
+): FileMeta => {
+  let fileArray: Express.Multer.File[] = []
+
+  if (Array.isArray(files)) {
+    fileArray = files
+  } else if (files && typeof files === 'object') {
+    const fileField = files.file || files.files
+    if (fileField && Array.isArray(fileField)) {
+      fileArray = fileField
+    } else {
+      throw new Error('No files selected')
+    }
+  } else {
+    throw new Error('No files selected')
+  }
+
+  if (fileArray.length === 0) throw new Error('No files selected')
+
+  const fileMap: Record<string, Uint8Array> = {}
+  let totalSize = 0
+
+  for (const file of fileArray) {
+    fileMap[file.originalname] = new Uint8Array(file.buffer)
+    totalSize += file.size
+  }
+
+  return {
+    fileMap,
+    totalSize,
+    fileArray,
+  }
+}
+
+/**
+ * Builds the USDFC payment metadata for upload transaction.
+ */
+export const depositUsdFC = async (req: Request, res: Response) => {
+  try {
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
+
+    const { walletAddress, duration, userEmail } = req.body
+    const durationInSeconds = parseInt(duration as string, 10)
+    const config = await db.select().from(configTable)
+    const { ratePerBytePerDay } = await getPricingConfig()
+    const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS)
+
+    if (!config[0].filecoinWallet) {
+      throw new Error('Filecoin wallet not configured')
+    }
+
+    const costUSD = totalSize * ratePerBytePerDay * duration_days
+
+    // TODO: verify USDFC uses 18 decimals (ERC-20 standard assumption)
+    // i think this is accurate though since USDFC is by design a ERC-20 token.
+    // contract: 0x80B98d3aa09ffff255c3ba4A241111Ff1262F045
+    const amountInUSDFC = BigInt(Math.floor(costUSD * 1e18))
+
+    Sentry.setUser({
+      id: walletAddress,
+      email: userEmail || undefined,
+    })
+
+    logger.info('USDFC deposit calculation', {
+      totalSize,
+      ratePerBytePerDay,
+      duration_days,
+      costUSD,
+      amountInUSDFC: amountInUSDFC.toString(),
+    })
+
+    const computedCID = await computeCID(fileMap)
+
+    Sentry.setContext('fil-upload', {
+      totalSize,
+      fileCount: fileArray.length,
+      duration: duration_days,
+      cid: computedCID,
+      chain: 'FIL',
+    })
+
+    Sentry.setTag('operation', 'deposit-usdfc')
+    Sentry.setTag('file_count', fileArray.length)
+    Sentry.setTag('payment_chain', 'fil')
+
+    // this is a reference to what i've seen in the filecoin-pin repo.
+    // javascript has another number type, apparently — BigNum/Int
+    if (amountInUSDFC <= 0n)
+      throw new Error(`Invalid deposit amount calculated: ${amountInUSDFC}`)
+
+    const durationNum = Number(duration)
+    if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
+
+    const backupExpirationDate = getExpiryDate(duration_days)
+
+    const depositMetadata = {
+      depositAmount: amountInUSDFC.toString(),
+      durationDays: duration_days,
+      depositKey: walletAddress,
+      userEmail: userEmail || null,
+      fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
+      fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
+      fileSize: totalSize,
+      expiresAt: backupExpirationDate,
+      paymentChain: 'fil',
+      paymentToken: 'USDFC',
+    }
+
+    res.status(200).json({
+      message: 'Payment details ready — transfer USDFC to proceed with upload',
+      cid: computedCID,
+      amountUSDFC: amountInUSDFC.toString(),
+      recipientAddress: config[0].filecoinWallet,
+      fileCount: fileArray.length,
+      totalSize: totalSize,
+      files: fileArray.map((f) => ({
+        name: f.originalname,
+        size: f.size,
+        type: f.mimetype,
+      })),
+      depositMetadata,
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error making USDFC deposit', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    res.status(400).json({
+      message: 'Error making USDFC deposit',
     })
   }
 }
@@ -403,6 +526,127 @@ export const confirmUpload = async (req: Request, res: Response) => {
     })
     return res.status(500).json({
       message: 'Error confirming upload',
+    })
+  }
+}
+
+/**
+ * Verifies USDFC payment transaction and saves upload to database.
+ * Called by SDK after user signs and broadcasts USDFC transfer transaction.
+ *
+ * @param req.body.cid - Content identifier of the uploaded files
+ * @param req.body.transactionHash - Filecoin transaction hash of the USDFC transfer
+ * @param req.body.depositMetadata - Metadata from depositUsdFC response
+ * @returns Confirmation message with deposit record
+ *
+ * @remarks
+ * Transaction verification will be implemented with indexer (see #176).
+ * SDK handles file upload to Storacha separately via /upload/file(s) endpoints.
+ */
+export const verifyUsdFcPayment = async (req: Request, res: Response) => {
+  try {
+    const { cid, transactionHash, depositMetadata } = req.body
+
+    if (!cid || !transactionHash)
+      return res.status(400).json({
+        message: 'The CID and transaction hash are required',
+      })
+    if (!depositMetadata)
+      return res.status(400).json({
+        message: 'Deposit metadata for this USDFC transaction is required',
+      })
+
+    const existing = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
+      .limit(1)
+
+    if (existing.length > 0) {
+      if (!existing[0].transactionHash) {
+        const updated = await db
+          .update(uploads)
+          .set({ transactionHash: transactionHash })
+          .where(eq(uploads.contentCid, cid))
+          .returning()
+
+        await saveTransaction({
+          depositId: updated[0].id,
+          contentCid: cid,
+          transactionHash: transactionHash,
+          transactionType: 'initial_deposit',
+          amountInLamports: updated[0].depositAmount,
+          durationDays: updated[0].durationDays,
+        })
+
+        return res.status(200).json({
+          message: 'Transaction hash updated successfully',
+          deposit: updated[0],
+        })
+      }
+
+      return res.status(409).json({
+        message: 'This upload has already been confirmed',
+        deposit: existing[0],
+      })
+    }
+
+    const config = await db.select().from(configTable)
+    if (!config[0].filecoinWallet)
+      throw new Error('Filecoin wallet not configured')
+
+    // TODO: implement transaction verification with ethers.js
+    // 1. fetch transaction receipt from Filecoin RPC
+    // 2. verify: tx.to === config.filecoinWallet
+    // 3. verify: tx.value >= depositMetadata.depositAmount
+    // 4. verify: tx.status === 1 (successful)
+    // throw error if verification fails
+    // proper transaction verification/reconciliation would happen
+    // when we have the indexer setup. see https://github.com/seetadev/Storacha-Solana-SDK/issues/176
+    // for context.
+
+    const depositItem: typeof uploads.$inferInsert = {
+      depositAmount: depositMetadata.depositAmount,
+      durationDays: depositMetadata.durationDays,
+      contentCid: cid,
+      depositKey: depositMetadata.depositKey,
+      depositSlot: 0,
+      lastClaimedSlot: 0,
+      expiresAt: depositMetadata.expiresAt,
+      createdAt: new Date().toISOString(),
+      userEmail: depositMetadata.userEmail,
+      fileName: depositMetadata.fileName,
+      fileType: depositMetadata.fileType,
+      fileSize: depositMetadata.fileSize,
+      transactionHash: transactionHash,
+      deletionStatus: 'active',
+      warningSentAt: null,
+      paymentChain: 'fil',
+      paymentToken: 'USDFC',
+    }
+
+    const inserted = await db.insert(uploads).values(depositItem).returning()
+
+    await saveTransaction({
+      depositId: inserted[0].id,
+      contentCid: cid,
+      transactionHash: transactionHash,
+      transactionType: 'initial_deposit',
+      amountInLamports: Number(depositMetadata.depositAmount),
+      durationDays: inserted[0].durationDays,
+    })
+
+    return res.status(200).json({
+      message: 'USDFC payment verified and upload confirmed successfully',
+      deposit: inserted[0],
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error verifying USDFC payment', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res.status(500).json({
+      message: 'Error verifying USDFC payment',
     })
   }
 }
