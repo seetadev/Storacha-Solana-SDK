@@ -10,7 +10,7 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets'
-import { Connection, clusterApiUrl, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { clusterApiUrl, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import type { Environment } from '@toju.network/sol'
 import React, { useEffect, useMemo, useReducer, useState } from 'react'
 
@@ -61,7 +61,7 @@ const initialState: AuthContextValues = {
   isLoadingBalance: false,
   logout: () => {},
   refreshBalance: async () => {},
-  network: getEnvironment(NETWORK),
+  network: getEnvironment(import.meta.env.VITE_SOLANA_NETWORK || NETWORK),
 }
 
 const authReducer = (
