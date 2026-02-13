@@ -58,7 +58,7 @@ const getNetworkFromEnv = (networkString?: string): WalletAdapterNetwork => {
 const getEnvironment = (network: WalletAdapterNetwork): Environment => {
   switch (network) {
     case WalletAdapterNetwork.Mainnet:
-      return 'mainnet' as Environment
+      return 'mainnet-beta' as Environment
     case WalletAdapterNetwork.Testnet:
       return 'testnet' as Environment
     default:
