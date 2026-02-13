@@ -144,10 +144,14 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
   const { connected, publicKey, disconnect } = useWallet()
   const [state, dispatch] = useReducer(authReducer, null, createInitialState)
 
-  const endpoint = useMemo(
-    () => clusterApiUrl(getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)),
-    [],
-  )
+  const endpoint = useMemo(() => {
+    const network = getNetworkFromEnv(import.meta.env.VITE_SOLANA_NETWORK)
+    const rpc = import.meta.env.VITE_HELIUS_PROXY_URL
+    if (network === WalletAdapterNetwork.Mainnet && rpc) return rpc
+
+    return clusterApiUrl(network)
+  }, [])
+
   const [connection] = useState(() => new Connection(endpoint, 'confirmed'))
 
   const refreshBalance = React.useCallback(async () => {
