@@ -6,6 +6,13 @@ import useSWR from 'swr'
 export function useUploadHistory() {
   const { user, network } = useAuthContext()
 
+  console.log('[useUploadHistory] Debug:', {
+    user,
+    network,
+    envVar: import.meta.env.VITE_SOLANA_NETWORK,
+    apiUrl: import.meta.env.VITE_API_URL,
+  })
+
   const client = useDeposit(network)
 
   const { data, error, isLoading, mutate } = useSWR(

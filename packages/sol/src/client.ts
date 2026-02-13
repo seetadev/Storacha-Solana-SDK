@@ -75,6 +75,13 @@ export class Client {
   constructor(options: ClientOptions) {
     this.rpcUrl = options.rpcUrl || getRpcUrl(options.environment);
     this.apiEndpoint = options.endpoint || getEndpointForRpc(this.rpcUrl);
+
+    console.log('[Client] Initialized:', {
+      environment: options.environment,
+      rpcUrl: this.rpcUrl,
+      apiEndpoint: this.apiEndpoint,
+      customEndpoint: options.endpoint,
+    });
   }
 
   /**
