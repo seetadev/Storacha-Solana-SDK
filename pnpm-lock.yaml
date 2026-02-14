@@ -64,8 +64,8 @@ importers:
         specifier: ^1.98.4
         version: 1.98.4(bufferutil@4.1.0)(encoding@0.1.13)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@storacha/client':
-        specifier: ^1.6.0
-        version: 1.8.26(encoding@0.1.13)
+        specifier: ^2.0.4
+        version: 2.0.4(encoding@0.1.13)
       '@types/bn.js':
         specifier: ^5.2.0
         version: 5.2.0
@@ -3001,14 +3001,11 @@ packages:
     engines: {node: '>=16.15'}
     hasBin: true
 
-  '@storacha/capabilities@1.12.0':
-    resolution: {integrity: sha512-d4YTllc9eoe/aZU8OCMszJgSnNHsXWpUNHRVlU+u3BDVCTqN6SZHEqR7HhYpr9IDC+pOz/f6nOj5iICiH3t77g==}
-
   '@storacha/capabilities@2.2.0':
     resolution: {integrity: sha512-xXXdwNkwWqMliR43PO+D58NqNnJ6b8bGmJ3NuFxkr0AjdQTuMjHK0woLRX+n7DKhDWDyKA2NOy3pdXlrXWTuQQ==}
 
-  '@storacha/client@1.8.26':
-    resolution: {integrity: sha512-rH7kRqlhoOMsMU6C87fBGBBDodusGDNhPON+4lpS+IXpzreCT/RCxMknuBUr4tqx8oQ9N0vxylcTxOGkBo/Zjg==}
+  '@storacha/client@2.0.4':
+    resolution: {integrity: sha512-VxGvFlWsvnuOZZEL+pcuI6DrLlCwRp5CSJU35WbNEHjGZGkjBHZmx0WONwqoHE1PV32oecy+o55vtq9LC8hnPg==}
     engines: {node: '>=18'}
 
   '@storacha/did-mailto@1.0.2':
@@ -11326,7 +11323,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -12574,16 +12571,6 @@ snapshots:
       sade: 1.8.1
       uint8arrays: 5.1.0
 
-  '@storacha/capabilities@1.12.0':
-    dependencies:
-      '@ucanto/core': 10.4.6
-      '@ucanto/interface': 11.0.1
-      '@ucanto/principal': 9.0.3
-      '@ucanto/transport': 9.2.1
-      '@ucanto/validator': 10.0.1
-      '@web3-storage/data-segment': 5.3.0
-      multiformats: 13.4.2
-
   '@storacha/capabilities@2.2.0':
     dependencies:
       '@ucanto/core': 10.4.6
@@ -12594,12 +12581,12 @@ snapshots:
       '@web3-storage/data-segment': 5.3.0
       multiformats: 13.4.2
 
-  '@storacha/client@1.8.26(encoding@0.1.13)':
+  '@storacha/client@2.0.4(encoding@0.1.13)':
     dependencies:
       '@ipld/dag-ucan': 3.4.5
       '@storacha/access': 1.6.7
       '@storacha/blob-index': 1.2.7
-      '@storacha/capabilities': 1.12.0
+      '@storacha/capabilities': 2.2.0
       '@storacha/did-mailto': 1.0.2
       '@storacha/filecoin-client': 1.0.18
       '@storacha/upload-client': 1.3.9(encoding@0.1.13)
@@ -18231,10 +18218,10 @@ snapshots:
   ox@0.6.7(typescript@5.9.3)(zod@3.25.76):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
       '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
+      '@scure/bip39': 1.6.0
       abitype: 1.0.8(typescript@5.9.3)(zod@3.25.76)
       eventemitter3: 5.0.1
     optionalDependencies:

@@ -24,11 +24,68 @@ export class UsageService {
 
   constructor(client: StorachaClient, planLimitBytes: number = 5_000_000_000) {
     this.client = client
-    this.planLimitBytes = planLimitBytes // default 5GB for free plan for now, so we can test
+    this.planLimitBytes = planLimitBytes // default 5GiB size
   }
 
   get planLimit(): number {
     return this.planLimitBytes
+  }
+
+  /**
+   * get plan limit from storacha using plan/get capability
+   *
+   * the limit is optional - absent means unlimited according to the
+   * storacha spec here: https://github.com/storacha/specs/pull/150
+   * @returns limit in bytes, or null if unlimited
+   */
+  private async fetchPlanLimit(): Promise<number | null> {
+    try {
+      const accounts = this.client.accounts()
+      const accountEntries = Object.values(accounts)
+
+      if (accountEntries.length === 0) {
+        logger.warn('no storacha account found, using default plan limit')
+        return 5_000_000_000 // 5GiB default for free
+      }
+
+      const account = accountEntries[0]
+      const accountDID = account.did()
+
+      const plan = await this.client.capability.plan.get(accountDID)
+
+      // limit is a string in bytes, needs to be parsed
+      // TS is complaining that "Property limit does not exist on type PlanGetSuccess."
+      // but that's probably a npm cache thing because in the latest version
+      // of the upload client we already have it present. see it: https://github.com/storacha/upload-service/blob/dfd96c418d86e3fe94d3eafa669caf5b701bf728/packages/capabilities/src/types.ts#L1132
+      const limitBytes = parseInt(plan.limit, 10)
+
+      logger.info('plan limit fetched from storacha', {
+        accountDID,
+        limitBytes,
+        limitGB: (limitBytes / 1e9).toFixed(2),
+      })
+
+      return limitBytes
+    } catch (error) {
+      logger.error('failed to fetch plan limit from storacha', { error })
+      return 5_000_000_000
+    }
+  }
+
+  /**
+   * init the service
+   */
+  async initialize(): Promise<void> {
+    const fetchedLimit = await this.fetchPlanLimit()
+    if (fetchedLimit !== null) {
+      this.planLimitBytes = fetchedLimit
+      logger.info('usage service initialized with plan limit', {
+        limitBytes: this.planLimitBytes,
+        limitGB: (this.planLimitBytes / 1e9).toFixed(2),
+      })
+    } else {
+      logger.info('usage service initialized with unlimited plan')
+    }
   }
 
   /**
