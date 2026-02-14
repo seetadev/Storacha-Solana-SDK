@@ -39,6 +39,20 @@ pub mod toju {
     ) -> Result<()> {
         let config = &ctx.accounts.config;
 
+        use std::str::FromStr;
+        cid::Cid::from_str(&content_cid).map_err(|_| error!(StorachaError::InvalidCid))?;
+
+        require!(
+            content_cid.len() <= 200,
+            StorachaError::CidTooLong
+        );
+
+        // file size must be greater than zero
+        require!(
+            file_size > 0,
+            StorachaError::InvalidFileSize
+        );
+
         // Validate minimum duration
         require!(
             duration_days >= config.min_duration_days,
@@ -106,6 +120,10 @@ pub mod toju {
         let config = &ctx.accounts.config;
         let deposit = &mut ctx.accounts.deposit;
 
+        // valid the cid with multiformats
+        use std::str::FromStr;
+        cid::Cid::from_str(&content_cid).map_err(|_| error!(StorachaError::InvalidCid))?;
+
         require!(duration > 0, StorachaError::InvalidDuration);
 
         let size_duration = deposit
@@ -160,7 +178,7 @@ pub mod toju {
         Ok(())
     }
 
-    /// Admin withdraws accumulated fees
+    /// withdraws accumulated fees
     pub fn withdraw_fees(ctx: Context<WithdrawFees>, amount: u64) -> Result<()> {
         require!(
             ctx.accounts.admin.key() == ctx.accounts.config.admin_key,
