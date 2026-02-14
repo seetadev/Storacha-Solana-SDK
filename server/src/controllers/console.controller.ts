@@ -13,6 +13,7 @@ export const getUsageHistory = async (req: Request, res: Response) => {
 
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
     const history = await usageService.getUsageHistory(days)
 
     return res.status(200).json({
@@ -35,6 +36,7 @@ export const getCurrentUsage = async (_req: Request, res: Response) => {
   try {
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
 
     const [storachaUsage, internalUsage] = await Promise.all([
       usageService.getStorachaUsage(),
@@ -84,6 +86,7 @@ export const getUnresolvedAlerts = async (_req: Request, res: Response) => {
   try {
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
     const alerts = await usageService.getUnresolvedAlerts()
 
     return res.status(200).json({
@@ -111,6 +114,7 @@ export const resolveAlert = async (req: Request, res: Response) => {
 
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
     await usageService.resolveAlert(alertId)
 
     return res.status(200).json({
