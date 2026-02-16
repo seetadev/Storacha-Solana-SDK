@@ -1,6 +1,9 @@
+export type PaymentChain = 'sol' | 'fil'
+
 export type QuoteInput = {
   sizeInBytes: number
   durationInUnits: number
+  chain?: PaymentChain
 }
 
 export type QuoteOutput = {

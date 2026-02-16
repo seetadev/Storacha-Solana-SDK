@@ -50,6 +50,21 @@ export const getAmountInLamportsFromUSD = (
 }
 
 /**
+ * Calculates storage cost in USD
+ * @param fileSize - file size in bytes
+ * @param rateInUSD - rate per byte per day in USD
+ * @param duration - storage duration in days
+ * @returns cost in USD
+ */
+export const getAmountInUSD = (
+  fileSize: number,
+  rateInUSD: number,
+  duration: number,
+): number => {
+  return fileSize * duration * rateInUSD
+}
+
+/**
  *
  * @param lamports
  * @returns The SOL equivalent
