@@ -1,4 +1,5 @@
 import { Client as StorachaClient } from '@storacha/client'
+import { AccountDID } from '@storacha/client/types'
 import { eq, sql } from 'drizzle-orm'
 import { Resend } from 'resend'
 import { db } from '../../db/db.js'
@@ -40,16 +41,14 @@ export class UsageService {
    */
   private async fetchPlanLimit(): Promise<number | null> {
     try {
-      const accounts = this.client.accounts()
-      const accountEntries = Object.values(accounts)
+      const accountDID = process.env.STORACHA_ACCOUNT_DID as AccountDID
 
-      if (accountEntries.length === 0) {
-        logger.warn('no storacha account found, using default plan limit')
+      if (!accountDID) {
+        logger.warn(
+          'STORACHA_ACCOUNT_DID not set, using default plan limit. Set STORACHA_ACCOUNT_DID in environment variables.',
+        )
         return 5_000_000_000 // 5GiB default for free
       }
-
-      const account = accountEntries[0]
-      const accountDID = account.did()
 
       const plan = await this.client.capability.plan.get(accountDID)
 
