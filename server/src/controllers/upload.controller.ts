@@ -297,7 +297,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
   try {
     const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
-    const { walletAddress, duration, userEmail } = req.body
+    const { userAddress, duration, userEmail } = req.body
     const durationInSeconds = parseInt(duration as string, 10)
     const config = await db.select().from(configTable)
     const { ratePerBytePerDay } = await getPricingConfig()
@@ -309,13 +309,12 @@ export const depositUsdFC = async (req: Request, res: Response) => {
 
     const costUSD = totalSize * ratePerBytePerDay * duration_days
 
-    // TODO: verify USDFC uses 18 decimals (ERC-20 standard assumption)
-    // i think this is accurate though since USDFC is by design a ERC-20 token.
+    // USDFC uses 18 decimals (standard ERC-20)
     // contract: 0x80B98d3aa09ffff255c3ba4A241111Ff1262F045
     const amountInUSDFC = BigInt(Math.floor(costUSD * 1e18))
 
     Sentry.setUser({
-      id: walletAddress,
+      id: userAddress,
       email: userEmail || undefined,
     })
 
@@ -354,7 +353,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
     const depositMetadata = {
       depositAmount: amountInUSDFC.toString(),
       durationDays: duration_days,
-      depositKey: walletAddress,
+      depositKey: userAddress,
       userEmail: userEmail || null,
       fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
@@ -364,11 +363,17 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       paymentToken: 'USDFC',
     }
 
+    const isMainnet = process.env.NODE_ENV === 'production'
+    const usdfcContractAddress = isMainnet
+      ? '0x80B98d3aa09ffff255c3ba4A241111Ff1262F045' // Filecoin mainnet
+      : '0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0' // Filecoin calibration
+
     res.status(200).json({
       message: 'Payment details ready — transfer USDFC to proceed with upload',
       cid: computedCID,
       amountUSDFC: amountInUSDFC.toString(),
       recipientAddress: config[0].filecoinWallet,
+      usdfcContractAddress,
       fileCount: fileArray.length,
       totalSize: totalSize,
       files: fileArray.map((f) => ({

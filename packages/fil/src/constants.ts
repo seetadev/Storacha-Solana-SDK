@@ -1,3 +1,6 @@
+/** Seconds in a day (86400) */
+export const DAY_TIME_IN_SECONDS = 86400
+
 export const USDFC_CONTRACT_ADDRESS = {
   mainnet: '0x80B98d3aa09ffff255c3ba4A241111Ff1262F045',
   calibration: '0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0',

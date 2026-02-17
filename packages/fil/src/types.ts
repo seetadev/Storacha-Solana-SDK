@@ -120,10 +120,8 @@ export interface VerifyPaymentArgs {
   transactionHash: string
   /** CID of the uploaded content */
   cid: string
-  /** Expected amount in USDFC */
-  expectedAmount: string
-  /** User's wallet address */
-  userAddress: string
+  /** Deposit metadata from server response */
+  depositMetadata: DepositMetadata
 }
 
 /**

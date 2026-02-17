@@ -2,6 +2,19 @@
   "name": "@toju.network/fil",
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "knip": "knip"
+  },
   "dependencies": {
     "ethers": "^6.16.0"
   },
