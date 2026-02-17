@@ -91,6 +91,7 @@ export const Header = ({ onMenuOpen }: HeaderProps) => {
                 >
                   {truncatePublicKey(connectedAddress)}
                 </Text>
+
                 <Box
                   as="span"
                   onClick={handleDisconnect}

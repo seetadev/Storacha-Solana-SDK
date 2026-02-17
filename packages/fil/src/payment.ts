@@ -59,8 +59,7 @@ export async function createDepositTxn(
       {
         transactionHash: txHash,
         cid: depositRes.cid,
-        expectedAmount: depositRes.amountUSDFC,
-        userAddress,
+        depositMetadata: depositRes.depositMetadata,
       },
       apiEndpoint,
     )
@@ -111,9 +110,9 @@ export async function verifyPayment(
   args: VerifyPaymentArgs,
   apiEndpoint: string,
 ): Promise<VerifyPaymentResponse> {
-  const { transactionHash, cid, expectedAmount, userAddress } = args
+  const { transactionHash, cid, depositMetadata } = args
 
-  const verifyReq = await fetch(`${apiEndpoint}/fil/verify-payment`, {
+  const verifyReq = await fetch(`${apiEndpoint}/upload/fil/verify-payment`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -121,8 +120,7 @@ export async function verifyPayment(
     body: JSON.stringify({
       transactionHash,
       cid,
-      expectedAmount,
-      userAddress,
+      depositMetadata,
     }),
   })
 

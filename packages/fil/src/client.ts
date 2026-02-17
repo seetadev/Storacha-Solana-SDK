@@ -1,5 +1,9 @@
 import { JsonRpcProvider } from 'ethers'
-import { FILECOIN_RPC, getEndpointForRpc } from './constants'
+import {
+  DAY_TIME_IN_SECONDS,
+  FILECOIN_RPC,
+  getEndpointForRpc,
+} from './constants'
 import { createDepositTxn } from './payment'
 import {
   CreateDepositArgs,
@@ -93,7 +97,7 @@ export class Client {
     return await createDepositTxn(
       {
         file,
-        duration: durationDays,
+        duration: durationDays * DAY_TIME_IN_SECONDS,
         userAddress,
         sendTransaction,
         userEmail,

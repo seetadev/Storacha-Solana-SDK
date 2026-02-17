@@ -124,21 +124,29 @@ export const HomeHeader = () => {
                     bg="rgba(255,255,255,0.05)"
                     border="1px solid rgba(255,255,255,0.1)"
                     borderRadius="full"
-                    justifyContent="space-between"
+                    spacing="0.75em"
                   >
+                    <WalletIcon
+                      size={18}
+                      color="var(--primary-500)"
+                      weight="fill"
+                    />
                     <Text
                       color="var(--text-inverse)"
-                      fontSize="sm"
-                      fontWeight="medium"
+                      fontSize="var(--font-size-sm)"
+                      fontWeight="var(--font-weight-medium)"
                     >
                       {truncatePublicKey(connectedAddress)}
                     </Text>
+
                     <Box
                       as="span"
                       onClick={handleDisconnect}
                       cursor="pointer"
                       color="var(--text-muted)"
-                      _hover={{ color: 'var(--red-mead)' }}
+                      display="flex"
+                      alignItems="center"
+                      _hover={{ color: 'var(--error)' }}
                       transition="color 0.2s"
                     >
                       <LinkBreakIcon size={20} weight="bold" />
