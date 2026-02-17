@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
-# Check if UI package.json has workspace:* for storacha-sol
+# Check if UI package.json has workspace:* for SOL package
 if grep -q '"@toju.network/sol": "workspace:\*"' ui/package.json; then
-  echo "Found workspace:* - updating sdk dependency in ui/ to latest version..."
+  echo "Found workspace:* - updating SOL sdk dependency in ui/ to latest version..."
   cd ui && pnpm add @toju.network/sol@latest
   
   # Stage the updated package.json and lockfile

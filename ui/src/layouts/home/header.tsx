@@ -1,3 +1,7 @@
+import { ChainSelector } from '@/components/chain-selector'
+import { ConnectFilWallet } from '@/components/connect-fil-wallet'
+import { ConnectWallet } from '@/components/connect-wallet'
+import { useAuthContext, useChainContext } from '@/hooks/context'
 import {
   Box,
   Button,
@@ -13,12 +17,23 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ConnectWallet } from '@/components/connect-wallet'
-import { useAuthContext } from '../../hooks/context/auth'
+import { useConnection, useDisconnect } from 'wagmi'
 
 export const HomeHeader = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFilModalOpen, setIsFilModalOpen] = useState(false)
+  const { selectedChain, setSelectedChain } = useChainContext()
   const { isAuthenticated, user, logout } = useAuthContext()
+  const { address: filAddress } = useConnection()
+  const { mutate: disconnectFil } = useDisconnect()
+
+  const isConnected = selectedChain === 'sol' ? isAuthenticated : !!filAddress
+  const connectedAddress = selectedChain === 'sol' ? user : filAddress
+
+  const handleDisconnect = () => {
+    if (selectedChain === 'sol') logout()
+    else disconnectFil()
+  }
 
   const truncatePublicKey = (publicKey: string) => {
     if (!publicKey) return ''
@@ -96,7 +111,12 @@ export const HomeHeader = () => {
                   <GithubLogoIcon size={22} />
                 </Button>
 
-                {isAuthenticated && user ? (
+                <ChainSelector
+                  value={selectedChain}
+                  onChange={setSelectedChain}
+                />
+
+                {isConnected && connectedAddress ? (
                   <HStack
                     height="40px"
                     width="fit-content"
@@ -111,16 +131,14 @@ export const HomeHeader = () => {
                       fontSize="sm"
                       fontWeight="medium"
                     >
-                      {truncatePublicKey(user)}
+                      {truncatePublicKey(connectedAddress)}
                     </Text>
                     <Box
                       as="span"
-                      onClick={logout}
+                      onClick={handleDisconnect}
                       cursor="pointer"
                       color="var(--text-muted)"
-                      _hover={{
-                        color: 'var(--red-mead)',
-                      }}
+                      _hover={{ color: 'var(--red-mead)' }}
                       transition="color 0.2s"
                     >
                       <LinkBreakIcon size={20} weight="bold" />
@@ -144,7 +162,11 @@ export const HomeHeader = () => {
                       bg: 'rgba(249, 115, 22, 0.1)',
                     }}
                     leftIcon={<WalletIcon size={18} weight="fill" />}
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() =>
+                      selectedChain === 'sol'
+                        ? setIsModalOpen(true)
+                        : setIsFilModalOpen(true)
+                    }
                   >
                     Connect Wallet
                   </Button>
@@ -157,6 +179,10 @@ export const HomeHeader = () => {
       <ConnectWallet
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+      <ConnectFilWallet
+        isOpen={isFilModalOpen}
+        onClose={() => setIsFilModalOpen(false)}
       />
     </>
   )
