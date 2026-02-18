@@ -1,6 +1,8 @@
 {
   "name": "@toju.network/fil",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Pay for storage with USDFC on IPFS using Storacha's Hot storage network.",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,11 +12,32 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seetadev/Storacha-Solana-SDK",
+    "directory": "packages/fil"
+  },
+  "keywords": [
+    "usdfc",
+    "storacha",
+    "typescript",
+    "web3",
+    "ipfs",
+    "filecoin",
+    "decentralized-storage",
+    "blockchain"
+  ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsup src/index.ts --minify",
+    "dev": "pnpm build --watch",
     "knip": "knip"
   },
+  "author": "toju.network",
+  "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "ethers": "^6.16.0"
   },

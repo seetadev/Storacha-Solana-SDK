@@ -12,3 +12,14 @@ if grep -q '"@toju.network/sol": "workspace:\*"' ui/package.json; then
 else
   echo "@toju.network/sol already using published version, skipping update"
 fi
+
+# Check if UI package.json has workspace:* for FIL package
+
+if grep -q '"@toju.network/fil": "workspace:\*"' ui/package.json; then
+echo "Found workspace:* for FIL - building FIL package..."
+cd packages/fil && pnpm build
+
+echo "@toju.network/fil built successfully"
+else
+echo "@toju.network/fil not using workspace protocol, skipping build"
+fi
