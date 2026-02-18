@@ -69,24 +69,65 @@ export async function createDepositTxn(
         verifyRes.message || 'Payment verification failed on server',
       )
 
+    const uploadData = new FormData()
+    file.forEach((file) => uploadData.append('file', file))
+    let fileUploadReq
+    const isMultipleFiles = file.length > 1
+
+    if (isMultipleFiles) {
+      fileUploadReq = await fetch(
+        `${apiEndpoint}/upload/files?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadData,
+        },
+      )
+    } else {
+      fileUploadReq = await fetch(
+        `${apiEndpoint}/upload/file?cid=${encodeURIComponent(depositRes.cid)}`,
+        {
+          method: 'POST',
+          body: uploadData,
+        },
+      )
+    }
+
+    if (!fileUploadReq.ok) {
+      let err = 'Unknown error'
+      try {
+        const data: DepositResponse = await fileUploadReq.json()
+        err = data.message || err
+      } catch {}
+      throw new Error('Deposit API error: ' + err)
+    }
+
+    const uploadResponse: Pick<DepositResponse, 'object' | 'cid' | 'message'> =
+      await fileUploadReq?.json()
+
     return {
       success: true,
       transactionHash: txHash,
       cid: depositRes.cid,
-      url: `https://w3s.link/ipfs/${depositRes.cid}`,
-      message: depositRes.message,
-      fileInfo: depositRes.files[0]
+      url: uploadResponse.object.url,
+      message: uploadResponse.object.message,
+      fileInfo: uploadResponse.object
         ? {
-            type: depositRes.files[0].type,
-            size: depositRes.files[0].size,
-            uploadedAt: new Date().toISOString(),
-            filename: depositRes.files[0].name,
+            type: uploadResponse?.object?.fileInfo?.type || '',
+            size: uploadResponse?.object?.fileInfo?.size || 0,
+            uploadedAt: uploadResponse?.object?.fileInfo?.uploadedAt || '',
+            filename: uploadResponse?.object?.fileInfo?.filename || '',
           }
         : undefined,
     }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred'
+
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
 
     return {
       success: false,

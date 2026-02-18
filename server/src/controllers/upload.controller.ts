@@ -237,7 +237,7 @@ export const deposit = async (req: Request, res: Response) => {
   }
 }
 
-/** the return type  */
+/** the return type for fileBuilder  */
 type FileMeta = {
   totalSize: number
   fileArray: Express.Multer.File[]
@@ -480,6 +480,7 @@ export const confirmUpload = async (req: Request, res: Response) => {
         })
 
         return res.status(200).json({
+          verified: true,
           message: 'Transaction hash updated successfully',
           deposit: updated[0],
         })
@@ -642,6 +643,7 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
     })
 
     return res.status(200).json({
+      verified: true,
       message: 'USDFC payment verified and upload confirmed successfully',
       deposit: inserted[0],
     })

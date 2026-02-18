@@ -74,6 +74,8 @@ export interface DepositResponse {
   fileCount: number
   /** Total size of all files in bytes */
   totalSize: number
+  /** result of a successful upload */
+  object: UploadResult
   /** Array of file information */
   files: Array<{
     name: string
