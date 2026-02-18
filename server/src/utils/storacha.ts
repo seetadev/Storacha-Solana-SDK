@@ -22,8 +22,16 @@ export async function initStorachaClient(): Promise<Client.Client> {
 
   const proof = await Proof.parse(process.env.STORACHA_PROOF!)
   const space = await client.addSpace(proof)
-
   await client.setCurrentSpace(space.did())
+
+  // we had errors on the server because the proof for this delegation
+  // wasn't provided. the plan/get capability cannot be scoped to the server (space DID?) agent
+  // so the appropriate thing to do is to get the plan proof separately so the
+  // plan limit call in the usage service doesn't error.
+  if (process.env.STORACHA_PLAN_PROOF) {
+    const planProof = await Proof.parse(process.env.STORACHA_PLAN_PROOF)
+    await client.addProof(planProof)
+  }
 
   return client
 }
