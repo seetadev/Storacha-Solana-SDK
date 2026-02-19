@@ -1,3 +1,4 @@
+import { useAuthContext } from '@/hooks/context'
 import {
   Box,
   Button,
@@ -18,7 +19,7 @@ import {
 } from '@phosphor-icons/react'
 import { RocketLaunchIcon } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@tanstack/react-router'
-import { useAuthContext } from '@/hooks/context'
+import { useConnection } from 'wagmi'
 
 const styles = {
   beam: {
@@ -57,6 +58,8 @@ const styles = {
 
 export const HomePage = () => {
   const { isAuthenticated } = useAuthContext()
+  const { address: filAddress } = useConnection()
+  const isAnyWalletConnected = isAuthenticated || !!filAddress
 
   return (
     <Box position="relative" overflow="hidden">
@@ -133,7 +136,7 @@ export const HomePage = () => {
             <Button
               as={Link}
               to="/app"
-              disabled={!isAuthenticated}
+              disabled={!isAnyWalletConnected}
               height="54px"
               px="2.5em"
               fontSize="var(--font-size-base)"
@@ -151,7 +154,7 @@ export const HomePage = () => {
               transition="all 0.2s"
               rightIcon={<ArrowRightIcon weight="bold" />}
             >
-              {isAuthenticated ? 'Get started' : 'Connect wallet'}
+              {isAnyWalletConnected ? 'Get started' : 'Connect wallet'}
             </Button>
 
             <Box

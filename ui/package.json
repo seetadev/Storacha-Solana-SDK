@@ -24,9 +24,11 @@
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.95.8",
     "@tanstack/react-devtools": "^0.7.0",
+    "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-router": "^1.132.0",
     "@tanstack/react-router-devtools": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
+    "@toju.network/fil": "workspace:*",
     "@toju.network/sol": "^0.1.4",
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
@@ -37,7 +39,9 @@
     "react-markdown": "^10.1.0",
     "sass": "^1.83.0",
     "sonner": "^2.0.7",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "viem": "~2.45.1",
+    "wagmi": "^3.4.4"
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "^0.3.11",

@@ -1,3 +1,20 @@
+import { StorageDurationSelector } from '@/components/duration-selector'
+import { StorageCostSkeleton } from '@/components/skeletons'
+import { FileUpload } from '@/components/upload'
+import {
+  useConnectionCheck,
+  /* eslint-disable */
+  type ConnectionQuality,
+} from '@/hooks/connection-check'
+import { useAuthContext, useChainContext } from '@/hooks/context'
+import { useSolPrice } from '@/hooks/sol-price'
+import { useStorageCost, useUsdfcStorageCost } from '@/hooks/storage-cost'
+import { UploadSuccess } from '@/layouts/modal-layout'
+import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
+import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
+import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
+import type { State } from '@/lib/types'
+import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -13,33 +30,54 @@ import {
 } from '@phosphor-icons/react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import type { Transaction } from '@solana/web3.js'
+import {
+  Environment,
+  USDFC_CONTRACT_ADDRESS,
+  useUpload as useFilUpload,
+} from '@toju.network/fil'
 import { useDeposit } from '@toju.network/sol'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { StorageDurationSelector } from '@/components/duration-selector'
-import { StorageCostSkeleton } from '@/components/skeletons'
-import { FileUpload } from '@/components/upload'
-import {
-  /* eslint-disable */
-  type ConnectionQuality,
-  useConnectionCheck,
-} from '@/hooks/connection-check'
-import { useAuthContext } from '@/hooks/context'
-import { useSolPrice } from '@/hooks/sol-price'
-import { useStorageCost } from '@/hooks/storage-cost'
-import { UploadSuccess } from '@/layouts/modal-layout'
-import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
-import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
-import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
-import type { State } from '@/lib/types'
-import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
+import { useConnection, useReadContract, useWriteContract } from 'wagmi'
 
 const SLOW_UPLOAD_THRESHOLD_MS = 15000
 
 export const Upload = () => {
   const { isAuthenticated, balance, refreshBalance, network } = useAuthContext()
+  const { selectedChain } = useChainContext()
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
+
+  const { address: filAddress } = useConnection()
+  const isFilMainnet = import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
+  const usdfcContractAddress = isFilMainnet
+    ? USDFC_CONTRACT_ADDRESS.mainnet
+    : USDFC_CONTRACT_ADDRESS.calibration
+  const { data: usdfcBalanceRaw } = useReadContract({
+    address: usdfcContractAddress as `0x${string}`,
+    abi: [
+      {
+        name: 'balanceOf',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [{ name: 'account', type: 'address' }],
+        outputs: [{ type: 'uint256' }],
+      },
+    ] as const,
+    functionName: 'balanceOf',
+    args: filAddress ? [filAddress] : undefined,
+    query: { enabled: !!filAddress },
+  })
+  const usdfcBalance = usdfcBalanceRaw ? Number(usdfcBalanceRaw) / 1e18 : null
+  const filEnvironment = isFilMainnet
+    ? Environment.mainnet
+    : Environment.calibration
+  const filClient = useFilUpload(
+    filEnvironment,
+    IS_DEV ? import.meta.env.VITE_API_URL : undefined,
+  )
+  const { writeContractAsync } = useWriteContract()
+
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
   const [storageDuration, setStorageDuration] = useState<string>('30')
   const [email, setEmail] = useState('')
@@ -115,10 +153,19 @@ export const Upload = () => {
     solanaRpcUrl,
   })
 
-  const { totalCost, isLoading: isCostLoading } = useStorageCost(
-    selectedFiles,
+  const { totalCost: solCost, isLoading: isSolCostLoading } = useStorageCost(
+    selectedChain === 'sol' ? selectedFiles : [],
     isValidDuration ? parsedDuration : 0,
   )
+  const { totalCost: usdfcCost, isLoading: isUsdfcCostLoading } =
+    useUsdfcStorageCost(
+      selectedChain === 'fil' ? selectedFiles : [],
+      isValidDuration ? parsedDuration : 0,
+    )
+
+  const totalCost = selectedChain === 'sol' ? solCost : usdfcCost
+  const isCostLoading =
+    selectedChain === 'sol' ? isSolCostLoading : isUsdfcCostLoading
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -145,32 +192,82 @@ export const Upload = () => {
     }, SLOW_UPLOAD_THRESHOLD_MS)
 
     try {
-      const result = await client.createDeposit({
-        file: selectedFiles,
-        durationDays: parsedDuration,
-        payer: publicKey!,
-        signTransaction: async (tx: Transaction) => {
-          toast.loading('Please sign the transaction in your wallet...', {
-            id: toastId,
-          })
-          const signed = await signTransaction!(tx)
-          toast.loading('Processing transaction...', { id: toastId })
-          return signed
-        },
-        userEmail: email || undefined,
-      })
+      let result: {
+        success: boolean
+        cid: string
+        transactionHash?: string
+        signature?: string
+        error?: string
+      }
+
+      if (selectedChain === 'fil') {
+        if (!filAddress) throw new Error('FIL wallet not connected')
+        result = await filClient.createDeposit({
+          file: selectedFiles,
+          durationDays: parsedDuration,
+          userAddress: filAddress,
+          userEmail: email || undefined,
+          sendTransaction: async (txData) => {
+            const chainId = isFilMainnet ? 314 : 314159 // Filecoin mainnet or calibration
+            toast.loading(
+              'Please confirm the USDFC transfer in your wallet...',
+              {
+                id: toastId,
+              },
+            )
+            const hash = await writeContractAsync({
+              chainId,
+              address: txData.contractAddress as `0x${string}`,
+              abi: [
+                {
+                  name: 'transfer',
+                  type: 'function',
+                  stateMutability: 'nonpayable',
+                  inputs: [
+                    { name: 'to', type: 'address' },
+                    { name: 'amount', type: 'uint256' },
+                  ],
+                  outputs: [{ type: 'bool' }],
+                },
+              ] as const,
+              functionName: 'transfer',
+              args: [txData.to as `0x${string}`, BigInt(txData.amount)],
+            })
+            toast.loading('Processing transaction...', { id: toastId })
+            return hash
+          },
+        })
+      } else {
+        const solResult = await client.createDeposit({
+          file: selectedFiles,
+          durationDays: parsedDuration,
+          payer: publicKey!,
+          signTransaction: async (tx: Transaction) => {
+            toast.loading('Please sign the transaction in your wallet...', {
+              id: toastId,
+            })
+            const signed = await signTransaction!(tx)
+            toast.loading('Processing transaction...', { id: toastId })
+            return signed
+          },
+          userEmail: email || undefined,
+        })
+        result = { ...solResult, transactionHash: solResult.signature }
+      }
 
       clearTimeout(slowUploadTimer)
 
       if (result.success) {
-        clearTimeout(slowUploadTimer)
         toast.success('Upload successful!', { id: toastId, duration: 3000 })
 
         const totalFileSize = selectedFiles.reduce(
           (acc, file) => acc + file.size,
           0,
         )
-        const usdCost = solPrice ? totalCost * Number(solPrice) : 0
+        const usdCost =
+          selectedChain === 'sol' && solPrice
+            ? totalCost * Number(solPrice)
+            : totalCost
 
         setUploadResult({
           cid: result.cid,
@@ -179,12 +276,12 @@ export const Upload = () => {
           fileSize: totalFileSize,
           fileCount: selectedFiles.length,
           duration: parsedDuration,
-          costInSOL: totalCost,
+          costInSOL: selectedChain === 'sol' ? totalCost : 0,
           costInUSD: usdCost,
-          transactionHash: result.signature,
+          transactionHash: result.transactionHash ?? result.signature ?? '',
         })
 
-        await refreshBalance()
+        if (selectedChain === 'sol') await refreshBalance()
         setSelectedFiles([])
         setState('idle')
         openSuccessModal()
@@ -195,16 +292,13 @@ export const Upload = () => {
       clearTimeout(slowUploadTimer)
       const errorMessage =
         error instanceof Error ? error.message : 'Upload failed'
-
       const isNetworkError =
         errorMessage.toLowerCase().includes('timeout') ||
         errorMessage.toLowerCase().includes('network') ||
         errorMessage.toLowerCase().includes('fetch')
-
       const displayMessage = isNetworkError
         ? `${errorMessage}. This may be due to a slow internet connection. Please try again with a stronger connection.`
         : errorMessage
-
       toast.error(displayMessage, { id: toastId })
       setState('idle')
     } finally {
@@ -218,8 +312,19 @@ export const Upload = () => {
       return
     }
 
-    if (!publicKey || !signTransaction || selectedFiles.length === 0) {
+    if (
+      selectedChain === 'sol' &&
+      (!publicKey || !signTransaction || selectedFiles.length === 0)
+    ) {
       toast.error('Wallet not properly connected or no files selected')
+      return
+    }
+
+    if (
+      selectedChain === 'fil' &&
+      (!filAddress || selectedFiles.length === 0)
+    ) {
+      toast.error('FIL wallet not connected or no files selected')
       return
     }
 
@@ -284,10 +389,19 @@ export const Upload = () => {
     }, 300)
   }
 
-  const usdEquivalent = solPrice ? totalCost * Number(solPrice) : 0
-  const hasInsufficientBalance = balance !== null && totalCost > balance
+  const usdEquivalent =
+    selectedChain === 'sol' && solPrice
+      ? totalCost * Number(solPrice)
+      : totalCost
+  const usdfcBalanceNum = usdfcBalance
+  const hasInsufficientBalance =
+    selectedChain === 'sol'
+      ? balance !== null && totalCost > balance
+      : usdfcBalanceNum !== null && totalCost > usdfcBalanceNum
   const isUploadDisabled =
-    !isAuthenticated || state === 'uploading' || hasInsufficientBalance
+    selectedChain === 'sol'
+      ? !isAuthenticated || state === 'uploading' || hasInsufficientBalance
+      : !filAddress || state === 'uploading' || hasInsufficientBalance
 
   const networkDisplay = network
 
@@ -343,25 +457,41 @@ export const Upload = () => {
                     Current Balance:
                   </Text>
                   <VStack spacing="0" align="flex-end">
-                    <Text
-                      fontSize="var(--font-size-lg)"
-                      fontWeight="var(--font-weight-semibold)"
-                      color="var(--text-inverse)"
-                      lineHeight="var(--line-height-tight)"
-                    >
-                      {balance !== null ? balance.toFixed(4) : '-.----'} SOL
-                    </Text>
-                    <Text
-                      fontSize="var(--font-size-xs)"
-                      color="var(--text-tertiary)"
-                      lineHeight="var(--line-height-tight)"
-                    >
-                      ≈ $
-                      {balance !== null && solPrice
-                        ? (balance * Number(solPrice)).toFixed(2)
-                        : '--'}{' '}
-                      USD
-                    </Text>
+                    {selectedChain === 'sol' ? (
+                      <>
+                        <Text
+                          fontSize="var(--font-size-lg)"
+                          fontWeight="var(--font-weight-semibold)"
+                          color="var(--text-inverse)"
+                          lineHeight="var(--line-height-tight)"
+                        >
+                          {balance !== null ? balance.toFixed(4) : '-.----'} SOL
+                        </Text>
+                        <Text
+                          fontSize="var(--font-size-xs)"
+                          color="var(--text-tertiary)"
+                          lineHeight="var(--line-height-tight)"
+                        >
+                          ≈ $
+                          {balance !== null && solPrice
+                            ? (balance * Number(solPrice)).toFixed(2)
+                            : '--'}{' '}
+                          USD
+                        </Text>
+                      </>
+                    ) : (
+                      <Text
+                        fontSize="var(--font-size-lg)"
+                        fontWeight="var(--font-weight-semibold)"
+                        color="var(--text-inverse)"
+                        lineHeight="var(--line-height-tight)"
+                      >
+                        {usdfcBalanceNum !== null
+                          ? usdfcBalanceNum.toFixed(2)
+                          : '-.--'}{' '}
+                        USDFC
+                      </Text>
+                    )}
                   </VStack>
                 </HStack>
 
@@ -390,7 +520,9 @@ export const Upload = () => {
                           }
                           lineHeight="var(--line-height-tight)"
                         >
-                          {formatSOL(totalCost)}
+                          {selectedChain === 'sol'
+                            ? formatSOL(totalCost)
+                            : `${totalCost.toFixed(6)} USDFC`}
                         </Text>
                         <Text
                           fontSize="var(--font-size-sm)"

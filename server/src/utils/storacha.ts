@@ -7,7 +7,7 @@ import { db } from '../db/db.js'
 import { configTable } from '../db/schema.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { QuoteInput } from '../types.js'
-import { getAmountInLamportsFromUSD } from './constant.js'
+import { getAmountInLamportsFromUSD, getAmountInUSD } from './constant.js'
 import { logger } from './logger.js'
 
 /**
@@ -34,6 +34,7 @@ export async function initStorachaClient(): Promise<Client.Client> {
 export const getQuoteForFileUpload = async ({
   durationInUnits,
   sizeInBytes,
+  chain = 'sol',
 }: QuoteInput) => {
   const data = await db
     .select({
@@ -49,13 +50,23 @@ export const getQuoteForFileUpload = async ({
   const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0]
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT)
 
-  const solPrice = await getSolPrice()
-  const totalCost = getAmountInLamportsFromUSD(
-    sizeInBytes,
-    RATE_PER_BYTE_PER_UNIT,
-    effectiveDuration,
-    solPrice,
-  )
+  let totalCost: number
+
+  if (chain === 'fil') {
+    totalCost = getAmountInUSD(
+      sizeInBytes,
+      RATE_PER_BYTE_PER_UNIT,
+      effectiveDuration,
+    )
+  } else {
+    const solPrice = await getSolPrice()
+    totalCost = getAmountInLamportsFromUSD(
+      sizeInBytes,
+      RATE_PER_BYTE_PER_UNIT,
+      effectiveDuration,
+      solPrice,
+    )
+  }
 
   return {
     effectiveDuration,

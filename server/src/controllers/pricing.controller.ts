@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { getSolPrice } from '../services/price/sol-price.service.js'
-import { QuoteOutput } from '../types.js'
+import { PaymentChain, QuoteOutput } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { getQuoteForFileUpload } from '../utils/storacha.js'
 
@@ -14,9 +14,12 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
   try {
     const duration = parseInt(req.query.duration as string, 10)
     const size = parseInt(req.query.size as string, 10)
+    const chain = (req.query.chain as string) || 'sol'
+
     const QuoteObject: QuoteOutput = await getQuoteForFileUpload({
       durationInUnits: duration,
       sizeInBytes: size,
+      chain: chain as PaymentChain,
     })
     return res.status(200).json({
       quote: QuoteObject,
