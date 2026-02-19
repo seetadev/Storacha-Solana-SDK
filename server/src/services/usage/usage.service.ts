@@ -33,10 +33,28 @@ export class UsageService {
   }
 
   /**
-   * get plan limit from storacha using plan/get capability
+   * known plan capacities by product DID.
    *
-   * the limit is optional - absent means unlimited according to the
-   * storacha spec here: https://github.com/storacha/specs/pull/150
+   * storacha plans with overages enabled return limit: 0 from plan/get,
+   * meaning "unlimited with overage charges." the actual included capacity
+   * must be mapped from the product DID. for forge plans (strict limits),
+   * plan/get returns the real byte limit.
+   *
+   * see: https://github.com/storacha/specs/pull/150
+   */
+  private static PLAN_CAPACITIES: Record<string, number> = {
+    'did:web:starter.storacha.network': 5_000_000_000,
+    'did:web:medium.storacha.network': 100_000_000_000,
+    'did:web:spciy.storacha.network': 2_000_000_000_000,
+  }
+
+  /**
+   * get plan limit from storacha using plan/get capability.
+   *
+   * if limit is 0, it means overages are enabled and the plan is
+   * virtually unlimited. we use the product DID to look up the
+   * included capacity instead.
+   *
    * @returns limit in bytes, or null if unlimited
    */
   private async fetchPlanLimit(): Promise<number | null> {
@@ -47,7 +65,7 @@ export class UsageService {
         logger.warn(
           'STORACHA_ACCOUNT_DID not set, using default plan limit. Set STORACHA_ACCOUNT_DID in environment variables.',
         )
-        return 5_000_000_000 // 5GiB default for free
+        return 5_000_000_000
       }
 
       const plan = await this.client.capability.plan.get(accountDID)
@@ -56,8 +74,33 @@ export class UsageService {
       // TS is complaining that "Property limit does not exist on type PlanGetSuccess."
       // but that's probably a npm cache thing because in the latest version
       // of the upload client we already have it present. see it: https://github.com/storacha/upload-service/blob/dfd96c418d86e3fe94d3eafa669caf5b701bf728/packages/capabilities/src/types.ts#L1132
+      /* @ts-ignore */
       const limitBytes = parseInt(plan.limit, 10)
 
+      // limit: 0 means overages enabled — look up included capacity from product DID
+      if (limitBytes === 0) {
+        const product = (plan as { product?: string }).product
+        const knownLimit = product
+          ? UsageService.PLAN_CAPACITIES[product]
+          : undefined
+
+        if (knownLimit) {
+          logger.info('plan has overages enabled, using known capacity', {
+            product,
+            limitBytes: knownLimit,
+            limitGB: (knownLimit / 1e9).toFixed(2),
+          })
+          return knownLimit
+        }
+
+        logger.warn('unknown product DID, using default capacity', {
+          product,
+          defaultGB: '5.00',
+        })
+        return 5_000_000_000
+      }
+
+      // forge plans return the actual byte limit
       logger.info('plan limit fetched from storacha', {
         accountDID,
         limitBytes,
