@@ -15,6 +15,7 @@ import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
 import { createDepositTransaction } from './solana.controller.js'
+import { getAddressTransfers } from '../services/indexer/beryx.service.js'
 
 /**
  * Function to upload a file to storacha
@@ -601,15 +602,52 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
     if (!config[0].filecoinWallet)
       throw new Error('Filecoin wallet not configured')
 
-    // TODO: implement transaction verification with ethers.js
-    // 1. fetch transaction receipt from Filecoin RPC
-    // 2. verify: tx.to === config.filecoinWallet
-    // 3. verify: tx.value >= depositMetadata.depositAmount
-    // 4. verify: tx.status === 1 (successful)
-    // throw error if verification fails
-    // proper transaction verification/reconciliation would happen
-    // when we have the indexer setup. see https://github.com/seetadev/Storacha-Solana-SDK/issues/176
-    // for context.
+    const treasury = config[0].filecoinWallet.toLowerCase()
+    const userAddress = depositMetadata.depositKey.toLowerCase()
+
+    const isMainnet = process.env.NODE_ENV === 'production'
+
+    const USDFC_CONTRACT = isMainnet
+      ? '0x80B98d3aa09ffff255c3ba4A241111Ff1262F045'
+      : '0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0'
+
+    const expectedAmount = BigInt(depositMetadata.depositAmount)
+
+    /**
+     * 🔁 Retry mechanism for indexing delay
+     */
+    let matchingTx = null
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const transfers = await getAddressTransfers(userAddress)
+
+      const txMatches = transfers.filter(
+        (tx) => tx.tx_hash.toLowerCase() === transactionHash.toLowerCase(),
+      )
+
+      if (txMatches.length) {
+        matchingTx = txMatches.find(
+          (tx) =>
+            tx.from.toLowerCase() === userAddress &&
+            tx.to.toLowerCase() === treasury &&
+            tx.contract_address.toLowerCase() ===
+              USDFC_CONTRACT.toLowerCase() &&
+            BigInt(tx.amount) >= expectedAmount,
+        )
+
+        if (matchingTx) break
+      }
+
+      // wait 10 seconds before retry
+      await new Promise((r) => setTimeout(r, 10000))
+    }
+
+    if (!matchingTx) {
+      return res.status(200).json({
+        message:
+          'Valid USDFC transfer not found. Transaction may still be indexing.',
+      })
+    }
 
     const depositItem: typeof uploads.$inferInsert = {
       depositAmount: depositMetadata.depositAmount,
