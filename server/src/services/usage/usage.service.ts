@@ -1,5 +1,5 @@
 import { Client as StorachaClient } from '@storacha/client'
-import { AccountDID } from '@storacha/client/types'
+import { AccountDID, PlanGetSuccess } from '@storacha/client/types'
 import { eq, sql } from 'drizzle-orm'
 import { Resend } from 'resend'
 import { db } from '../../db/db.js'
@@ -14,6 +14,27 @@ import { logger } from '../../utils/logger.js'
 const { EMAIL_FROM, WATCHMAN } = process.env!
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const KiB = 1024
+const MiB = 1024 * KiB
+const GiB = 1024 * MiB
+const TiB = 1024 * GiB
+
+/**
+ * known plan capacities by product DID.
+ *
+ * storacha plans with overages enabled return limit: 0 from plan/get,
+ * meaning "unlimited with overage charges." the actual included capacity
+ * must be mapped from the product DID. for forge plans (strict limits),
+ * plan/get returns the real byte limit.
+ *
+ * see: https://github.com/storacha/specs/pull/150
+ */
+const PLAN_CAPACITIES: Record<string, number> = {
+  'did:web:starter.storacha.network': 5 * GiB,
+  'did:web:lite.storacha.network': 100 * GiB,
+  'did:web:business.storacha.network': 2 * TiB,
+}
+
 interface UsageReport {
   finalSize: number
   initialSize: number
@@ -23,29 +44,13 @@ export class UsageService {
   private client: StorachaClient
   private planLimitBytes: number
 
-  constructor(client: StorachaClient, planLimitBytes: number = 5_000_000_000) {
+  constructor(client: StorachaClient, planLimitBytes: number = 5 * GiB) {
     this.client = client
     this.planLimitBytes = planLimitBytes // default 5GiB size
   }
 
   get planLimit(): number {
     return this.planLimitBytes
-  }
-
-  /**
-   * known plan capacities by product DID.
-   *
-   * storacha plans with overages enabled return limit: 0 from plan/get,
-   * meaning "unlimited with overage charges." the actual included capacity
-   * must be mapped from the product DID. for forge plans (strict limits),
-   * plan/get returns the real byte limit.
-   *
-   * see: https://github.com/storacha/specs/pull/150
-   */
-  private static PLAN_CAPACITIES: Record<string, number> = {
-    'did:web:starter.storacha.network': 5_000_000_000,
-    'did:web:medium.storacha.network': 100_000_000_000,
-    'did:web:spciy.storacha.network': 2_000_000_000_000,
   }
 
   /**
@@ -65,10 +70,11 @@ export class UsageService {
         logger.warn(
           'STORACHA_ACCOUNT_DID not set, using default plan limit. Set STORACHA_ACCOUNT_DID in environment variables.',
         )
-        return 5_000_000_000
+        return 5 * GiB
       }
 
-      const plan = await this.client.capability.plan.get(accountDID)
+      const plan: PlanGetSuccess =
+        await this.client.capability.plan.get(accountDID)
 
       // limit is a string in bytes, needs to be parsed
       // TS is complaining that "Property limit does not exist on type PlanGetSuccess."
@@ -79,10 +85,8 @@ export class UsageService {
 
       // limit: 0 means overages enabled — look up included capacity from product DID
       if (limitBytes === 0) {
-        const product = (plan as { product?: string }).product
-        const knownLimit = product
-          ? UsageService.PLAN_CAPACITIES[product]
-          : undefined
+        const product = plan.product
+        const knownLimit = product ? PLAN_CAPACITIES[product] : undefined
 
         if (knownLimit) {
           logger.info('plan has overages enabled, using known capacity', {
@@ -97,7 +101,7 @@ export class UsageService {
           product,
           defaultGB: '5.00',
         })
-        return 5_000_000_000
+        return 5 * GiB
       }
 
       // forge plans return the actual byte limit
@@ -110,7 +114,7 @@ export class UsageService {
       return limitBytes
     } catch (error) {
       logger.error('failed to fetch plan limit from storacha', { error })
-      return 5_000_000_000
+      return 5 * GiB
     }
   }
 
