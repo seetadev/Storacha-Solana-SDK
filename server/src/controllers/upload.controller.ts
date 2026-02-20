@@ -15,7 +15,10 @@ import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
 import { createDepositTransaction } from './solana.controller.js'
-import { getAddressTransfers } from '../services/indexer/beryx.service.js'
+import {
+  getAddressTransfers,
+  getUsdfcContractAddress,
+} from '../services/indexer/beryx.service.js'
 
 /**
  * Function to upload a file to storacha
@@ -602,14 +605,10 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
     if (!config[0].filecoinWallet)
       throw new Error('Filecoin wallet not configured')
 
-    const treasury = config[0].filecoinWallet.toLowerCase()
-    const userAddress = depositMetadata.depositKey.toLowerCase()
+    const treasury = config[0].filecoinWallet
+    const userAddress = depositMetadata.depositKey
 
-    const isMainnet = process.env.NODE_ENV === 'production'
-
-    const USDFC_CONTRACT = isMainnet
-      ? '0x80B98d3aa09ffff255c3ba4A241111Ff1262F045'
-      : '0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0'
+    const USDFC_CONTRACT = getUsdfcContractAddress()
 
     const expectedAmount = BigInt(depositMetadata.depositAmount)
 
