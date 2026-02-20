@@ -6,7 +6,7 @@ const FILECOIN_INDEXER_BASE_URL = {
   calibration: 'https://api.zondax.ch/fil/data/v4/calibration',
 } as const
 
-export function getFilecoinNetwork(): keyof typeof FILECOIN_INDEXER_BASE_URL {
+function getFilecoinNetwork(): keyof typeof FILECOIN_INDEXER_BASE_URL {
   const network = process.env.FILECOIN_NETWORK
 
   if (network !== 'mainnet' && network !== 'calibration') {

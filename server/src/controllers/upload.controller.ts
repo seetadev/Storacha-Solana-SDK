@@ -612,9 +612,6 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
 
     const expectedAmount = BigInt(depositMetadata.depositAmount)
 
-    /**
-     * 🔁 Retry mechanism for indexing delay
-     */
     let matchingTx = null
 
     for (let attempt = 0; attempt < 5; attempt++) {
