@@ -1,3 +1,4 @@
+import { PublicKey } from '@solana/web3.js'
 import * as Sentry from '@sentry/node'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
@@ -15,6 +16,10 @@ import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
 import { createDepositTransaction } from './solana.controller.js'
+
+const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
+// email regex
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
  * Function to upload a file to storacha
@@ -177,7 +182,33 @@ export const deposit = async (req: Request, res: Response) => {
     }
 
     const { publicKey, duration, userEmail } = req.body
+
+    // input validation
+    try {
+      new PublicKey(publicKey)
+    } catch {
+      return res
+        .status(400)
+        .json({ message: 'Invalid Solana public key' })
+    }
+
     const durationInSeconds = parseInt(duration as string, 10)
+    if (
+      Number.isNaN(durationInSeconds) ||
+      durationInSeconds < MIN_DURATION_SECONDS
+    ) {
+      return res.status(400).json({
+        message: `Duration must be at least ${MIN_DURATION_SECONDS} seconds`,
+      })
+    }
+
+    if (userEmail && (typeof userEmail !== 'string' || !EMAIL_RE.test(userEmail))) {
+      return res.status(400).json({ message: 'Invalid email address' })
+    }
+    const sanitizedEmail = userEmail
+      ? userEmail.trim().slice(0, 254)
+      : undefined
+
     const { ratePerBytePerDay } = await getPricingConfig()
     const solPrice = await getSolPrice()
     const duration_days = Math.floor(durationInSeconds / DAY_TIME_IN_SECONDS)
@@ -190,7 +221,7 @@ export const deposit = async (req: Request, res: Response) => {
 
     Sentry.setUser({
       id: publicKey,
-      email: userEmail || undefined,
+      email: sanitizedEmail,
     })
 
     logger.info('Deposit calculation', {
@@ -216,8 +247,6 @@ export const deposit = async (req: Request, res: Response) => {
     if (!Number.isSafeInteger(amountInLamports) || amountInLamports <= 0) {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`)
     }
-    const durationNum = Number(duration)
-    if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
 
     const depositInstructions = await createDepositTransaction({
       publicKey,
@@ -235,7 +264,7 @@ export const deposit = async (req: Request, res: Response) => {
       depositAmount: amountInLamports,
       durationDays: duration_days,
       depositKey: publicKey,
-      userEmail: userEmail || null,
+      userEmail: sanitizedEmail || null,
       fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
       fileSize: totalSize,
