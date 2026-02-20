@@ -20,8 +20,11 @@ export const Transactions = () => {
 
   const openExplorer = (signature: string) => {
     if (selectedChain === 'fil') {
+      const filfoxUrl = import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
+        ? 'https://filfox.info'
+        : 'https://calibration.filfox.info'
       window.open(
-        `https://filfox.info/tx/${signature}`,
+        `${filfoxUrl}/tx/${signature}`,
         '_blank',
       )
     } else {
