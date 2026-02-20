@@ -1,14 +1,14 @@
-import * as Client from "@storacha/client";
-import { create } from "@storacha/client";
-import { Signer } from "@storacha/client/principal/ed25519";
-import * as Proof from "@storacha/client/proof";
-import { StoreMemory } from "@storacha/client/stores/memory";
-import { db } from "../db/db.js";
-import { configTable } from "../db/schema.js";
-import { getSolPrice } from "../services/price/sol-price.service.js";
-import { QuoteInput } from "../types.js";
-import { getAmountInLamportsFromUSD } from "./constant.js";
-import { logger } from "./logger.js";
+import * as Client from '@storacha/client'
+import { create } from '@storacha/client'
+import { Signer } from '@storacha/client/principal/ed25519'
+import * as Proof from '@storacha/client/proof'
+import { StoreMemory } from '@storacha/client/stores/memory'
+import { db } from '../db/db.js'
+import { configTable } from '../db/schema.js'
+import { getSolPrice } from '../services/price/sol-price.service.js'
+import { QuoteInput } from '../types.js'
+import { getAmountInLamportsFromUSD } from './constant.js'
+import { logger } from './logger.js'
 
 /**
  * Initializes a Storacha client using user-provided key and proof.
@@ -16,44 +16,29 @@ import { logger } from "./logger.js";
  * @returns {Promise<Client.Client>} Initialized W3UP client
  */
 export async function initStorachaClient(): Promise<Client.Client> {
-  const principal = Signer.parse(process.env.STORACHA_KEY!);
-  const store = new StoreMemory();
-  const client = await create({ principal, store });
+  const principal = Signer.parse(process.env.STORACHA_KEY!)
+  const store = new StoreMemory()
+  const client = await create({ principal, store })
 
-  const proof = await Proof.parse(process.env.STORACHA_PROOF!);
-  const space = await client.addSpace(proof);
-  await client.setCurrentSpace(space.did());
+  const proof = await Proof.parse(process.env.STORACHA_PROOF!)
+  const space = await client.addSpace(proof)
+  await client.setCurrentSpace(space.did())
 
-  logger.info("STORACHA_PLAN_PROOF env var present:", {
+  logger.info('STORACHA_PLAN_PROOF env var present:', {
     exists: !!process.env.STORACHA_PLAN_PROOF,
-  });
+  })
 
   // we had errors on the server because the proof for this delegation
   // wasn't provided. the plan/get capability cannot be scoped to the server (space DID?) agent
-  // so the appropriate thing to do is to get the plan proof separately so the
+  // so the appropriate thing to do is to get the plan proof separately with sacap: https://github.com/kaf-lamed-beyt/sacap
+  // since it is an account-level capability (did:mailto...) so the
   // plan limit call in the usage service doesn't error.
   if (process.env.STORACHA_PLAN_PROOF) {
-    try {
-      const planProof = await Proof.parse(process.env.STORACHA_PLAN_PROOF);
-      logger.info("plan proof parsed", {
-        audience: planProof.audience.did(),
-        issuer: planProof.issuer.did(),
-        capabilities: JSON.stringify(planProof.capabilities),
-        agentDID: client.did(),
-        audienceMatchesAgent: planProof.audience.did() === client.did(),
-      });
-      await client.addProof(planProof);
-
-      const proofs = client.proofs([
-        { can: "plan/get", with: "did:mailto:gmail.com:fil.keep.dev" },
-      ]);
-      logger.info("plan/get proofs after addProof", { count: proofs.length });
-    } catch (err) {
-      logger.error("failed to parse/add plan proof", { error: err });
-    }
+    const planProof = await Proof.parse(process.env.STORACHA_PLAN_PROOF)
+    await client.addProof(planProof)
   }
 
-  return client;
+  return client
 }
 
 /**
@@ -68,29 +53,28 @@ export const getQuoteForFileUpload = async ({
       MINIMUM_DURATION_UNIT: configTable.minDurationDays,
       RATE_PER_BYTE_PER_UNIT: configTable.ratePerBytePerDay,
     })
-    .from(configTable);
+    .from(configTable)
 
-  if (!data || data.length === 0) {
-    throw new Error("Config not found in database");
-  }
+  if (!data || data.length === 0)
+    throw new Error('Config not found in database')
 
-  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0];
-  const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT);
+  const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0]
+  const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT)
 
-  const solPrice = await getSolPrice();
+  const solPrice = await getSolPrice()
   const totalCost = getAmountInLamportsFromUSD(
     sizeInBytes,
     RATE_PER_BYTE_PER_UNIT,
     effectiveDuration,
     solPrice,
-  );
+  )
 
   return {
     effectiveDuration,
     ratePerBytePerDay: RATE_PER_BYTE_PER_UNIT,
     totalCost,
-  };
-};
+  }
+}
 
 /**
  * Returns pricing config from database
@@ -104,19 +88,19 @@ export const getPricingConfig = async () => {
         ratePerBytePerDay: configTable.ratePerBytePerDay,
       })
       .from(configTable)
-      .limit(1);
+      .limit(1)
 
     if (!data || data.length === 0)
-      throw new Error("Pricing config not found in database");
+      throw new Error('Pricing config not found in database')
 
     return {
       minDurationDays: data[0].minDurationDays,
       ratePerBytePerDay: data[0].ratePerBytePerDay,
-    };
+    }
   } catch (error) {
-    logger.error("Error fetching pricing config from database", {
+    logger.error('Error fetching pricing config from database', {
       error: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
+    })
+    throw error
   }
-};
+}
