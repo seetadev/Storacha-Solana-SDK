@@ -1,4 +1,4 @@
-import { useDeposit as useSolDeposit } from '@toju.network/sol'
+import { useUpload as useSolUpload } from '@toju.network/sol'
 import { Environment as FilEnvironment, useUpload as useFilDeposit } from '@toju.network/fil'
 import useSWR from 'swr'
 import { useAuthContext, useChainContext } from '@/hooks/context'
@@ -15,7 +15,7 @@ export function useUploadHistory() {
   const currentUserAddress = selectedChain === 'sol' ? solAddress : filAddress
 
   const client = selectedChain === 'sol' 
-    ? useSolDeposit(network) 
+    ? useSolUpload(network) 
     : useFilDeposit(
         import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet' ? FilEnvironment.mainnet : FilEnvironment.calibration,
         IS_DEV ? import.meta.env.VITE_API_URL : undefined as any
