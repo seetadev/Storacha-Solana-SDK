@@ -9,6 +9,9 @@ export const Transactions = () => {
   const { files, isLoading, stats } = useUploadHistory()
   const { selectedChain } = useChainContext()
 
+  const SOL_DECIMALS = 4
+  const USDFC_DECIMALS = 6
+
   // Network is determined at build time via env var
   const configuredNetwork =
     import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
@@ -94,7 +97,7 @@ export const Transactions = () => {
             fontWeight="var(--font-weight-bold)"
             color="var(--text-inverse)"
           >
-            {selectedChain === 'sol' ? stats.totalSpent.toFixed(4) : stats.totalSpent.toFixed(6)}
+            {selectedChain === 'sol' ? stats.totalSpent.toFixed(SOL_DECIMALS) : stats.totalSpent.toFixed(USDFC_DECIMALS)}
             <Text
               as="span"
               fontSize="var(--font-size-lg)"
@@ -213,7 +216,7 @@ export const Transactions = () => {
                     fontWeight="var(--font-weight-bold)"
                     color="var(--text-inverse)"
                   >
-                    -{file.cost.toFixed(6)} {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
+                    -{file.cost.toFixed(selectedChain === 'sol' ? SOL_DECIMALS : USDFC_DECIMALS)} {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
                   </Text>
                   <Text
                     fontSize="var(--font-size-xs)"

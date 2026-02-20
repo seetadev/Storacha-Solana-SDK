@@ -1,21 +1,18 @@
 import { useDeposit as useSolDeposit } from '@toju.network/sol'
 import { Environment as FilEnvironment, useUpload as useFilDeposit } from '@toju.network/fil'
 import useSWR from 'swr'
-import { useAuthContext } from '@/hooks/context'
+import { useAuthContext, useChainContext } from '@/hooks/context'
 import type { DashboardStats, UploadedFile } from '@/lib/types'
-import { useContext } from 'react'
-import { ChainContext } from '@/context/chain-provider'
 import { IS_DEV } from '@/lib/utils'
 import { useConnection } from 'wagmi'
 
 export function useUploadHistory() {
-  const { user: solUser, network } = useAuthContext()
+  const { user: solAddress, network } = useAuthContext()
   const { address: filAddress } = useConnection()
   
-  const chainContext = useContext(ChainContext)
-  const selectedChain = chainContext?.selectedChain || 'sol'
+  const { selectedChain } = useChainContext()
 
-  const activeUser = selectedChain === 'sol' ? solUser : filAddress
+  const currentUserAddress = selectedChain === 'sol' ? solAddress : filAddress
 
   const client = selectedChain === 'sol' 
     ? useSolDeposit(network) 
@@ -25,11 +22,11 @@ export function useUploadHistory() {
       )
 
   const { data, error, isLoading, mutate } = useSWR(
-    activeUser ? ['upload-history', activeUser, network, selectedChain] : null,
+    currentUserAddress ? ['upload-history', currentUserAddress, network, selectedChain] : null,
     async () => {
-      if (!activeUser) return null
+      if (!currentUserAddress) return null
 
-      const historyData = await client.getUserUploadHistory(activeUser, 1, 20)
+      const historyData = await client.getUserUploadHistory(currentUserAddress, 1, 20)
 
       if (!historyData.data || historyData.data.length === 0) {
         return {
