@@ -1,18 +1,35 @@
-import { useDeposit } from '@toju.network/sol'
+import { useDeposit as useSolDeposit } from '@toju.network/sol'
+import { Environment as FilEnvironment, useUpload as useFilDeposit } from '@toju.network/fil'
 import useSWR from 'swr'
 import { useAuthContext } from '@/hooks/context'
 import type { DashboardStats, UploadedFile } from '@/lib/types'
+import { useContext } from 'react'
+import { ChainContext } from '@/context/chain-provider'
+import { IS_DEV } from '@/lib/utils'
+import { useConnection } from 'wagmi'
 
 export function useUploadHistory() {
-  const { user, network } = useAuthContext()
-  const client = useDeposit(network)
+  const { user: solUser, network } = useAuthContext()
+  const { address: filAddress } = useConnection()
+  
+  const chainContext = useContext(ChainContext)
+  const selectedChain = chainContext?.selectedChain || 'sol'
+
+  const activeUser = selectedChain === 'sol' ? solUser : filAddress
+
+  const client = selectedChain === 'sol' 
+    ? useSolDeposit(network) 
+    : useFilDeposit(
+        import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet' ? FilEnvironment.mainnet : FilEnvironment.calibration,
+        IS_DEV ? import.meta.env.VITE_API_URL : undefined as any
+      )
 
   const { data, error, isLoading, mutate } = useSWR(
-    user ? ['upload-history', user, network] : null,
+    activeUser ? ['upload-history', activeUser, network, selectedChain] : null,
     async () => {
-      if (!user) return null
+      if (!activeUser) return null
 
-      const historyData = await client.getUserUploadHistory(user, 1, 20)
+      const historyData = await client.getUserUploadHistory(activeUser, 1, 20)
 
       if (!historyData.data || historyData.data.length === 0) {
         return {

@@ -26,6 +26,7 @@ export const getUserHistory = async (
   wallet: string,
   page = 1,
   limit = 20,
+  chain: string = 'sol',
   ctx?: PaginationContext,
 ) => {
   try {
@@ -35,12 +36,22 @@ export const getUserHistory = async (
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddress))
+      .where(
+        and(
+          eq(uploads.depositKey, userAddress),
+          eq(uploads.paymentChain, chain)
+        )
+      )
 
     const data = await db
       .select()
       .from(uploads)
-      .where(eq(uploads.depositKey, userAddress))
+      .where(
+        and(
+          eq(uploads.depositKey, userAddress),
+          eq(uploads.paymentChain, chain)
+        )
+      )
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
       .offset(offset)
@@ -49,7 +60,7 @@ export const getUserHistory = async (
     const totalPages = Math.ceil(total / limit)
 
     const buildPageUrl = (p: number) =>
-      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}`
+      `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}&chain=${chain}`
 
     return {
       data,

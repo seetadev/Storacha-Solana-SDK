@@ -400,6 +400,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
 export const getUploadHistory = async (req: Request, res: Response) => {
   try {
     const userAddress = req.query.userAddress as string
+    const chain = (req.query.chain as string) || 'sol'
 
     if (!userAddress) {
       return res.status(400).json({
@@ -418,6 +419,7 @@ export const getUploadHistory = async (req: Request, res: Response) => {
       userAddress,
       page,
       limit,
+      chain,
       paginationContext,
     )
 
