@@ -24,10 +24,6 @@ export async function initStorachaClient(): Promise<Client.Client> {
   const space = await client.addSpace(proof)
   await client.setCurrentSpace(space.did())
 
-  logger.info('STORACHA_PLAN_PROOF env var present:', {
-    exists: !!process.env.STORACHA_PLAN_PROOF,
-  })
-
   // we had errors on the server because the proof for this delegation
   // wasn't provided. the plan/get capability cannot be scoped to the server (space DID?) agent
   // so the appropriate thing to do is to get the plan proof separately with sacap: https://github.com/kaf-lamed-beyt/sacap
