@@ -2,10 +2,15 @@ import { Box, HStack, IconButton, Stack, Text, VStack } from '@chakra-ui/react'
 import { ArrowSquareOutIcon, CopyIcon } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useUploadHistory } from '@/hooks/upload-history'
+import { useChainContext } from '@/hooks/context'
 import type { UploadedFile } from '@/lib/types'
 
 export const Transactions = () => {
   const { files, isLoading, stats } = useUploadHistory()
+  const { selectedChain } = useChainContext()
+
+  const SOL_DECIMALS = 4
+  const USDFC_DECIMALS = 6
 
   // Network is determined at build time via env var
   const configuredNetwork =
@@ -17,14 +22,22 @@ export const Transactions = () => {
   }
 
   const openExplorer = (signature: string) => {
-    const cluster =
-      configuredNetwork === 'mainnet-beta'
-        ? ''
-        : `?cluster=${configuredNetwork}`
-    window.open(
-      `https://explorer.solana.com/tx/${signature}${cluster}`,
-      '_blank',
-    )
+    if (selectedChain === 'fil') {
+      const filfoxUrl =
+        import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
+          ? 'https://filfox.info'
+          : 'https://calibration.filfox.info'
+      window.open(`${filfoxUrl}/tx/${signature}`, '_blank')
+    } else {
+      const cluster =
+        configuredNetwork === 'mainnet-beta'
+          ? ''
+          : `?cluster=${configuredNetwork}`
+      window.open(
+        `https://explorer.solana.com/tx/${signature}${cluster}`,
+        '_blank',
+      )
+    }
   }
 
   if (isLoading) {
@@ -82,14 +95,16 @@ export const Transactions = () => {
             fontWeight="var(--font-weight-bold)"
             color="var(--text-inverse)"
           >
-            {stats.totalSpent.toFixed(4)}
+            {selectedChain === 'sol'
+              ? stats.totalSpent.toFixed(SOL_DECIMALS)
+              : stats.totalSpent.toFixed(USDFC_DECIMALS)}
             <Text
               as="span"
               fontSize="var(--font-size-lg)"
               color="var(--text-muted)"
               ml="0.25em"
             >
-              SOL
+              {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
             </Text>
           </Text>
         </Box>
@@ -201,7 +216,11 @@ export const Transactions = () => {
                     fontWeight="var(--font-weight-bold)"
                     color="var(--text-inverse)"
                   >
-                    -{file.cost.toFixed(6)} SOL
+                    -
+                    {file.cost.toFixed(
+                      selectedChain === 'sol' ? SOL_DECIMALS : USDFC_DECIMALS,
+                    )}{' '}
+                    {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
                   </Text>
                   <Text
                     fontSize="var(--font-size-xs)"
