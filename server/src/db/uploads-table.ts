@@ -39,8 +39,8 @@ export const getUserHistory = async (
       .where(
         and(
           eq(uploads.depositKey, userAddress),
-          eq(uploads.paymentChain, chain)
-        )
+          eq(uploads.paymentChain, chain),
+        ),
       )
 
     const data = await db
@@ -49,8 +49,8 @@ export const getUserHistory = async (
       .where(
         and(
           eq(uploads.depositKey, userAddress),
-          eq(uploads.paymentChain, chain)
-        )
+          eq(uploads.paymentChain, chain),
+        ),
       )
       .orderBy(desc(uploads.createdAt))
       .limit(limit)

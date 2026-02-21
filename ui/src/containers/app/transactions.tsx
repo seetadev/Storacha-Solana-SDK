@@ -23,13 +23,11 @@ export const Transactions = () => {
 
   const openExplorer = (signature: string) => {
     if (selectedChain === 'fil') {
-      const filfoxUrl = import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
-        ? 'https://filfox.info'
-        : 'https://calibration.filfox.info'
-      window.open(
-        `${filfoxUrl}/tx/${signature}`,
-        '_blank',
-      )
+      const filfoxUrl =
+        import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
+          ? 'https://filfox.info'
+          : 'https://calibration.filfox.info'
+      window.open(`${filfoxUrl}/tx/${signature}`, '_blank')
     } else {
       const cluster =
         configuredNetwork === 'mainnet-beta'
@@ -97,7 +95,9 @@ export const Transactions = () => {
             fontWeight="var(--font-weight-bold)"
             color="var(--text-inverse)"
           >
-            {selectedChain === 'sol' ? stats.totalSpent.toFixed(SOL_DECIMALS) : stats.totalSpent.toFixed(USDFC_DECIMALS)}
+            {selectedChain === 'sol'
+              ? stats.totalSpent.toFixed(SOL_DECIMALS)
+              : stats.totalSpent.toFixed(USDFC_DECIMALS)}
             <Text
               as="span"
               fontSize="var(--font-size-lg)"
@@ -216,7 +216,11 @@ export const Transactions = () => {
                     fontWeight="var(--font-weight-bold)"
                     color="var(--text-inverse)"
                   >
-                    -{file.cost.toFixed(selectedChain === 'sol' ? SOL_DECIMALS : USDFC_DECIMALS)} {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
+                    -
+                    {file.cost.toFixed(
+                      selectedChain === 'sol' ? SOL_DECIMALS : USDFC_DECIMALS,
+                    )}{' '}
+                    {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
                   </Text>
                   <Text
                     fontSize="var(--font-size-xs)"
