@@ -1,4 +1,5 @@
 import { ChakraProvider } from '@chakra-ui/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
@@ -6,10 +7,14 @@ import ReactDOM from 'react-dom/client'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
+import { WagmiProvider } from 'wagmi'
 import '../styles/_globals.scss'
 import { ToastProvider } from './components/toast.tsx'
+import { config } from './config/wagmi.ts'
 import { WalletProviders } from './context/auth-provider.tsx'
 import reportWebVitals from './reportWebVitals.ts'
+
+const queryClient = new QueryClient()
 
 // Create a new router instance
 const router = createRouter({
@@ -34,12 +39,16 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <WalletProviders>
-        <ChakraProvider>
-          <RouterProvider router={router} />
-          <ToastProvider />
-        </ChakraProvider>
-      </WalletProviders>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <WalletProviders>
+            <ChakraProvider>
+              <RouterProvider router={router} />
+              <ToastProvider />
+            </ChakraProvider>
+          </WalletProviders>
+        </QueryClientProvider>
+      </WagmiProvider>
     </StrictMode>,
   )
 }

@@ -15,6 +15,7 @@ import type { Environment } from '@toju.network/sol'
 import React, { useEffect, useMemo, useReducer, useState } from 'react'
 
 import '@solana/wallet-adapter-react-ui/styles.css'
+import { ChainProvider } from './chain-provider'
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -138,7 +139,9 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <ChainProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ChainProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

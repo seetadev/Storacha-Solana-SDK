@@ -1,3 +1,4 @@
+import { formatFileSize } from '@/lib/utils'
 import { Box, Center, HStack, Text, VStack } from '@chakra-ui/react'
 import {
   CheckCircleIcon,
@@ -5,7 +6,6 @@ import {
   XCircleIcon,
 } from '@phosphor-icons/react'
 import type { DropzoneInputProps, DropzoneRootProps } from 'react-dropzone'
-import { formatFileSize } from '@/lib/utils'
 
 interface DropZoneProps {
   getRootProps: () => DropzoneRootProps
@@ -92,17 +92,9 @@ export const DropZone = ({
           {isDragReject ? (
             <XCircleIcon size={48} color="var(--error)" weight="duotone" />
           ) : isDragActive ? (
-            <CheckCircleIcon
-              size={48}
-              color="var(--primary-500)"
-              weight="duotone"
-            />
+            <CheckCircleIcon size={48} color="var(--primary-500)" />
           ) : (
-            <UploadSimpleIcon
-              size={48}
-              color="var(--text-muted)"
-              weight="duotone"
-            />
+            <UploadSimpleIcon size={48} color="var(--text-muted)" />
           )}
         </Box>
 

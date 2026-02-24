@@ -1,6 +1,9 @@
+export type PaymentChain = 'sol' | 'fil'
+
 export type QuoteInput = {
   sizeInBytes: number
   durationInUnits: number
+  chain?: PaymentChain
 }
 
 export type QuoteOutput = {
@@ -17,4 +20,16 @@ export type PaginationQuery = {
 export type PaginationContext = {
   baseUrl: string
   path: string
+}
+export type Erc20Transfer = {
+  tx_hash: string
+  from: string
+  to: string
+  amount: string
+  contract_address: string
+  height: number
+}
+export type BeryxTransfersResponse = {
+  next_cursor?: string
+  transfers: Erc20Transfer[]
 }

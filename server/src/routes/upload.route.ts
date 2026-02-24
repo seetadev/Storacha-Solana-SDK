@@ -13,6 +13,11 @@ uploadsRouter.post(
   uploadsController.deposit,
 )
 uploadsRouter.post(
+  '/deposit-usdfc',
+  upload.fields([{ name: 'file' }]),
+  uploadsController.depositUsdFC,
+)
+uploadsRouter.post(
   '/file',
   uploadLimiter,
   upload.single('file'),
@@ -26,3 +31,4 @@ uploadsRouter.post(
 )
 uploadsRouter.get('/history', uploadsController.getUploadHistory)
 uploadsRouter.post('/confirm', uploadsController.confirmUpload)
+uploadsRouter.post('/fil/verify-payment', uploadsController.verifyUsdFcPayment)

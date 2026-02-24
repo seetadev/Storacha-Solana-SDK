@@ -23,6 +23,7 @@
   },
   "repository": {
     "type": "git",
+    "directory": "packages/sol",
     "url": "git+https://github.com/seetadev/storacha-solana-sdk.git"
   },
   "keywords": [
@@ -37,7 +38,7 @@
   ],
   "author": "toju.network",
   "license": "Apache-2.0",
-  "description": "Decentralized storage SDK for Solana via Storacha - pay with SOL, store on IPFS",
+  "description": "Pay for storage with SOL on IPFS using Storacha's Hot storage network.",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",
