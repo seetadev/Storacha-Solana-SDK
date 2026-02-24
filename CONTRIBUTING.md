@@ -300,7 +300,24 @@ See [VERSIONING.md](./VERSIONING.md) for commit message format.
 
 ## Testing the App
 
+### Solana (SOL)
+
 1. Install [Phantom wallet](https://phantom.app/) browser extension
 2. Enable testnet in Settings > Developer Settings
 3. Get test SOL from [Solana Faucet](https://faucet.solana.com/)
-4. Try the app in prod (where you'll need real SOL) [here](https://toju.network) and on (staging](https://staging.toju.network) where you can use testnet SOL.
+4. Try the app in prod (where you'll need real SOL) [here](https://toju.network) and on [staging](https://staging.toju.network) where you can use testnet SOL.
+
+### Filecoin (USDFC)
+
+To test USDFC payments on the Filecoin Calibration testnet:
+
+1. Install [MetaMask](https://metamask.io/) and add the **Filecoin Calibration** testnet network
+2. Get test FIL (tFIL) from the [Calibration Faucet](https://faucet.calibnet.chainsafe-fil.io/funds.html) — you can request up to 100 tFIL twice daily
+3. Go to [stg.usdfc.net](https://stg.usdfc.net) and connect your wallet
+4. In the **Trove** section, click **Open Trove**, enter your tFIL collateral amount, and confirm the transaction to mint test USDFC
+5. On the Dashboard under **Protocol Statistics**, click **Add to Wallet** next to the USDFC contract to import the token into MetaMask
+6. Go to [staging.toju.network](https://staging.toju.network), select **FIL** as the payment chain, connect your MetaMask wallet, and upload a file
+
+For more details on minting test USDFC, see the [Secured Finance guide](https://docs.secured.finance/usdfc-stablecoin/getting-started/getting-test-usdfc-on-testnet).
+
+> **Note:** You need tFIL for gas fees even when paying with USDFC. Make sure you have enough tFIL in your wallet before transacting.

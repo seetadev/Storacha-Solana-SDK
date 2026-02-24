@@ -124,7 +124,7 @@ export const HomePage = () => {
           >
             True permanence for your digital assets. Store data on IPFS via
             Storacha's decentralized network and settle the fees instantly with
-            SOL. No banks.
+            SOL or USDFC. No banks.
           </Text>
 
           <HStack
@@ -237,14 +237,14 @@ export const HomePage = () => {
                     fontWeight="var(--font-weight-semibold)"
                     color="var(--text-inverse)"
                   >
-                    Pay with SOL
+                    Pay with Crypto
                   </Text>
                   <Text
                     color="var(--text-muted)"
                     fontSize="var(--font-size-sm)"
                   >
-                    Settle your storage fees instantly with SOL. No credit card
-                    required. Only pay for what you use.
+                    Settle your storage fees instantly with SOL or USDFC. No
+                    credit card required. Only pay for what you use.
                   </Text>
                 </Stack>
               </Stack>
