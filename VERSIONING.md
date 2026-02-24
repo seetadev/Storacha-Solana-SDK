@@ -1,13 +1,15 @@
 # Versioning Strategy
 
-We use independent versioning for each package in the monorepo. Each package maintains its own version number and changelog using [standard-version](https://github.com/conventional-changelog/standard-version).
+We use [changesets](https://github.com/changesets/changesets) for independent versioning and publishing of each package in the monorepo.
+
+Previously we used [standard-version](https://github.com/conventional-changelog/standard-version), but it's designed for single-package repos. It couldn't scope version bumps or changelogs to individual packages in a monorepo — every release was global. Changesets solves this by letting each package track its own changes independently.
 
 ## Package Structure
 
 ```
 packages/
-  ├── sol/          # @toju.network/sol - Solana payments (v0.1.1)
-  ├── fil/          # @toju.network/fil - Filecoin payments (not yet published)
+  ├── sol/          # @toju.network/sol - Solana payments
+  ├── fil/          # @toju.network/fil - Filecoin payments
   └── eth/          # @toju.network/eth - Ethereum/Base payments (planned)
 ```
 
@@ -29,21 +31,51 @@ Independent versioning means:
 - Breaking changes in one package don't force version bumps in others
 - Each package can follow its own maturity timeline
 
-## Changelog Format
+## Workflow
 
-Each package uses standard-version for automatic changelog generation. See [`packages/sol/CHANGELOG.md`](packages/sol/CHANGELOG.md) for the format.
+There are three commands involved in the release process. Contributors only need to know the first one.
 
-Changelogs are generated from conventional commit messages:
+### 1. Add a changeset (contributors)
+
+After making changes to a package, run:
 
 ```bash
-feat: add new feature
-fix: resolve bug
-chore: update dependencies
+pnpm changeset
 ```
+
+This prompts you to:
+- Select which packages changed (`@toju.network/sol`, `@toju.network/fil`, etc.)
+- Choose the bump type (patch, minor, major)
+- Write a summary of the change
+
+A markdown file is created in `.changeset/` describing the change. **Commit this file alongside your code changes.** No versions are bumped at this stage — the changeset is just a record of intent.
+
+### 2. Version packages (maintainer)
+
+When ready to cut a release, a maintainer runs:
+
+```bash
+pnpm version-packages
+```
+
+This consumes all pending changeset files and:
+- Bumps the `version` in each affected `package.json`
+- Updates each package's `CHANGELOG.md`
+- Removes the consumed changeset files from `.changeset/`
+
+The result is a commit with updated versions and changelogs, ready to publish.
+
+### 3. Publish to npm (maintainer)
+
+```bash
+pnpm release
+```
+
+This publishes every package that has a new version not yet on the npm registry. Requires npm authentication (`npm login` or `NPM_TOKEN` in CI).
 
 ## Commit Message Guidelines
 
-Use conventional commits for automatic changelog generation:
+Use conventional commits for clear history:
 
 **Format:**
 ```
@@ -51,8 +83,8 @@ Use conventional commits for automatic changelog generation:
 ```
 
 **Types:**
-- `feat:` - new features (minor version bump)
-- `fix:` - bug fixes (patch version bump)
+- `feat:` - new features
+- `fix:` - bug fixes
 - `chore:` - maintenance, no user-facing changes
 - `docs:` - documentation updates
 
@@ -62,25 +94,32 @@ feat(sol): add transaction retry logic
 fix(fil): resolve USDFC decimals issue
 ```
 
-**Examples:**
-```
-feat: add storage renewal endpoints
-fix(sol): return user friendly error on duplicate upload
-chore: update dependencies
-docs: add usage examples to README
-```
-
 ## Version Bumps
 
-standard-version automatically determines version bumps based on commits:
+Changesets use semver:
 
-- `feat:` → minor version (0.1.0 → 0.2.0)
-- `fix:` → patch version (0.1.0 → 0.1.1)
-- `BREAKING CHANGE:` → major version (0.1.0 → 1.0.0)
+- **patch** (0.1.0 → 0.1.1): bug fixes, internal changes
+- **minor** (0.1.0 → 0.2.0): new features, non-breaking additions
+- **major** (0.1.0 → 1.0.0): breaking changes
 
-Breaking changes require a footer:
-```
-feat: redesign storage API
+## Example
 
-BREAKING CHANGE: removed deprecated createDeposit() method, use createPayment() instead
+```bash
+# 1. make changes to @toju.network/sol
+# 2. add a changeset
+pnpm changeset
+# → select @toju.network/sol, pick "patch", write "fix deposit confirmation timeout"
+
+# 3. commit everything (changeset file included)
+git add --all
+git commit -m "fix(sol): deposit confirmation timeout"
+
+# 4. when ready to release (maintainer only)
+pnpm version-packages
+git add --all
+git commit -m "chore: version packages"
+git push
+
+# 5. publish to npm (maintainer only)
+pnpm release
 ```

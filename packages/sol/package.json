@@ -42,8 +42,7 @@
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",
-    "@solana/web3.js": "^1.98.2",
-    "standard-version": "^9.5.0"
+    "@solana/web3.js": "^1.98.2"
   },
   "devDependencies": {
     "knip": "^5.72.0",
