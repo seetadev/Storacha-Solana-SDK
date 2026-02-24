@@ -1,39 +1,68 @@
 ---
 title: 'Overview'
-description: 'Getting started with the @toju.network/sol SDK'
+description: 'Getting started with the SDKs'
 ---
+
+We provide separate SDK packages per chain. Pick the one that matches your payment method.
 
 ## Installation
 
-Install the SDK in your React project:
+<Tabs>
+  <Tab title="Solana (SOL)">
+    <CodeGroup>
 
-<CodeGroup>
+    ```bash pnpm
+    pnpm add @toju.network/sol
+    ```
 
-```bash pnpm
-pnpm add @toju.network/sol
-```
+    ```bash npm
+    npm install @toju.network/sol
+    ```
 
-```bash npm
-npm install @toju.network/sol
-```
+    ```bash yarn
+    yarn add @toju.network/sol
+    ```
 
-```bash yarn
-yarn add @toju.network/sol
-```
+    </CodeGroup>
 
-</CodeGroup>
+    **Peer dependencies:**
 
-## Peer Dependencies
+    ```bash
+    pnpm add @solana/wallet-adapter-react @solana/web3.js
+    ```
 
-The SDK requires Solana wallet adapters:
+    <Info>
+      Works with any Solana wallet adapter (Phantom, Solflare, Ledger, etc.)
+    </Info>
+  </Tab>
+  <Tab title="Filecoin (USDFC)">
+    <CodeGroup>
 
-```bash
-pnpm add @solana/wallet-adapter-react @solana/web3.js
-```
+    ```bash pnpm
+    pnpm add @toju.network/fil
+    ```
 
-<Info>
-  The SDK is designed to work with any Solana wallet adapter (Phantom, Solflare, Ledger, etc.)
-</Info>
+    ```bash npm
+    npm install @toju.network/fil
+    ```
+
+    ```bash yarn
+    yarn add @toju.network/fil
+    ```
+
+    </CodeGroup>
+
+    **Peer dependencies:**
+
+    ```bash
+    pnpm add wagmi viem @tanstack/react-query
+    ```
+
+    <Info>
+      Uses wagmi for EVM wallet connections (MetaMask, etc.) on the Filecoin network.
+    </Info>
+  </Tab>
+</Tabs>
 
 ## Basic Usage
 
@@ -81,7 +110,7 @@ const client = useUpload(Environment.mainnet);
 </CodeGroup>
 
 <Warning>
-  Always use `testnet` or `devnet` for development. Only use `mainnet` for production with real SOL.
+  Always use `testnet` or `devnet` for development. Only use `mainnet` for production with real tokens.
 </Warning>
 
 ## Core Methods
@@ -278,7 +307,10 @@ export default defineConfig({
   <Card title="GitHub Issues" icon="github" href="https://github.com/seetadev/Storacha-Solana-SDK/issues">
     Report bugs or request features
   </Card>
-  <Card title="NPM Package" icon="npm" href="https://www.npmjs.com/package/@toju.network/sol">
+  <Card title="SOL Package" icon="npm" href="https://www.npmjs.com/package/@toju.network/sol">
+    View on npm
+  </Card>
+  <Card title="FIL Package" icon="npm" href="https://www.npmjs.com/package/@toju.network/fil">
     View on npm
   </Card>
 </CardGroup>

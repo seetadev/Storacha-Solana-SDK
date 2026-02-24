@@ -30,13 +30,13 @@ Our rate is **$0.000000000003 per byte per day** (3 × 10⁻¹² USD).
 
 | Provider | 1 GB / 30 days | 100 GB / 30 days | Notes |
 |----------|----------------|------------------|-------|
-| **toju** | **$0.09** | **$9.00** | Pay with SOL, no subscription |
+| **toju** | **$0.09** | **$9.00** | Pay with SOL or USDFC, no subscription |
 | Walrus | $0.016 | $1.60 | Requires Sui wallet + WAL token |
 | Storacha (direct) | $0.15 | $15.00 | Free tier available, higher overage |
 | AWS S3 Standard | ~$0.023 | ~$2.30 | Centralized, requires credit card |
 
 <Note>
-  While some providers appear cheaper, they often require specific tokens, ecosystems, or credit cards. We offer competitive pricing with the flexibility of paying with SOL (and soon FIL, USDFC, and more).
+  While some providers appear cheaper, they often require specific tokens, ecosystems, or credit cards. We offer competitive pricing with the flexibility of paying with SOL or USDFC.
 </Note>
 
 ## Why Pay-As-You-Go?
@@ -56,9 +56,11 @@ Our rate is **$0.000000000003 per byte per day** (3 × 10⁻¹² USD).
   </Card>
 </CardGroup>
 
-## Payment in SOL
+## Payment Methods
 
-All payments are made in SOL on Solana. We convert the USD cost to SOL using real-time pricing from [Pyth](https://pyth.network/).
+### SOL (Solana)
+
+Payments in SOL are converted from USD using real-time pricing from [Pyth](https://pyth.network/).
 
 ```
 SOL Amount = USD Cost ÷ Current SOL Price
@@ -66,6 +68,18 @@ SOL Amount = USD Cost ÷ Current SOL Price
 
 <Info>
   The SOL price is fetched at the time of upload, so your cost in SOL may vary slightly based on market conditions.
+</Info>
+
+### USDFC (Filecoin)
+
+USDFC is a stablecoin pegged 1:1 to USD on the Filecoin network. Since it's dollar-denominated, the amount you pay is exactly the USD cost &mdash; no price conversion needed.
+
+```
+USDFC Amount = USD Cost
+```
+
+<Info>
+  You'll need a small amount of FIL in your wallet for gas fees when paying with USDFC.
 </Info>
 
 ## Example Calculation
@@ -86,16 +100,18 @@ Cost in SOL = $0.0047 ÷ $120
            = 39,000 lamports
 ```
 
-## Multi-Chain Payments (Coming Soon)
+## Multi-Chain Payments
 
-We're expanding beyond Solana to support:
+We currently support:
 
-- **Filecoin (FIL)** - Native payments on Filecoin
-- **USDFC** - Filecoin's native stablecoin
-- **Base (ETH)** - Ethereum L2 for lower gas fees
+- **SOL** - Payments on Solana
+- **USDFC** - Filecoin's native stablecoin (1:1 with USD)
+
+Coming soon:
+- **Base (ETH)** - Ethereum L2 payments for lower gas fees
 
 <Check>
-  Same storage, same pricing - just pay with your preferred crypto.
+  Same storage, same pricing &mdash; pay with your preferred crypto.
 </Check>
 
 ## Pricing Changes

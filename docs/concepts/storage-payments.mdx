@@ -1,11 +1,11 @@
 ---
 title: 'Storage Payments'
-description: 'How onchain payments work'
+description: 'How onchain payments work with SOL and USDFC'
 ---
 
 ## Overview
 
-We implement a pay-as-you-go model for decentralized storage using blockchain payments. Unlike traditional cloud storage with monthly subscriptions, users pay only for what they store and for how long.
+We implement a pay-as-you-go model for decentralized storage using blockchain payments. Unlike traditional cloud storage with monthly subscriptions, users pay only for what they store and for how long. We currently support **SOL** (Solana) and **USDFC** (Filecoin).
 
 ## How It Works
 
@@ -26,11 +26,11 @@ We implement a pay-as-you-go model for decentralized storage using blockchain pa
   </Step>
   
   <Step title="Sign Transaction">
-    Approve the payment with your Solana wallet
+    Approve the payment with your wallet (Phantom for SOL, MetaMask for USDFC)
   </Step>
   
   <Step title="Onchain Deposit">
-    A deposit is created on the Solana blockchain via our smart contract
+    For SOL: a deposit is created on the Solana blockchain via our smart contract. For USDFC: a token transfer is sent on Filecoin.
   </Step>
   
   <Step title="Storage Delegation">
@@ -99,16 +99,19 @@ Every payment is recorded both:
   </Card>
 </CardGroup>
 
-## Multi-Chain Future
+## Supported Payment Chains
 
-Currently, we only support payments in SOL on Solana. We're working on adding:
+We currently support two payment methods:
 
-- **Filecoin (FIL)**: Native payments on the Filecoin network
+- **SOL (Solana)**: Payments via our Solana smart contract with escrow and linear release
+- **USDFC (Filecoin)**: Direct stablecoin transfers on Filecoin (1:1 with USD)
+
+Coming soon:
 - **Base (ETH)**: Ethereum L2 payments for lower gas fees
 - **Additional chains**: Based on community demand
 
 <Note>
-  Multi-chain support means you'll be able to pay for the same Storacha storage using different cryptocurrencies, choosing whichever chain you prefer.
+  All payment methods store data on the same Storacha network. You choose whichever chain you prefer &mdash; the storage experience is identical.
 </Note>
 
 ## Benefits
