@@ -22,8 +22,17 @@ export async function initStorachaClient(): Promise<Client.Client> {
 
   const proof = await Proof.parse(process.env.STORACHA_PROOF!)
   const space = await client.addSpace(proof)
-
   await client.setCurrentSpace(space.did())
+
+  // we had errors on the server because the proof for this delegation
+  // wasn't provided. the plan/get capability cannot be scoped to the server (space DID?) agent
+  // so the appropriate thing to do is to get the plan proof separately with sacap: https://github.com/kaf-lamed-beyt/sacap
+  // since it is an account-level capability (did:mailto...) so the
+  // plan limit call in the usage service doesn't error.
+  if (process.env.STORACHA_PLAN_PROOF) {
+    const planProof = await Proof.parse(process.env.STORACHA_PLAN_PROOF)
+    await client.addProof(planProof)
+  }
 
   return client
 }
@@ -43,9 +52,8 @@ export const getQuoteForFileUpload = async ({
     })
     .from(configTable)
 
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0)
     throw new Error('Config not found in database')
-  }
 
   const { MINIMUM_DURATION_UNIT, RATE_PER_BYTE_PER_UNIT } = data[0]
   const effectiveDuration = Math.max(durationInUnits, MINIMUM_DURATION_UNIT)
