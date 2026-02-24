@@ -1,4 +1,5 @@
 import { Client as StorachaClient } from '@storacha/client'
+import { AccountDID, PlanGetSuccess } from '@storacha/client/types'
 import { eq, sql } from 'drizzle-orm'
 import { Resend } from 'resend'
 import { db } from '../../db/db.js'
@@ -13,6 +14,27 @@ import { logger } from '../../utils/logger.js'
 const { EMAIL_FROM, WATCHMAN } = process.env!
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const KiB = 1024
+const MiB = 1024 * KiB
+const GiB = 1024 * MiB
+const TiB = 1024 * GiB
+
+/**
+ * known plan capacities by product DID.
+ *
+ * storacha plans with overages enabled return limit: 0 from plan/get,
+ * meaning "unlimited with overage charges." the actual included capacity
+ * must be mapped from the product DID. for forge plans (strict limits),
+ * plan/get returns the real byte limit.
+ *
+ * see: https://github.com/storacha/specs/pull/150
+ */
+const PLAN_CAPACITIES: Record<string, number> = {
+  'did:web:starter.storacha.network': 5 * GiB,
+  'did:web:lite.storacha.network': 100 * GiB,
+  'did:web:business.storacha.network': 2 * TiB,
+}
+
 interface UsageReport {
   finalSize: number
   initialSize: number
@@ -22,13 +44,94 @@ export class UsageService {
   private client: StorachaClient
   private planLimitBytes: number
 
-  constructor(client: StorachaClient, planLimitBytes: number = 5_000_000_000) {
+  constructor(client: StorachaClient, planLimitBytes: number = 5 * GiB) {
     this.client = client
-    this.planLimitBytes = planLimitBytes // default 5GB for free plan for now, so we can test
+    this.planLimitBytes = planLimitBytes // default 5GiB size
   }
 
   get planLimit(): number {
     return this.planLimitBytes
+  }
+
+  /**
+   * get plan limit from storacha using plan/get capability.
+   *
+   * if limit is 0, it means overages are enabled and the plan is
+   * virtually unlimited. we use the product DID to look up the
+   * included capacity instead.
+   *
+   * @returns limit in bytes, or null if unlimited
+   */
+  private async fetchPlanLimit(): Promise<number | null> {
+    try {
+      const accountDID = process.env.STORACHA_ACCOUNT_DID as AccountDID
+
+      if (!accountDID) {
+        logger.warn(
+          'STORACHA_ACCOUNT_DID not set, using default plan limit. Set STORACHA_ACCOUNT_DID in environment variables.',
+        )
+        return 5 * GiB
+      }
+
+      const plan: PlanGetSuccess =
+        await this.client.capability.plan.get(accountDID)
+
+      // limit is a string in bytes, needs to be parsed
+      // TS is complaining that "Property limit does not exist on type PlanGetSuccess."
+      // but that's probably a npm cache thing because in the latest version
+      // of the upload client we already have it present. see it: https://github.com/storacha/upload-service/blob/dfd96c418d86e3fe94d3eafa669caf5b701bf728/packages/capabilities/src/types.ts#L1132
+      /* @ts-ignore */
+      const limitBytes = parseInt(plan.limit, 10)
+
+      // limit: 0 means overages enabled — look up included capacity from product DID
+      if (limitBytes === 0) {
+        const product = plan.product
+        const knownLimit = product ? PLAN_CAPACITIES[product] : undefined
+
+        if (knownLimit) {
+          logger.info('plan has overages enabled, using known capacity', {
+            product,
+            limitBytes: knownLimit,
+            limitGB: (knownLimit / 1e9).toFixed(2),
+          })
+          return knownLimit
+        }
+
+        logger.warn('unknown product DID, using default capacity', {
+          product,
+          defaultGB: '5.00',
+        })
+        return 5 * GiB
+      }
+
+      // forge plans return the actual byte limit
+      logger.info('plan limit fetched from storacha', {
+        accountDID,
+        limitBytes,
+        limitGB: (limitBytes / 1e9).toFixed(2),
+      })
+
+      return limitBytes
+    } catch (error) {
+      logger.error('failed to fetch plan limit from storacha', { error })
+      return 5 * GiB
+    }
+  }
+
+  /**
+   * init the service
+   */
+  async initialize(): Promise<void> {
+    const fetchedLimit = await this.fetchPlanLimit()
+    if (fetchedLimit !== null) {
+      this.planLimitBytes = fetchedLimit
+      logger.info('usage service initialized with plan limit', {
+        limitBytes: this.planLimitBytes,
+        limitGB: (this.planLimitBytes / 1e9).toFixed(2),
+      })
+    } else {
+      logger.info('usage service initialized with unlimited plan')
+    }
   }
 
   /**

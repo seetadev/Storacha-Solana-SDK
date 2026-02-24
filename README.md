@@ -95,7 +95,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 **Production (Mainnet):**
 - [Website](https://toju.network)
 - [API](https://api.toju.network/health)
-- [Mainnet Demo](https://youtu.be/H6Ihbspmb6o)
+- [Mainnet Demo](https://youtu.be/VqD2NWYqPDE)
 
 **Staging (Testnet):**
 - [Website](https://staging.toju.network)
@@ -117,4 +117,3 @@ Apache-2.0
 ## Help us Scale
 
 <a href="https://filecoin.drips.network/app/projects/github/seetadev/Storacha-Solana-SDK" target="_blank"><img src="https://filecoin.drips.network/api/embed/project/https%3A%2F%2Fgithub.com%2Fseetadev%2FStoracha-Solana-SDK/support.png?background=dark&style=drips&text=me&stat=support" alt="Support Storacha-Solana-SDK on drips.network" height="32"></a>
-

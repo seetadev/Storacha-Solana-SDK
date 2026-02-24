@@ -1,12 +1,12 @@
-import { useUpload as useSolUpload } from '@toju.network/sol'
+import { useAuthContext, useChainContext } from '@/hooks/context'
+import type { DashboardStats, UploadedFile } from '@/lib/types'
+import { IS_DEV } from '@/lib/utils'
 import {
   Environment as FilEnvironment,
   useUpload as useFilDeposit,
 } from '@toju.network/fil'
+import { useUpload as useSolUpload } from '@toju.network/sol'
 import useSWR from 'swr'
-import { useAuthContext, useChainContext } from '@/hooks/context'
-import type { DashboardStats, UploadedFile } from '@/lib/types'
-import { IS_DEV } from '@/lib/utils'
 import { useConnection } from 'wagmi'
 
 export function useUploadHistory() {

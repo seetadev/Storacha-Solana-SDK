@@ -53,7 +53,7 @@ pnpm add <package-name> -F server         # server workspace
 pnpm add <package-name> -F ui             # UI workspace
 pnpm add <package-name> -F @toju.network/sol  # Solana SDK
 pnpm add <package-name> -F @toju.network/fil  # Filecoin SDK
-pnpm add -D <package-name> -F server      # dev dependencies
+pnpm add -D <package-name> -F <workspace>      # dev dependencies
 ```
 
 **Don't install at root** unless it's a shared dev tool (like TypeScript or ESLint).

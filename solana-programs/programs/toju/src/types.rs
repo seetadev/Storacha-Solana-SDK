@@ -255,4 +255,7 @@ pub enum StorachaError {
 
     #[msg("Withdrawal wallet does not match the configured withdrawal wallet")]
     InvalidWithdrawalWallet,
+
+    #[msg("CID string exceeds maximum allowed length (200 bytes)")]
+    CidTooLong,
 }

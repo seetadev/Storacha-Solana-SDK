@@ -177,6 +177,7 @@ export const dailyUsageSnapshot = async (_req: Request, res: Response) => {
 
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
 
     await usageService.createDailySnapshot()
 
@@ -203,6 +204,7 @@ export const weeklyUsageComparison = async (_req: Request, res: Response) => {
 
     const storachaClient = await initStorachaClient()
     const usageService = new UsageService(storachaClient)
+    await usageService.initialize()
 
     await usageService.compareUsage()
 
