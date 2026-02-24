@@ -45,6 +45,26 @@ jobs:
       
       - name: Run knip
         run: pnpm --filter @toju.network/sol knip
+  
+  fil-sdk:
+    name: fil sdk - knip!
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      
+      - name: Run knip
+        run: pnpm --filter @toju.network/fil knip
 
   frontend:
     name: ui - knip!
