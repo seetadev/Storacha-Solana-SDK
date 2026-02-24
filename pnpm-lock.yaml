@@ -20,6 +20,9 @@ importers:
 
   packages/fil:
     dependencies:
+      '@toju.network/fil':
+        specifier: ^0.1.0
+        version: 0.1.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers:
         specifier: ^6.16.0
         version: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -234,8 +237,8 @@ importers:
         specifier: ^1.132.0
         version: 1.158.0(@tanstack/react-router@1.158.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@7.3.1(@types/node@22.19.8)(jiti@2.6.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       '@toju.network/fil':
-        specifier: workspace:*
-        version: link:../packages/fil
+        specifier: ^0.1.0
+        version: 0.1.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@toju.network/sol':
         specifier: ^0.1.4
         version: 0.1.4(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))
@@ -3216,6 +3219,9 @@ packages:
   '@tanstack/virtual-file-routes@1.154.7':
     resolution: {integrity: sha512-cHHDnewHozgjpI+MIVp9tcib6lYEQK5MyUr0ChHpHFGBl8Xei55rohFK0I0ve/GKoHeioaK42Smd8OixPp6CTg==}
     engines: {node: '>=12'}
+
+  '@toju.network/fil@0.1.0':
+    resolution: {integrity: sha512-6POY9Di0rQj8+FnTeopkmxRznCG7nbM53XBLaNQ+y5t0uQyG06cp3ACogoILw55cPk3f7oNK3Lott553pZi8eA==}
 
   '@toju.network/sol@0.1.4':
     resolution: {integrity: sha512-YJ1tu4v3WJYaQfRSYcAC5g8St7l8tp3nBPXN5tl/EGn5hXgz9oNAIaO1D5BqoMMcUIErWWoKj3EJoID3eXoDLg==}
@@ -13059,6 +13065,13 @@ snapshots:
   '@tanstack/store@0.8.0': {}
 
   '@tanstack/virtual-file-routes@1.154.7': {}
+
+  '@toju.network/fil@0.1.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+    dependencies:
+      ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@toju.network/sol@0.1.4(bufferutil@4.1.0)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.18.3(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
     dependencies:

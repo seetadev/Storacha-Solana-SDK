@@ -41,6 +41,7 @@
   "author": "toju.network",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
+    "@toju.network/fil": "^0.1.0",
     "ethers": "^6.16.0"
   },
   "devDependencies": {
