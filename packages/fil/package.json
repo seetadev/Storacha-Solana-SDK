@@ -1,15 +1,17 @@
 {
   "name": "@toju.network/fil",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pay for storage with USDFC on IPFS using Storacha's Hot storage network.",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -41,12 +43,10 @@
   "author": "toju.network",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@toju.network/fil": "^0.1.0",
     "ethers": "^6.16.0"
   },
   "devDependencies": {
     "knip": "^5.72.0",
-    "standard-version": "^9.5.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   }
