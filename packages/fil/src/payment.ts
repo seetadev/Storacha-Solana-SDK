@@ -43,7 +43,9 @@ export async function createDepositTxn(
     if (!depositReq.ok) {
       const errorData = await depositReq.json().catch(() => ({}))
       throw new Error(
-        errorData.error || 'Failed to get deposit instructions from server',
+        errorData.message ||
+          errorData.error ||
+          'Failed to get deposit instructions from server',
       )
     }
 
@@ -167,7 +169,11 @@ export async function verifyPayment(
 
   if (!verifyReq.ok) {
     const errorData = await verifyReq.json().catch(() => ({}))
-    throw new Error(errorData.error || 'Payment verification request failed')
+    throw new Error(
+      errorData.message ||
+        errorData.error ||
+        'Payment verification request failed',
+    )
   }
 
   return await verifyReq.json()

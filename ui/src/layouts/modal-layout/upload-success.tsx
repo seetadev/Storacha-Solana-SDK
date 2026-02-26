@@ -1,22 +1,14 @@
+import type { UploadResultInfo } from '@/lib/types'
+import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import { Box, Button, HStack, Stack, Text, VStack } from '@chakra-ui/react'
 import { ArrowRightIcon } from '@phosphor-icons/react'
 import { useNavigate } from '@tanstack/react-router'
-import { formatFileSize, formatSOL, formatUSD } from '@/lib/utils'
 import { ModalLayout } from './modal'
 
 interface UploadSuccessProps {
   isOpen: boolean
   onClose: () => void
-  uploadInfo: {
-    cid: string
-    fileName?: string
-    fileSize: number
-    fileCount: number
-    duration: number
-    costInSOL: number
-    costInUSD: number
-    transactionHash: string
-  }
+  uploadInfo: UploadResultInfo
 }
 
 export const UploadSuccess = ({
@@ -157,11 +149,15 @@ export const UploadSuccess = ({
                 color="var(--text-inverse)"
                 fontWeight="var(--font-weight-medium)"
               >
-                {formatSOL(uploadInfo.costInSOL)} SOL
+                {uploadInfo.paymentChain === 'sol'
+                  ? `${formatSOL(uploadInfo.costInSOL)} SOL`
+                  : `${formatUSD(uploadInfo.costInUSDFC)} USDFC`}
               </Text>
-              <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
-                {formatUSD(uploadInfo.costInUSD)}
-              </Text>
+              {uploadInfo.paymentChain === 'sol' && (
+                <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
+                  {formatUSD(uploadInfo.costInUSD)}
+                </Text>
+              )}
             </VStack>
           </HStack>
 
