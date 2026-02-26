@@ -13,7 +13,7 @@ import { UploadSuccess } from '@/layouts/modal-layout'
 import { ConnectionWarning } from '@/layouts/modal-layout/connection-warning'
 import { EmailNudge } from '@/layouts/modal-layout/email-nudge'
 import { ShortDurationWarning } from '@/layouts/modal-layout/short-duration-warning'
-import type { State } from '@/lib/types'
+import type { State, UploadResultInfo } from '@/lib/types'
 import { formatFileSize, formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
@@ -105,16 +105,9 @@ export const Upload = () => {
     onClose: closeSuccessModal,
   } = useDisclosure()
 
-  const [uploadResult, setUploadResult] = useState<{
-    cid: string
-    fileName?: string
-    fileSize: number
-    fileCount: number
-    duration: number
-    costInSOL: number
-    costInUSD: number
-    transactionHash: string
-  } | null>(null)
+  const [uploadResult, setUploadResult] = useState<UploadResultInfo | null>(
+    null,
+  )
 
   const parsedDuration = Number(storageDuration)
   const isValidDuration =
@@ -278,6 +271,8 @@ export const Upload = () => {
           duration: parsedDuration,
           costInSOL: selectedChain === 'sol' ? totalCost : 0,
           costInUSD: usdCost,
+          costInUSDFC: selectedChain === 'fil' ? totalCost : 0,
+          paymentChain: selectedChain,
           transactionHash: result.transactionHash ?? result.signature ?? '',
         })
 

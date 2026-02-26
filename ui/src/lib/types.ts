@@ -1,3 +1,18 @@
+export type PaymentChain = 'sol' | 'fil'
+
+export interface UploadResultInfo {
+  cid: string
+  fileName?: string
+  fileSize: number
+  fileCount: number
+  duration: number
+  costInSOL: number
+  costInUSD: number
+  costInUSDFC: number
+  paymentChain: PaymentChain
+  transactionHash: string
+}
+
 export type State = 'idle' | 'loading' | 'uploading'
 /** uploaded data status (for filtering) */
 export type Filter = 'all' | 'active' | 'expired'

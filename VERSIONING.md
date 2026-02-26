@@ -50,7 +50,9 @@ This prompts you to:
 
 A markdown file is created in `.changeset/` describing the change. **Commit this file alongside your code changes.** No versions are bumped at this stage — the changeset is just a record of intent.
 
-### 2. Version packages (maintainer)
+**NOTE: the steps (2 & 3) below are reserved for maintainers**
+
+### 2. Version packages
 
 When ready to cut a release, a maintainer runs:
 
@@ -65,7 +67,7 @@ This consumes all pending changeset files and:
 
 The result is a commit with updated versions and changelogs, ready to publish.
 
-### 3. Publish to npm (maintainer)
+### 3. Publish to npm
 
 ```bash
 pnpm release
@@ -114,12 +116,12 @@ pnpm changeset
 git add --all
 git commit -m "fix(sol): deposit confirmation timeout"
 
-# 4. when ready to release (maintainer only)
+# 4. release
 pnpm version-packages
 git add --all
 git commit -m "chore: version packages"
 git push
 
-# 5. publish to npm (maintainer only)
+# 5. publish to npm
 pnpm release
 ```

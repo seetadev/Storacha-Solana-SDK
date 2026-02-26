@@ -4,6 +4,10 @@ import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { configTable, uploads } from '../db/schema.js'
 import { getUserHistory, saveTransaction } from '../db/uploads-table.js'
+import {
+  getUsdfcContractAddress,
+  verifyErc20Transfer,
+} from '../services/fil/verify.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
 import { computeCID } from '../utils/compute-cid.js'
@@ -15,10 +19,6 @@ import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
 import { createDepositTransaction } from './solana.controller.js'
-import {
-  getAddressTransfers,
-  getUsdfcContractAddress,
-} from '../services/indexer/beryx.service.js'
 
 /**
  * Function to upload a file to storacha
@@ -614,36 +614,18 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
 
     const expectedAmount = BigInt(depositMetadata.depositAmount)
 
-    let matchingTx = null
+    const { verified } = await verifyErc20Transfer({
+      transactionHash,
+      from: userAddress,
+      to: treasury,
+      contractAddress: USDFC_CONTRACT,
+      expectedAmount,
+    })
 
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const transfers = await getAddressTransfers(userAddress)
-
-      const txMatches = transfers.filter(
-        (tx) => tx.tx_hash.toLowerCase() === transactionHash.toLowerCase(),
-      )
-
-      if (txMatches.length) {
-        matchingTx = txMatches.find(
-          (tx) =>
-            tx.from.toLowerCase() === userAddress &&
-            tx.to.toLowerCase() === treasury &&
-            tx.contract_address.toLowerCase() ===
-              USDFC_CONTRACT.toLowerCase() &&
-            BigInt(tx.amount) >= expectedAmount,
-        )
-
-        if (matchingTx) break
-      }
-
-      // wait 10 seconds before retry
-      await new Promise((r) => setTimeout(r, 10000))
-    }
-
-    if (!matchingTx) {
-      return res.status(200).json({
+    if (!verified) {
+      return res.status(400).json({
         message:
-          'Valid USDFC transfer not found. Transaction may still be indexing.',
+          'USDFC transfer verification failed. Transaction may not exist, may have failed, or the amount/recipient does not match.',
       })
     }
 
