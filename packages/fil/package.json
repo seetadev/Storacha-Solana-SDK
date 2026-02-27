@@ -1,6 +1,6 @@
 {
   "name": "@toju.network/fil",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Pay for storage with USDFC on IPFS using Storacha's Hot storage network.",
   "license": "Apache-2.0",
   "type": "module",

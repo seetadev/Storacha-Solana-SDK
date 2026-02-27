@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 8a6af5b: add storage renewal support (`getStorageRenewalCost`, `renewStorageDuration`) and guard deposit flow against duplicate CID uploads
+
 ## 0.1.2
 
 ### Patch Changes
