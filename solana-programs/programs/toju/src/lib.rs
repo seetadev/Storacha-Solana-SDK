@@ -5,6 +5,20 @@ pub use types::*;
 
 declare_id!("CSXnfQsFWxdPB5pnS73TQDA6ivK6kcFnRwtt6TgFquxH");
 
+#[cfg(not(feature = "no-entrypoint"))]
+use solana_security_txt::security_txt;
+
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "toju",
+    project_url: "https://toju.network",
+    contacts: "email:support@toju.network,link:https://github.com/seetadev/Storacha-Solana-SDK/issues",
+    policy: "https://github.com/seetadev/Storacha-Solana-SDK/blob/main/SECURITY.md",
+    preferred_languages: "en",
+    source_code: "https://github.com/seetadev/Storacha-Solana-SDK/tree/main/solana-programs",
+    auditors: "None"
+}
+
 #[program]
 pub mod toju {
     use super::*;
