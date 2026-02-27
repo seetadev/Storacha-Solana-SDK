@@ -1,6 +1,9 @@
 import {
   CreateDepositArgs,
   DepositResponse,
+  RenewalPaymentDetails,
+  StorageRenewalCost,
+  StorageRenewalParams,
   UploadResult,
   VerifyPaymentArgs,
   VerifyPaymentResponse,
@@ -177,4 +180,90 @@ export async function verifyPayment(
   }
 
   return await verifyReq.json()
+}
+
+/**
+ * Get the cost of renewing storage for a CID
+ *
+ * @param cid - Content identifier of the file to renew
+ * @param duration - Number of additional days
+ * @param apiEndpoint
+ * @returns StorageRenewalCost with cost breakdown and expiration details
+ */
+export async function getStorageRenewalCost(
+  cid: string,
+  duration: number,
+  apiEndpoint: string,
+): Promise<StorageRenewalCost> {
+  const response = await fetch(
+    `${apiEndpoint}/storage/renewal-cost?cid=${encodeURIComponent(cid)}&duration=${duration}&chain=fil`,
+  )
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Failed to get renewal cost')
+  }
+
+  return await response.json()
+}
+
+/**
+ * Renew storage for an existing upload by paying with USDFC
+ *
+ * Flow:
+ * 1. Get renewal payment details from server
+ * 2. User sends USDFC transfer on-chain
+ * 3. Server verifies payment and extends storage duration
+ *
+ * @param args - StorageRenewalParams
+ * @param apiEndpoint - Backend API URL
+ * @returns Renewal confirmation with updated deposit
+ */
+export async function renewStorageTxn(
+  args: StorageRenewalParams,
+  apiEndpoint: string,
+): Promise<{ verified: boolean; message: string; deposit: unknown }> {
+  const { cid, duration, userAddress, sendTransaction } = args
+
+  const renewReq = await fetch(`${apiEndpoint}/storage/renew-usdfc`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cid, duration, userAddress }),
+  })
+
+  if (!renewReq.ok) {
+    const errorData = await renewReq.json().catch(() => ({}))
+    throw new Error(
+      errorData.message || 'Failed to get renewal payment details',
+    )
+  }
+
+  const renewalDetails: RenewalPaymentDetails = await renewReq.json()
+
+  const txHash = await sendTransaction({
+    to: renewalDetails.recipientAddress,
+    amount: renewalDetails.cost.usdfc,
+    contractAddress: renewalDetails.usdfcContractAddress,
+  })
+
+  const confirmReq = await fetch(
+    `${apiEndpoint}/storage/confirm-renewal-usdfc`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cid,
+        transactionHash: txHash,
+        duration,
+        userAddress,
+      }),
+    },
+  )
+
+  if (!confirmReq.ok) {
+    const errorData = await confirmReq.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Renewal payment verification failed')
+  }
+
+  return await confirmReq.json()
 }

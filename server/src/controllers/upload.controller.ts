@@ -178,6 +178,19 @@ export const deposit = async (req: Request, res: Response) => {
 
     const computedCID = await computeCID(fileMap)
 
+    const existingUpload = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, computedCID))
+      .limit(1)
+
+    if (existingUpload.length > 0 && existingUpload[0].transactionHash)
+      return res.status(409).json({
+        message: 'This file has already been uploaded',
+        cid: existingUpload[0].contentCid,
+        expiresAt: existingUpload[0].expiresAt,
+      })
+
     Sentry.setContext('upload', {
       totalSize,
       fileCount: fileArray.length,
@@ -331,6 +344,19 @@ export const depositUsdFC = async (req: Request, res: Response) => {
     })
 
     const computedCID = await computeCID(fileMap)
+
+    const existingUpload = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, computedCID))
+      .limit(1)
+
+    if (existingUpload.length > 0 && existingUpload[0].transactionHash)
+      return res.status(409).json({
+        message: 'This file has already been uploaded',
+        cid: existingUpload[0].contentCid,
+        expiresAt: existingUpload[0].expiresAt,
+      })
 
     Sentry.setContext('fil-upload', {
       totalSize,

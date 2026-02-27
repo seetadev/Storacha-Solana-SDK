@@ -4,10 +4,16 @@ import {
   FILECOIN_RPC,
   getEndpointForRpc,
 } from './constants'
-import { createDepositTxn } from './payment'
+import {
+  createDepositTxn,
+  getStorageRenewalCost,
+  renewStorageTxn,
+} from './payment'
 import {
   CreateDepositArgs,
   StorageCostEstimate,
+  StorageRenewalCost,
+  StorageRenewalParams,
   UploadHistoryResponse,
   UploadResult,
 } from './types'
@@ -163,5 +169,51 @@ export class Client {
     if (!response.ok) throw new Error('Failed to fetch upload history')
 
     return await response.json()
+  }
+
+  /**
+   * Get the cost of renewing storage for an existing upload
+   *
+   * @param {string} cid - Content identifier of the file to renew
+   * @param {number} duration - Number of additional days to extend storage
+   *
+   * @example
+   * const cost = await client.getStorageRenewalCost('bafybeig...', 30);
+   * console.log(`Renewal: ${cost.costInUsdfc} USDFC`);
+   *
+   * @returns {Promise<StorageRenewalCost>} Cost breakdown and expiration details
+   */
+  async getStorageRenewalCost(
+    cid: string,
+    duration: number,
+  ): Promise<StorageRenewalCost> {
+    return await getStorageRenewalCost(cid, duration, this.apiEndpoint)
+  }
+
+  /**
+   * Renew storage for an existing upload by paying with USDFC
+   *
+   * @param {Object} params
+   * @param {string} params.cid - Content identifier of the file to renew
+   * @param {number} params.duration - Number of additional days to extend storage
+   * @param {string} params.userAddress - User's Filecoin wallet address
+   * @param {Function} params.sendTransaction - Callback to send USDFC transfer
+   *
+   * @example
+   * const result = await client.renewStorageDuration({
+   *   cid: 'bafybeig...',
+   *   duration: 30,
+   *   userAddress: address,
+   *   sendTransaction: async (txData) => {
+   *     return await writeContractAsync({ ... });
+   *   },
+   * });
+   *
+   * @returns {Promise<{ verified: boolean; message: string; deposit: unknown }>} Renewal result
+   */
+  async renewStorageDuration(
+    params: StorageRenewalParams,
+  ): Promise<{ verified: boolean; message: string; deposit: unknown }> {
+    return await renewStorageTxn(params, this.apiEndpoint)
   }
 }
