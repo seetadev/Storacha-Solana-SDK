@@ -34,7 +34,7 @@ We implement a pay-as-you-go model for decentralized storage using blockchain pa
   </Step>
   
   <Step title="Storage Delegation">
-    The server uses UCAN delegation to store your files on Storacha
+    The server uses UCAN delegation to store your files on Storacha. If you're curious about how UCANs work in practice, see [An up-close look at UCANs in the wild](https://www.meje.dev/blog/ucans-in-the-wild).
   </Step>
 </Steps>
 
@@ -58,33 +58,36 @@ The base rate is dynamically calculated to cover Storacha storage costs while ke
 sequenceDiagram
     participant User
     participant Wallet
-    participant Contract
     participant Server
+    participant Contract
     participant Storacha
-    
-    User->>Contract: Request deposit estimate
-    Contract-->>User: Return cost in SOL
+
+    User->>Server: Request cost estimate
+    Server-->>User: Return cost (SOL or USDFC)
     User->>Wallet: Sign transaction
-    Wallet->>Contract: Create deposit
-    Contract-->>Server: Emit deposit event
+    Wallet->>Contract: Send payment (SOL deposit or USDFC transfer)
+    User->>Server: Submit files + transaction signature
+    Server->>Contract: Verify payment onchain
     Server->>Storacha: Upload files with UCAN
     Storacha-->>Server: Return CID
-    Server-->>User: Confirm upload
+    Server-->>User: Confirm upload with CID
 ```
 
-## Escrow Model
+## Payment Model
 
-When you create a deposit:
+When you pay for storage:
 
-1. **Funds are locked** in the smart contract
-2. **Storage is provisioned** on Storacha immediately
-3. **Funds are released** linearly over the storage duration to service providers
-4. **No refunds** after upload (storage is already provisioned)
+1. **Payment is processed** — SOL via our smart contract, or USDFC via direct token transfer
+2. **Storage is provisioned** immediately on Storacha
+3. **Files are accessible** for the full duration you paid for
 
-This escrow model ensures:
-- Storage providers get paid
-- Users get guaranteed storage duration
-- No need for recurring payments
+Your payment covers the cost of storing your data on Storacha through our infrastructure. The smart contract (SOL) provides on-chain accounting and deposit verification, while USDFC payments are direct token transfers.
+
+This model ensures:
+- No recurring subscriptions or credit cards needed
+- Transparent, verifiable payments on-chain
+- Storage guaranteed for the full paid duration
+- Simple one-time payment per upload
 
 ## Transaction Records
 
@@ -103,7 +106,7 @@ Every payment is recorded both:
 
 We currently support two payment methods:
 
-- **SOL (Solana)**: Payments via our Solana smart contract with escrow and linear release
+- **SOL (Solana)**: Payments via our Solana smart contract with on-chain deposit verification
 - **USDFC (Filecoin)**: Direct stablecoin transfers on Filecoin (1:1 with USD)
 
 Coming soon:
