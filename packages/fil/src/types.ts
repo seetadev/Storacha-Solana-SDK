@@ -213,3 +213,62 @@ export interface StorageCostEstimate {
   /** Cost in USD (same as USDFC since 1:1 pegged) */
   usd: string
 }
+
+/**
+ * Response from /storage/renewal-cost?chain=fil endpoint
+ */
+export interface StorageRenewalCost {
+  /** New expiration date after renewal */
+  newExpirationDate: string
+  /** Current expiration date */
+  currentExpirationDate: string
+  /** Number of days being added */
+  additionalDays: number
+  /** Cost in USD */
+  costUSD: number
+  /** Cost in USDFC (as string to handle BigInt precision) */
+  costInUsdfc: string
+  /** Details about the file being renewed */
+  fileDetails: {
+    cid: string
+    fileName: string | null
+    fileSize: number
+  }
+}
+
+/**
+ * Response from /storage/renew-usdfc endpoint
+ */
+export interface RenewalPaymentDetails {
+  /** CID of the content being renewed */
+  cid: string
+  /** Status message */
+  message: string
+  /** Recipient address for USDFC transfer */
+  recipientAddress: string
+  /** USDFC contract address */
+  usdfcContractAddress: string
+  /** Renewal duration in days */
+  duration: number
+  /** New expiration date after renewal */
+  newExpirationDate: string
+  /** Cost breakdown */
+  cost: {
+    usd: number
+    usdfc: string
+  }
+}
+
+/**
+ * Parameters for renewing storage with USDFC
+ */
+export interface StorageRenewalParams {
+  /** CID of the content to renew */
+  cid: string
+  /** Additional days to extend storage */
+  duration: number
+  /** User's Filecoin wallet address */
+  userAddress: string
+  /** Callback to send the USDFC transfer transaction */
+  sendTransaction: (txData: TransactionData) => Promise<string>
+}
