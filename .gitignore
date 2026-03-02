@@ -1,6 +1,7 @@
 .claude/
 .DS_Store
 node_modules
+.pnpm-store
 
 # Keypairs - NEVER commit these
 *-keypair.json
