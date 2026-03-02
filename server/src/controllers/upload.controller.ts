@@ -187,9 +187,7 @@ export const deposit = async (req: Request, res: Response) => {
     try {
       new PublicKey(publicKey)
     } catch {
-      return res
-        .status(400)
-        .json({ message: 'Invalid Solana public key' })
+      return res.status(400).json({ message: 'Invalid Solana public key' })
     }
 
     const durationInSeconds = parseInt(duration as string, 10)
@@ -202,7 +200,10 @@ export const deposit = async (req: Request, res: Response) => {
       })
     }
 
-    if (userEmail && (typeof userEmail !== 'string' || !EMAIL_RE.test(userEmail))) {
+    if (
+      userEmail &&
+      (typeof userEmail !== 'string' || !EMAIL_RE.test(userEmail))
+    ) {
       return res.status(400).json({ message: 'Invalid email address' })
     }
     const sanitizedEmail = userEmail
