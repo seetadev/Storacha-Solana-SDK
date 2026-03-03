@@ -76,11 +76,9 @@ export class UsageService {
       const plan: PlanGetSuccess =
         await this.client.capability.plan.get(accountDID)
 
-      // limit is a string in bytes, needs to be parsed
-      // TS is complaining that "Property limit does not exist on type PlanGetSuccess."
-      // but that's probably a npm cache thing because in the latest version
-      // of the upload client we already have it present. see it: https://github.com/storacha/upload-service/blob/dfd96c418d86e3fe94d3eafa669caf5b701bf728/packages/capabilities/src/types.ts#L1132
-      /* @ts-expect-error */
+      // used to have TS complain about an error here before.
+      // previous comment no longer needed. this too would go away later. browse the commit
+      // history for your perusal if you want.
       const limitBytes = parseInt(plan.limit, 10)
 
       // limit: 0 means overages enabled — look up included capacity from product DID
