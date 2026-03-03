@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- cc2bbff: fix: set payment_chain and payment_token explicitly for SOL deposits, update package READMEs
+
 ## 0.2.0
 
 ### Minor Changes
