@@ -258,6 +258,8 @@ export const deposit = async (req: Request, res: Response) => {
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
       fileSize: totalSize,
       expiresAt: backupExpirationDate,
+      paymentChain: 'sol',
+      paymentToken: 'SOL',
     }
 
     res.status(200).json({
@@ -570,6 +572,8 @@ export const confirmUpload = async (req: Request, res: Response) => {
       transactionHash: transactionHash,
       deletionStatus: 'active',
       warningSentAt: null,
+      paymentChain: depositMetadata.paymentChain || 'sol',
+      paymentToken: depositMetadata.paymentToken || 'SOL',
     }
 
     const inserted = await db.insert(uploads).values(depositItem).returning()
