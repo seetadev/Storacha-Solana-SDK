@@ -27,7 +27,7 @@ jobs:
         run: pnpm --filter server knip
 
   solana-sdk:
-    name: solana sdk - knip!
+    name: sol sdk - knip!
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
