@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+### Patch Changes
+
+- 8822b5f: add optional directoryName field to CreateDepositArgs for preserving directory names during multi-file uploads. previously, directory uploads saved fileName as null in the database, causing "Unknown File" to display in upload history. the UI now extracts the directory name from webkitRelativePath and passes it through the SDK to the server.
+
 ## 0.1.5
 
 ### Patch Changes
