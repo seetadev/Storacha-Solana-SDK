@@ -49,7 +49,10 @@ export interface ClientOptions {
 }
 
 export interface UploadParams
-  extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail' | 'directoryName'> {
+  extends Pick<
+    CreateDepositArgs,
+    'signTransaction' | 'userEmail' | 'directoryName'
+  > {
   /** Wallet public key of the payer */
   payer: PublicKey
   /** File(s) to be stored */

@@ -44,7 +44,10 @@ export interface ClientOptions {
 }
 
 export interface UploadParams
-  extends Pick<CreateDepositArgs, 'sendTransaction' | 'userEmail' | 'directoryName'> {
+  extends Pick<
+    CreateDepositArgs,
+    'sendTransaction' | 'userEmail' | 'directoryName'
+  > {
   /** User's wallet address */
   userAddress: string
   /** File(s) to be stored */

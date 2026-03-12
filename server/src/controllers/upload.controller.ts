@@ -420,7 +420,10 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       durationDays: duration_days,
       depositKey: userAddress,
       userEmail: userEmail || null,
-      fileName: fileArray.length === 1 ? fileArray[0].originalname : (directoryName || null),
+      fileName:
+        fileArray.length === 1
+          ? fileArray[0].originalname
+          : directoryName || null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
       fileSize: totalSize,
       expiresAt: backupExpirationDate,
