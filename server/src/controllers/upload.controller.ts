@@ -156,7 +156,7 @@ export const deposit = async (req: Request, res: Response) => {
   try {
     const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
-    const { publicKey, duration, userEmail } = req.body
+    const { publicKey, duration, userEmail, directoryName } = req.body
 
     // input validation
     try {
@@ -254,7 +254,10 @@ export const deposit = async (req: Request, res: Response) => {
       durationDays: duration_days,
       depositKey: publicKey,
       userEmail: sanitizedEmail || null,
-      fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
+      fileName:
+        fileArray.length === 1
+          ? fileArray[0].originalname
+          : directoryName || null,
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
       fileSize: totalSize,
       expiresAt: backupExpirationDate,
@@ -346,7 +349,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
   try {
     const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
-    const { userAddress, duration, userEmail } = req.body
+    const { userAddress, duration, userEmail, directoryName } = req.body
     const durationInSeconds = parseInt(duration as string, 10)
     const config = await db.select().from(configTable)
     const { ratePerBytePerDay } = await getPricingConfig()
@@ -417,7 +420,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       durationDays: duration_days,
       depositKey: userAddress,
       userEmail: userEmail || null,
-      fileName: fileArray.length === 1 ? fileArray[0].originalname : null,
+      fileName: fileArray.length === 1 ? fileArray[0].originalname : (directoryName || null),
       fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
       fileSize: totalSize,
       expiresAt: backupExpirationDate,

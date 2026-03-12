@@ -44,7 +44,7 @@ export interface ClientOptions {
 }
 
 export interface UploadParams
-  extends Pick<CreateDepositArgs, 'sendTransaction' | 'userEmail'> {
+  extends Pick<CreateDepositArgs, 'sendTransaction' | 'userEmail' | 'directoryName'> {
   /** User's wallet address */
   userAddress: string
   /** File(s) to be stored */
@@ -97,6 +97,7 @@ export class Client {
     durationDays,
     sendTransaction,
     userEmail,
+    directoryName,
   }: UploadParams): Promise<UploadResult> {
     console.log('Creating USDFC deposit with environment:', this.rpcUrl)
 
@@ -107,6 +108,7 @@ export class Client {
         userAddress,
         sendTransaction,
         userEmail,
+        directoryName,
       },
       this.apiEndpoint,
     )

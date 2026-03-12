@@ -34,9 +34,8 @@ export async function createDepositTxn(
     file.forEach((f) => formData.append('file', f))
     formData.append('duration', duration.toString())
     formData.append('userAddress', userAddress)
-    if (userEmail) {
-      formData.append('userEmail', userEmail)
-    }
+    if (userEmail) formData.append('userEmail', userEmail)
+    if (args.directoryName) formData.append('directoryName', args.directoryName)
 
     const depositReq = await fetch(`${apiEndpoint}/upload/deposit-usdfc`, {
       method: 'POST',
