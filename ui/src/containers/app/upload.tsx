@@ -35,7 +35,7 @@ import {
   USDFC_CONTRACT_ADDRESS,
   useUpload as useFilUpload,
 } from '@toju.network/fil'
-import { useDeposit } from '@toju.network/sol'
+import { useUpload } from '@toju.network/sol'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useConnection, useReadContract, useWriteContract } from 'wagmi'
@@ -47,6 +47,15 @@ export const Upload = () => {
   const { selectedChain } = useChainContext()
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
+
+  const configuredNetwork =
+    import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
+
+  const apiEndpoint =
+    import.meta.env.VITE_API_URL ||
+    (configuredNetwork === 'mainnet-beta'
+      ? 'https://api.toju.network'
+      : 'https://staging-api.toju.network')
 
   const { address: filAddress } = useConnection()
   const isFilMainnet = import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
@@ -72,10 +81,7 @@ export const Upload = () => {
   const filEnvironment = isFilMainnet
     ? Environment.mainnet
     : Environment.calibration
-  const filClient = useFilUpload(
-    filEnvironment,
-    IS_DEV ? import.meta.env.VITE_API_URL : undefined,
-  )
+  const filClient = useFilUpload(filEnvironment, apiEndpoint)
   const { writeContractAsync } = useWriteContract()
 
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
@@ -115,25 +121,12 @@ export const Upload = () => {
     Number.isInteger(parsedDuration) &&
     parsedDuration > 0
 
-  const configuredNetwork =
-    import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta'
-
-  const apiEndpoint =
-    import.meta.env.VITE_API_URL ||
-    (configuredNetwork === 'mainnet-beta'
-      ? 'https://api.toju.network'
-      : 'https://staging-api.toju.network')
-
   const shouldUseProxy = !IS_DEV && configuredNetwork === 'mainnet-beta'
   const rpcUrl = shouldUseProxy
     ? import.meta.env.VITE_HELIUS_PROXY_URL
     : undefined
 
-  const client = useDeposit(
-    configuredNetwork,
-    IS_DEV ? apiEndpoint : undefined,
-    rpcUrl,
-  )
+  const client = useUpload(configuredNetwork, apiEndpoint, rpcUrl)
 
   const solanaRpcUrl = shouldUseProxy
     ? rpcUrl!
@@ -193,6 +186,11 @@ export const Upload = () => {
         error?: string
       }
 
+      const directoryName =
+        selectedFiles.length > 1 && selectedFiles[0].webkitRelativePath
+          ? selectedFiles[0].webkitRelativePath.split('/')[0]
+          : undefined
+
       if (selectedChain === 'fil') {
         if (!filAddress) throw new Error('FIL wallet not connected')
         result = await filClient.createDeposit({
@@ -200,6 +198,7 @@ export const Upload = () => {
           durationDays: parsedDuration,
           userAddress: filAddress,
           userEmail: email || undefined,
+          directoryName,
           sendTransaction: async (txData) => {
             const chainId = isFilMainnet ? 314 : 314159 // Filecoin mainnet or calibration
             toast.loading(
@@ -244,6 +243,7 @@ export const Upload = () => {
             return signed
           },
           userEmail: email || undefined,
+          directoryName,
         })
         result = { ...solResult, transactionHash: solResult.signature }
       }
@@ -265,7 +265,9 @@ export const Upload = () => {
         setUploadResult({
           cid: result.cid,
           fileName:
-            selectedFiles.length === 1 ? selectedFiles[0].name : undefined,
+            selectedFiles.length === 1
+              ? selectedFiles[0].name
+              : directoryName || undefined,
           fileSize: totalFileSize,
           fileCount: selectedFiles.length,
           duration: parsedDuration,

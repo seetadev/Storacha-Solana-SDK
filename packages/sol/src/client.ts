@@ -49,7 +49,10 @@ export interface ClientOptions {
 }
 
 export interface UploadParams
-  extends Pick<CreateDepositArgs, 'signTransaction' | 'userEmail'> {
+  extends Pick<
+    CreateDepositArgs,
+    'signTransaction' | 'userEmail' | 'directoryName'
+  > {
   /** Wallet public key of the payer */
   payer: PublicKey
   /** File(s) to be stored */
@@ -109,6 +112,7 @@ export class Client {
     durationDays,
     signTransaction,
     userEmail,
+    directoryName,
   }: UploadParams): Promise<UploadResult> {
     console.log('Creating deposit transaction with environment:', this.rpcUrl)
     // HTTP-only connection because proxies don't support WebSocket)
@@ -128,6 +132,7 @@ export class Client {
         connection,
         signTransaction,
         userEmail,
+        directoryName,
       },
       this.apiEndpoint,
     )

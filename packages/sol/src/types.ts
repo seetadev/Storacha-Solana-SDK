@@ -148,6 +148,8 @@ export interface CreateDepositArgs
   signTransaction: (tx: SolanaTransaction) => Promise<SolanaTransaction>
   /** Optional user email for expiration notifications */
   userEmail?: string
+  /** Original directory name from browser (webkitRelativePath) for multi-file uploads */
+  directoryName?: string
 }
 
 /** Arguments for renewing storage duration */

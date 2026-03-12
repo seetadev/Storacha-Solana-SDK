@@ -98,6 +98,8 @@ export interface CreateDepositArgs {
   userAddress: string
   /** Optional user email for expiration notifications */
   userEmail?: string
+  /** Original directory name from browser (webkitRelativePath) for multi-file uploads */
+  directoryName?: string
   /** Callback to sign and send the USDFC transfer transaction */
   sendTransaction: (txData: TransactionData) => Promise<string>
 }
