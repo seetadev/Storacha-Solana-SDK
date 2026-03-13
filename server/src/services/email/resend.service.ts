@@ -10,8 +10,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
  * Email configuration
  */
 const EMAIL_CONFIG = {
-  from:
-    process.env.EMAIL_FROM || 'Storacha Solana <noreply@storacha-solana.com>',
+  from: process.env.EMAIL_FROM || 'toju <noreply@toju.network>',
   replyTo: process.env.EMAIL_REPLY_TO,
   promulgator: process.env.PROMULGATOR,
 }
@@ -36,7 +35,9 @@ export const sendBatchExpirationWarningEmail = async (
     const count = uploads.length
     const cids = uploads.map((u) => u.contentCid).join(',')
     const response = await resend.emails.send({
-      from: ` <${EMAIL_CONFIG.from}>`,
+      from: EMAIL_CONFIG.promulgator
+        ? `${EMAIL_CONFIG.promulgator} <${EMAIL_CONFIG.from}>`
+        : EMAIL_CONFIG.from,
       to,
       replyTo: EMAIL_CONFIG.replyTo,
       subject: `⚠️ You have ${count} file${count !== 1 ? 's' : ''} expiring soon on toju`,
