@@ -1,5 +1,5 @@
-import { PublicKey } from '@solana/web3.js'
 import * as Sentry from '@sentry/node'
+import { PublicKey } from '@solana/web3.js'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
@@ -24,6 +24,16 @@ import { createDepositTransaction } from './solana.controller.js'
 const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
 // email regex
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * i encountered an issue yesterday where uploading a 73MB folder took around 20.2mins and still ended up
+ * failing because of a timeout. the entire 73MB CAR was sent directly via blob/add on
+ * a slower connection 70Mbps download 5/10Mbps upload speed. we should break large files into smaller
+ * chunks by specifying the shard size.
+ * in this case, a 10MB (10 * 1024 * 1024 = 10,485,760` bytes) shard size would mean having around ~8 shards
+ * many requests. but each one finishes faster compared to the 73MB (and potentially large sizes in the future) chunk at once
+ */
+const SHARD_SIZE = 10_485_760
 
 /**
  * Function to upload a file to storacha
@@ -101,7 +111,9 @@ export const uploadFiles = async (req: Request, res: Response) => {
     )
 
     const client = await initStorachaClient()
-    const uploadedCID = await client.uploadDirectory(fileObjects)
+    const uploadedCID = await client.uploadDirectory(fileObjects, {
+      shardSize: SHARD_SIZE,
+    })
 
     if (uploadedCID.toString() !== cid)
       throw new Error(
