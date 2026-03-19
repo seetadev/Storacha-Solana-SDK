@@ -15,6 +15,8 @@ const EMAIL_CONFIG = {
   promulgator: process.env.PROMULGATOR,
 }
 
+const BASE_URL = process.env.BASE_URL || 'https://toju.network'
+
 /**
  * Send batched expiration warning email for multiple uploads
  * @param to - Recipient email address
@@ -40,7 +42,7 @@ export const sendBatchExpirationWarningEmail = async (
         : EMAIL_CONFIG.from,
       to,
       replyTo: EMAIL_CONFIG.replyTo,
-      subject: `⚠️ You have ${count} file${count !== 1 ? 's' : ''} expiring soon on toju`,
+      subject: `Action required: ${count} file${count !== 1 ? 's' : ''} expiring soon on toju`,
       html: getBatchExpirationWarningEmailHtml(uploads, cids),
       text: getBatchExpirationWarningEmailText(uploads, cids),
     })
@@ -91,13 +93,13 @@ function getBatchExpirationWarningEmailHtml(
 
       return `
         <tr>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${upload.fileName || 'Unnamed'}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${formatFileSize(upload.fileSize)}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${expirationDate}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">${daysRemaining}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #1a1a1a;">
-            <a href="https://toju.network/renew?cids=${cids}" 
-               style="color: #f97316; text-decoration: none; font-weight: 500; cursor: pointer;">Renew →</a>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${upload.fileName || 'Unnamed'}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${formatFileSize(upload.fileSize)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${expirationDate}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${daysRemaining}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+            <a href="${BASE_URL}/renew?cids=${cids}" 
+               style="color: #2563eb; text-decoration: none; font-weight: 500; cursor: pointer;">Renew</a>
           </td>
         </tr>
       `
@@ -112,18 +114,24 @@ function getBatchExpirationWarningEmailHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Files Expiring Soon</title>
 </head>
-<body style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #ffffff; background-color: #080808; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+<body style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; background-color: #f9fafb; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
   
-  <div style="text-align: center; margin-bottom: 32px; padding: 24px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px;">
-    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-    <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Expiration Notice</h1>
-    <p style="color: #949495; margin: 0; font-size: 16px;">
+  <div style="text-align: center; margin-bottom: 32px; padding: 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="width: 64px; height: 64px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <h1 style="color: #111827; margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Expiration Notice</h1>
+    <p style="color: #6b7280; margin: 0; font-size: 16px;">
       You have ${count} upload${count !== 1 ? 's' : ''} expiring soon
     </p>
   </div>
 
   <div style="margin-bottom: 32px;">
-    <table style="width: 100%; border-collapse: collapse; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <thead>
         <tr style="background: #141414;">
           <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">File</th>
@@ -140,29 +148,29 @@ function getBatchExpirationWarningEmailHtml(
   </div>
 
   <div style="text-align: center; margin-bottom: 32px;">
-    <a href="https://toju.network/renew?cids=${cids}" 
-       style="display: inline-block; background: #ffffff; color: #080808; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-right: 12px; cursor: pointer;">
-      View All & Renew →
+    <a href="${BASE_URL}/renew?cids=${cids}" 
+       style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-right: 12px; cursor: pointer;">
+      View All & Renew
     </a>
-    <a href="https://toju.network" 
-       style="display: inline-block; background: transparent; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer;">
-      Manage Storage →
+    <a href="${BASE_URL}" 
+       style="display: inline-block; background: #ffffff; color: #374151; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; border: 1px solid #d1d5db; cursor: pointer;">
+      Manage Storage
     </a>
   </div>
 
-  <div style="background: #0f0f0f; padding: 16px; border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 12px; margin-bottom: 32px;">
-    <p style="margin: 0; font-size: 14px; color: #f97316; font-weight: 500;">
+  <div style="background: #fffbeb; padding: 16px; border: 1px solid #fcd34d; border-radius: 12px; margin-bottom: 32px;">
+    <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 500;">
       What happens after expiration?
     </p>
-    <p style="margin: 8px 0 0 0; font-size: 14px; color: #949495;">
+    <p style="margin: 8px 0 0 0; font-size: 14px; color: #78350f;">
       Files will be automatically deleted from storage and removed from IPFS within 30 days.
     </p>
   </div>
 
-  <hr style="border: none; border-top: 1px solid #1a1a1a; margin: 32px 0;">
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
 
   <div style="text-align: center;">
-    <p style="font-size: 12px; color: #6b7280; margin: 0;">This is an automated message. Please do not reply to this email.</p>
+    <p style="font-size: 12px; color: #9ca3af; margin: 0;">This is an automated message. Please do not reply to this email.</p>
   </div>
 
 </body>
@@ -204,14 +212,14 @@ ${index + 1}. ${upload.fileName || 'Unnamed'}
     .join('\n\n')
 
   return `
-⚠️ Expiration Notice
+Expiration Notice
 
 You have ${count} upload${count !== 1 ? 's' : ''} expiring soon on toju.
 
 ${uploadList}
 
-View all & renew: https://toju.network/renew?cids=${cids}
-Manage storage: https://toju.network
+View all & renew: ${BASE_URL}/renew?cids=${cids}
+Manage storage: ${BASE_URL}
 
 What happens after expiration?
 Files will be automatically deleted from storage and removed from IPFS within 30 days.
