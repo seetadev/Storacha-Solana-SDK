@@ -185,31 +185,35 @@ export const Renew = () => {
 
   if (cids.length === 0) {
     return (
-      <VStack spacing="2em" align="stretch">
+      <VStack spacing="2em" align="stretch" w="90%" maxW="640px">
         <Box
-          textAlign="center"
           py="4em"
           bg="var(--bg-dark)"
           border="1px solid var(--border-hover)"
           borderRadius="var(--radius-lg)"
         >
-          <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
-          <Text
-            mt="1em"
-            fontSize="var(--font-size-lg)"
-            fontWeight="var(--font-weight-semibold)"
-            color="var(--text-inverse)"
-          >
-            No CID Provided
-          </Text>
-          <Text mt="0.5em" color="var(--text-muted)">
-            Please select a file from your history to renew
-          </Text>
-          <Link to="/app/history">
-            <Button mt="2em" size="md">
-              Go to History
-            </Button>
-          </Link>
+          <VStack spacing="1em" align="center">
+            <WarningCircleIcon
+              size={48}
+              color="var(--error)"
+              weight="duotone"
+            />
+            <Text
+              fontSize="var(--font-size-lg)"
+              fontWeight="var(--font-weight-semibold)"
+              color="var(--text-inverse)"
+            >
+              No CID Provided
+            </Text>
+            <Text color="var(--text-muted)">
+              Please select a file from your history to renew
+            </Text>
+            <Link to="/app/history">
+              <Button mt="0.5em" size="md">
+                Go to History
+              </Button>
+            </Link>
+          </VStack>
         </Box>
       </VStack>
     )
@@ -217,33 +221,37 @@ export const Renew = () => {
 
   if (fileError) {
     return (
-      <VStack spacing="2em" align="stretch">
+      <VStack spacing="2em" align="stretch" w="90%" maxW="640px">
         <Box
-          textAlign="center"
           py="4em"
           bg="var(--bg-dark)"
           border="1px solid var(--border-hover)"
           borderRadius="var(--radius-lg)"
         >
-          <WarningCircleIcon size={64} color="var(--error)" weight="duotone" />
-          <Text
-            mt="1em"
-            fontSize="var(--font-size-lg)"
-            fontWeight="var(--font-weight-semibold)"
-            color="var(--text-inverse)"
-          >
-            Unable to Load File
-          </Text>
-          <Text mt="0.5em" color="var(--text-muted)">
-            {fileError instanceof Error
-              ? fileError.message
-              : 'Failed to fetch file details'}
-          </Text>
-          <Link to="/app/history">
-            <Button mt="2em" size="md">
-              Go to History
-            </Button>
-          </Link>
+          <VStack spacing="1em" align="center">
+            <WarningCircleIcon
+              size={48}
+              color="var(--error)"
+              weight="duotone"
+            />
+            <Text
+              fontSize="var(--font-size-lg)"
+              fontWeight="var(--font-weight-semibold)"
+              color="var(--text-inverse)"
+            >
+              Unable to Load File
+            </Text>
+            <Text color="var(--text-muted)">
+              {fileError instanceof Error
+                ? fileError.message
+                : 'Failed to fetch file details'}
+            </Text>
+            <Link to="/app/history">
+              <Button mt="0.5em" size="md">
+                Go to History
+              </Button>
+            </Link>
+          </VStack>
         </Box>
       </VStack>
     )

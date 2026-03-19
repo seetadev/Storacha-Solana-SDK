@@ -98,8 +98,8 @@ function getBatchExpirationWarningEmailHtml(
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${expirationDate}</td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${daysRemaining}</td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-            <a href="${BASE_URL}/renew?cids=${cids}" 
-               style="color: #2563eb; text-decoration: none; font-weight: 500; cursor: pointer;">Renew</a>
+            <a href="${BASE_URL}/renew?cids=${cids}"
+               style="color: #f97316; text-decoration: none; font-weight: 500; cursor: pointer;">Renew →</a>
           </td>
         </tr>
       `
@@ -117,13 +117,6 @@ function getBatchExpirationWarningEmailHtml(
 <body style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; background-color: #f9fafb; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
   
   <div style="text-align: center; margin-bottom: 32px; padding: 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <div style="width: 64px; height: 64px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-    </div>
     <h1 style="color: #111827; margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Expiration Notice</h1>
     <p style="color: #6b7280; margin: 0; font-size: 16px;">
       You have ${count} upload${count !== 1 ? 's' : ''} expiring soon
@@ -133,12 +126,12 @@ function getBatchExpirationWarningEmailHtml(
   <div style="margin-bottom: 32px;">
     <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <thead>
-        <tr style="background: #141414;">
-          <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">File</th>
-          <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">Size</th>
-          <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">Expires</th>
-          <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">Days</th>
-          <th style="padding: 12px; text-align: left; color: #949495; font-weight: 500; font-size: 14px;">Action</th>
+        <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+          <th style="padding: 12px; text-align: left; color: #6b7280; font-weight: 500; font-size: 14px;">File</th>
+          <th style="padding: 12px; text-align: left; color: #6b7280; font-weight: 500; font-size: 14px;">Size</th>
+          <th style="padding: 12px; text-align: left; color: #6b7280; font-weight: 500; font-size: 14px;">Expires</th>
+          <th style="padding: 12px; text-align: left; color: #6b7280; font-weight: 500; font-size: 14px;">Days</th>
+          <th style="padding: 12px; text-align: left; color: #6b7280; font-weight: 500; font-size: 14px;">Action</th>
         </tr>
       </thead>
       <tbody>
@@ -149,7 +142,7 @@ function getBatchExpirationWarningEmailHtml(
 
   <div style="text-align: center; margin-bottom: 32px;">
     <a href="${BASE_URL}/renew?cids=${cids}" 
-       style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-right: 12px; cursor: pointer;">
+       style="display: inline-block; background: #f97316; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-right: 12px; cursor: pointer;">
       View All & Renew
     </a>
     <a href="${BASE_URL}" 
