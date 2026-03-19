@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# Format staged files
+pnpm lint-staged
+
 # Check if UI package.json has workspace:* for SOL package
 if grep -q '"@toju.network/sol": "workspace:\*"' ui/package.json; then
   echo "Found workspace:* - updating SOL sdk dependency in ui/ to latest version..."
