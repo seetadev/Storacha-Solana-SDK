@@ -3,3 +3,4 @@ packages:
   - 'ui'
   - 'server'
   - 'docs'
+  - 'x402-spike'
