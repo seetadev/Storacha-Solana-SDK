@@ -95,7 +95,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
     // USDC has 6 decimals compared to other ERC-20 tokens that uses 18 decimals.
     // we should store amount in micro-USDC (same unit as USDC atomic units).
     // apply the same $0.000001 floor the x402 middleware uses so we don't get
-    // a disparity between what the agent is charged is uniform with what we store in our db.
+    // a disparity between what the agent is charged and what we store in our db.
     const { ratePerBytePerDay } = await getPricingConfig()
     const costUSD = Math.max(
       getAmountInUSD(size, ratePerBytePerDay, duration),
