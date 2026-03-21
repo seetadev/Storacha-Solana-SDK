@@ -55,7 +55,8 @@
         "sdk/deposit",
         "sdk/sol-price",
         "sdk/upload-history",
-        "sdk/renewal"
+        "sdk/renewal",
+        "sdk/x402"
       ]
     }
   ],

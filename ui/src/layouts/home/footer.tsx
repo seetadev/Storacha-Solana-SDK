@@ -50,8 +50,7 @@ export const HomeFooter = () => {
                 toju.
               </Text>
               <Text color="var(--text-muted)" maxW="300px" lineHeight="1.6">
-                The crypto-native bridge to decentralized storage on Filecoin.
-                No credit cards, no subscriptions.
+                Upload to IPFS, pay with crypto. No credit cards, no middlemen.
               </Text>
             </VStack>
 

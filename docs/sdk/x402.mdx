@@ -1,0 +1,202 @@
+---
+title: 'Agent Payments (x402)'
+description: 'Store files autonomously and pay with USDC on Base — no human intervention required'
+---
+
+## Overview
+
+`@toju.network/x402` implements the [x402 protocol](https://x402.org) for autonomous storage payments. An agent instantiates `AgentClient` with a funded Base wallet, calls `store()`, and the SDK handles the full payment negotiation automatically — no wallet prompts, no manual signing steps.
+
+The flow under the hood:
+
+<Steps>
+  <Step title="Send request">
+    Agent sends `POST /upload/agent` with the file and storage parameters
+  </Step>
+  <Step title="Receive 402">
+    Server responds with `402 Payment Required` and a price quote in USDC
+  </Step>
+  <Step title="Sign off-chain">
+    SDK signs an EIP-3009 authorization (no on-chain transaction yet)
+  </Step>
+  <Step title="Retry with payment">
+    SDK retries the request with the signed `X-PAYMENT` header attached
+  </Step>
+  <Step title="Facilitator settles">
+    Coinbase's public facilitator verifies and settles the USDC transfer on Base
+  </Step>
+  <Step title="File stored">
+    Server uploads to IPFS via Storacha and returns the CID
+  </Step>
+</Steps>
+
+## Install
+
+```shell
+pnpm add @toju.network/x402
+```
+
+## Quick start
+
+```ts
+import { createAgentClient } from '@toju.network/x402'
+
+const client = createAgentClient({
+  privateKey: process.env.AGENT_PRIVATE_KEY as `0x${string}`,
+  environment: 'mainnet',
+})
+
+const file = new File([fileBuffer], 'report.pdf', { type: 'application/pdf' })
+const result = await client.store(file, { durationDays: 30 })
+
+console.log(result.cid)       // bafy...
+console.log(result.expiresAt) // 2025-06-01T00:00:00.000Z
+```
+
+Your agent's wallet needs USDC on Base to pay. At our rate of 3×10⁻¹² USD/byte/day, storing 1 MB for 30 days costs about **$0.0001**.
+
+## createAgentClient
+
+```ts
+import { createAgentClient } from '@toju.network/x402'
+
+const client = createAgentClient(options)
+```
+
+### Options
+
+<ParamField path="privateKey" type="`0x${string}`" required>
+  EVM private key for the agent's wallet. Must hold USDC on Base to pay for storage.
+</ParamField>
+
+<ParamField path="environment" type="'mainnet'" required>
+  Target environment. Use `'mainnet'` for Base Mainnet with real USDC.
+</ParamField>
+
+## estimateStorageCost
+
+Check the cost before uploading.
+
+```ts
+const estimate = await client.estimateStorageCost(
+  1_000_000, // sizeInBytes
+  30          // durationDays
+)
+
+console.log(estimate.usdc) // '0.000090' (USDC, 6 decimal places)
+console.log(estimate.usd)  // '0.00'
+```
+
+### Parameters
+
+<ParamField path="sizeInBytes" type="number" required>
+  Raw byte count of the file
+</ParamField>
+
+<ParamField path="durationDays" type="number" required>
+  How long to keep the file on IPFS
+</ParamField>
+
+### Response
+
+<ResponseField name="usdc" type="string">
+  Cost in USDC, formatted to 6 decimal places (e.g. `'0.000090'`)
+</ResponseField>
+
+<ResponseField name="usd" type="string">
+  Approximate USD cost, formatted to 2 decimal places
+</ResponseField>
+
+## store
+
+Upload a file and pay autonomously via x402.
+
+```ts
+const result = await client.store(file, { durationDays: 30 })
+```
+
+### Parameters
+
+<ParamField path="file" type="File" required>
+  The file to upload. Use the standard Web API `File` object — works in Node.js 20+ and all modern runtimes.
+</ParamField>
+
+<ParamField path="options.durationDays" type="number" required>
+  Storage duration in days
+</ParamField>
+
+### Response
+
+<ResponseField name="cid" type="string">
+  IPFS content identifier for the uploaded file (e.g. `bafybei...`)
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  ISO 8601 date string when the file will be removed from IPFS
+</ResponseField>
+
+<ResponseField name="fileName" type="string">
+  Original file name
+</ResponseField>
+
+<ResponseField name="fileSize" type="number">
+  File size in bytes
+</ResponseField>
+
+## USDC on Base
+
+USDC uses 6 decimal places on all EVM chains (Circle standard). The SDK and server handle conversion automatically.
+
+| Network | USDC Contract |
+|---|---|
+| Base Mainnet | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+
+<Info>
+  Your agent wallet needs enough USDC to cover the storage cost, plus a small amount of ETH on Base for gas. Gas fees on Base are typically under $0.001 per transaction.
+</Info>
+
+## Framework integrations
+
+`AgentClient` works with any framework that can hold an EVM private key:
+
+```ts
+// LangChain tool
+import { DynamicTool } from 'langchain/tools'
+
+const storeTool = new DynamicTool({
+  name: 'store_file',
+  description: 'Store a file on IPFS and return its CID',
+  func: async (filePath: string) => {
+    const buffer = await fs.readFile(filePath)
+    const file = new File([buffer], path.basename(filePath))
+    const result = await client.store(file, { durationDays: 30 })
+    return result.cid
+  },
+})
+```
+
+```ts
+// CrewAI-style (TypeScript)
+const storeAction = async (input: { filePath: string; days: number }) => {
+  const buffer = await fs.readFile(input.filePath)
+  const file = new File([buffer], path.basename(input.filePath))
+  return client.store(file, { durationDays: input.days })
+}
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="coins" href="/pricing">
+    Storage rate and cost calculator
+  </Card>
+  <Card title="Upload (SOL)" icon="arrow-up" href="/sdk/deposit">
+    Human wallet uploads with Solana
+  </Card>
+  <Card title="CID Computation" icon="hashtag" href="/concepts/cid-computation">
+    How content identifiers work
+  </Card>
+  <Card title="Storage Payments" icon="credit-card" href="/concepts/storage-payments">
+    Payment mechanics
+  </Card>
+</CardGroup>
