@@ -17,7 +17,7 @@
     "release": "changeset publish"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,css,scss,md}": "biome format --write"
+    "*.{ts,tsx,js,jsx,json,css,scss}": "biome format --write"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
