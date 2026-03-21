@@ -14,8 +14,10 @@ import {
   ArrowRightIcon,
   ArrowsClockwiseIcon,
   CoinsIcon,
+  CubeIcon,
   HardDrivesIcon,
   LightningIcon,
+  RobotIcon,
 } from '@phosphor-icons/react'
 import { RocketLaunchIcon } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@tanstack/react-router'
@@ -108,7 +110,7 @@ export const HomePage = () => {
             color="var(--text-inverse)"
             textAlign="center"
           >
-            Keep it forever. <br />
+            Store without middlemen. <br />
             <Box as="span" sx={styles.gradientText}>
               Pay with crypto.
             </Box>
@@ -122,9 +124,8 @@ export const HomePage = () => {
             lineHeight="var(--line-height-relaxed)"
             pt="-0.8em"
           >
-            True permanence for your digital assets. Store data on IPFS via
-            Storacha's decentralized network and settle the fees instantly with
-            SOL or USDFC. No banks.
+            Pay per upload with SOL, USDFC, or USDC on Base. No credit cards, no
+            subscriptions. Pay only for what you store.
           </Text>
 
           <HStack
@@ -179,8 +180,8 @@ export const HomePage = () => {
       </Container>
 
       <Box borderTop="1px solid var(--border-dark)" bg="var(--bg-dark)">
-        <Container maxW="container.xl" py="6em">
-          <SimpleGrid columns={{ base: 1, md: 3, xl: 3 }} gap="1em">
+        <Container maxW="container.lg" py="6em">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="1em">
             <Box sx={styles.card}>
               <Stack spacing="1.5em">
                 <Box
@@ -284,6 +285,48 @@ export const HomePage = () => {
                 </Stack>
               </Stack>
             </Box>
+
+            <Box sx={styles.card}>
+              <Stack spacing="1.5em">
+                <Box
+                  w="48px"
+                  h="48px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  borderRadius="var(--radius-md)"
+                  bg="var(--bg-darker)"
+                  border="1px solid var(--border-dark)"
+                  color="var(--primary-500)"
+                >
+                  <RobotIcon size={24} weight="fill" />
+                </Box>
+                <Stack spacing="0.5em">
+                  <Text
+                    fontSize="var(--font-size-lg)"
+                    fontWeight="var(--font-weight-semibold)"
+                    color="var(--text-inverse)"
+                  >
+                    Agent Payments
+                  </Text>
+                  <Text
+                    color="var(--text-muted)"
+                    fontSize="var(--font-size-sm)"
+                  >
+                    Built for autonomous agents. Use{' '}
+                    <Box
+                      as="code"
+                      fontSize="var(--font-size-xs)"
+                      color="var(--primary-300)"
+                    >
+                      @toju.network/x402
+                    </Box>{' '}
+                    to store files and pay with USDC on Base — no human in the
+                    loop.
+                  </Text>
+                </Stack>
+              </Stack>
+            </Box>
           </SimpleGrid>
         </Container>
       </Box>
@@ -342,6 +385,21 @@ export const HomePage = () => {
                 fontWeight="bold"
               >
                 Solana
+              </Text>
+            </HStack>
+            <HStack cursor="pointer">
+              <CubeIcon size={30} color="var(--text-inverse)" />
+              <Text
+                fontSize={{
+                  xl: 'var(--font-size-xl)',
+                  lg: 'var(--font-size-lg)',
+                  md: 'var(--font-size-md)',
+                  base: 'var(--font-size-base)',
+                }}
+                color="var(--text-inverse)"
+                fontWeight="bold"
+              >
+                Base
               </Text>
             </HStack>
           </HStack>
