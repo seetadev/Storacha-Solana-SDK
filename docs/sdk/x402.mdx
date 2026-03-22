@@ -155,34 +155,65 @@ USDC uses 6 decimal places on all EVM chains (Circle standard). The SDK and serv
   Your agent wallet needs enough USDC to cover the storage cost, plus a small amount of ETH on Base for gas. Gas fees on Base are typically under $0.001 per transaction.
 </Info>
 
-## Framework integrations
+## AI Agent Integrations
 
-`AgentClient` works with any framework that can hold an EVM private key:
+`@toju.network/x402` works with any AI agent framework that can hold an EVM private key and execute TypeScript. The SDK handles all payment logic — you just need to wrap it as a tool or action.
+
+### LangChain
+
+This example shows how to integrate `@toju.network/x402` with LangChain. See the complete working example in the [x402-langchain repo](https://github.com/kaf-lamed-beyt/x402-langchain).
 
 ```ts
-// LangChain tool
-import { DynamicTool } from 'langchain/tools'
+import { createAgent, tool } from "langchain"
+import * as z from "zod"
+import { createAgentClient } from "@toju.network/x402"
+import * as fs from "fs/promises"
+import * as path from "path"
 
-const storeTool = new DynamicTool({
-  name: 'store_file',
-  description: 'Store a file on IPFS and return its CID',
-  func: async (filePath: string) => {
+// Create the storage tool
+const storeFileTool = tool(
+  async ({ filePath, durationDays }) => {
+    const client = createAgentClient({
+      privateKey: process.env.AGENT_PRIVATE_KEY as `0x${string}`,
+      environment: "sepolia",
+    })
     const buffer = await fs.readFile(filePath)
     const file = new File([buffer], path.basename(filePath))
-    const result = await client.store(file, { durationDays: 30 })
-    return result.cid
+    const result = await client.store(file, { durationDays })
+    return JSON.stringify(result)
   },
+  {
+    name: "store_file_ipfs",
+    description: "Store a file on IPFS via decentralized storage (Storacha) and pay with USDC autonomously on Base.",
+    schema: z.object({
+      filePath: z.string().describe("Absolute path to the file to store"),
+      durationDays: z.number().describe("How many days to store the file"),
+    }),
+  }
+)
+
+// Use with LangChain agent
+const agent = createAgent({
+  model: "openai:gpt-4o",
+  tools: [storeFileTool],
+})
+
+const result = await agent.invoke({
+  messages: [
+    { role: "user", content: "Store ./test-data/sample.txt on IPFS for 30 days." },
+  ],
 })
 ```
 
-```ts
-// CrewAI-style (TypeScript)
-const storeAction = async (input: { filePath: string; days: number }) => {
-  const buffer = await fs.readFile(input.filePath)
-  const file = new File([buffer], path.basename(input.filePath))
-  return client.store(file, { durationDays: input.days })
-}
-```
+This example demonstrates:
+1. Agent receives natural language request
+2. LLM decides to use the `store_file_ipfs` tool
+3. Tool reads file from disk and pays via x402
+4. File uploaded to IPFS, CID returned
+
+### Langchain demo
+
+[Autonomous AI Agent Storing Files on IPFS](https://youtu.be/7M0RPbH89HE)
 
 ## Related
 
