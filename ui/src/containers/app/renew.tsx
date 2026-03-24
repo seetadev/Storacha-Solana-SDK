@@ -1,3 +1,9 @@
+import { RenewalSkeleton } from '@/components/skeletons'
+import { useAuthContext } from '@/hooks/context'
+import { useRenewalCost } from '@/hooks/renewal'
+import { useSolPrice } from '@/hooks/sol-price'
+import type { State } from '@/lib/types'
+import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 import {
   Box,
   Button,
@@ -22,18 +28,13 @@ import dayjs from 'dayjs'
 import useEmblaCarousel from 'embla-carousel-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { useAuthContext } from '@/hooks/context'
-import { useFileDetails, useRenewalCost } from '@/hooks/renewal'
-import { useSolPrice } from '@/hooks/sol-price'
-import type { State } from '@/lib/types'
-import { formatSOL, formatUSD, IS_DEV } from '@/lib/utils'
 
 const DURATION_PRESETS = [7, 30, 90, 180]
 
 export const Renew = () => {
   const search = useSearch({ from: '/renew' })
   const navigate = useNavigate()
-  const { user, balance } = useAuthContext()
+  const { balance } = useAuthContext()
   const { publicKey, signTransaction } = useWallet()
   const { price: solPrice } = useSolPrice()
 
@@ -101,11 +102,6 @@ export const Renew = () => {
   const [customDuration, setCustomDuration] = useState('')
   const [state, setState] = useState<State>('idle')
 
-  const { data: fileDetails, error: fileError } = useFileDetails(
-    user || '',
-    activeCid,
-  )
-
   const {
     data: renewalCost,
     error: costError,
@@ -137,7 +133,7 @@ export const Renew = () => {
     return Math.max(0, diffDays)
   }
 
-  const daysRemaining = getDaysRemaining(fileDetails?.expiresAt)
+  const daysRemaining = getDaysRemaining(renewalCost?.currentExpirationDate)
   const isExpired = daysRemaining === 0
   const costInSOL = Number(renewalCost?.costInSOL || 0)
   const hasInsufficientBalance = balance !== null && costInSOL > balance
@@ -219,7 +215,7 @@ export const Renew = () => {
     )
   }
 
-  if (fileError) {
+  if (costError) {
     return (
       <VStack spacing="2em" align="stretch" w="90%" maxW="640px">
         <Box
@@ -242,8 +238,8 @@ export const Renew = () => {
               Unable to Load File
             </Text>
             <Text color="var(--text-muted)">
-              {fileError instanceof Error
-                ? fileError.message
+              {costError instanceof Error
+                ? costError.message
                 : 'Failed to fetch file details'}
             </Text>
             <Link to="/app/history">
@@ -257,7 +253,9 @@ export const Renew = () => {
     )
   }
 
-  return (
+  return isLoadingCost ? (
+    <RenewalSkeleton />
+  ) : (
     <VStack spacing="2em" align="stretch" w="90%" maxW="640px">
       <Link to="/app/history">
         <HStack
@@ -336,22 +334,24 @@ export const Renew = () => {
                 <HStack justify="space-between">
                   <Text color="var(--text-muted)">Filename:</Text>
                   <Text color="var(--text-inverse)">
-                    {fileDetails?.fileName || 'Unnamed'}
+                    {renewalCost?.fileDetails.fileName || 'Unnamed'}
                   </Text>
                 </HStack>
 
                 <HStack justify="space-between">
                   <Text color="var(--text-muted)">Size:</Text>
                   <Text color="var(--text-inverse)">
-                    {formatFileSize(fileDetails?.fileSize)}
+                    {formatFileSize(renewalCost?.fileDetails.fileSize ?? 0)}
                   </Text>
                 </HStack>
 
                 <HStack justify="space-between">
                   <Text color="var(--text-muted)">Current Expiration:</Text>
                   <Text color="var(--text-inverse)">
-                    {fileDetails?.expiresAt
-                      ? dayjs(fileDetails.expiresAt).format('DD/MM/YYYY')
+                    {renewalCost?.currentExpirationDate
+                      ? dayjs(renewalCost.currentExpirationDate).format(
+                          'DD/MM/YYYY',
+                        )
                       : 'N/A'}
                   </Text>
                 </HStack>
@@ -503,11 +503,7 @@ export const Renew = () => {
           </Text>
         </HStack>
 
-        {isLoadingCost ? (
-          <Box textAlign="center" py="2em">
-            <Text color="var(--text-muted)">Calculating cost...</Text>
-          </Box>
-        ) : costError ? (
+        {costError ? (
           <Text color="var(--error)">Failed to calculate cost</Text>
         ) : (
           <VStack spacing="1em" align="stretch">
@@ -576,28 +572,11 @@ export const Renew = () => {
         borderRadius="var(--radius-lg)"
         transition="all 0.2s ease"
         _hover={{
-          bg:
-            state === 'uploading' || !renewalCost || hasInsufficientBalance
-              ? undefined
-              : 'var(--primary-600)',
+          bg: 'var(--white)',
           transform:
             state === 'uploading' || !renewalCost || hasInsufficientBalance
               ? 'none'
               : 'translateY(-1px)',
-          boxShadow:
-            state === 'uploading' || !renewalCost || hasInsufficientBalance
-              ? undefined
-              : '0 4px 12px rgba(249, 115, 22, 0.4), 0 0 20px rgba(249, 115, 22, 0.2)',
-        }}
-        _active={{
-          transform:
-            state === 'uploading' || !renewalCost || hasInsufficientBalance
-              ? 'none'
-              : 'translateY(0)',
-          bg:
-            state === 'uploading' || !renewalCost || hasInsufficientBalance
-              ? undefined
-              : 'var(--primary-700)',
         }}
         _disabled={{
           bg: 'var(--bg-dark)',

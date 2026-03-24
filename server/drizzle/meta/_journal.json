@@ -57,6 +57,13 @@
       "when": 1739232000000,
       "tag": "0007_add_filecoin_wallet",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1742774400000,
+      "tag": "0008_backfill_payment_chain",
+      "breakpoints": true
     }
   ]
 }

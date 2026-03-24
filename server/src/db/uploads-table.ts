@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lte, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { PaginationContext } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { db } from './db.js'
@@ -33,25 +33,22 @@ export const getUserHistory = async (
     const userAddress = wallet
     const offset = (page - 1) * limit
 
+    // before the payment_chain integration, all transactions, by default should be SOL
+    // so backfilling all NULL columns is neccessary
+    const paymentChainFilter =
+      chain === 'sol'
+        ? or(eq(uploads.paymentChain, chain), isNull(uploads.paymentChain))
+        : eq(uploads.paymentChain, chain)
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(
-        and(
-          eq(uploads.depositKey, userAddress),
-          eq(uploads.paymentChain, chain),
-        ),
-      )
+      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
 
     const data = await db
       .select()
       .from(uploads)
-      .where(
-        and(
-          eq(uploads.depositKey, userAddress),
-          eq(uploads.paymentChain, chain),
-        ),
-      )
+      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
       .offset(offset)
