@@ -12,6 +12,14 @@ import {
 import { logger } from '../../utils/logger.js'
 
 const { EMAIL_FROM, WATCHMAN } = process.env!
+const recipients: string | string[] = (() => {
+  if (!WATCHMAN) return []
+  try {
+    return JSON.parse(WATCHMAN)
+  } catch {
+    return WATCHMAN
+  }
+})()
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const KiB = 1024
@@ -347,7 +355,7 @@ export class UsageService {
     try {
       await resend.emails.send({
         from: EMAIL_FROM as string,
-        to: WATCHMAN as string | string[],
+        to: recipients,
         subject: `🚨 [${alert.alertLevel.toUpperCase()}] storage alert - ${alert.alertType.replace(/_/g, ' ')}`,
         html: `
           <div style="font-family: Inter, sans-serif; max-width: 600px; background: #080808; color: #fff; padding: 32px; border-radius: 12px;">
@@ -388,7 +396,7 @@ export class UsageService {
       })
 
       logger.info('alert email sent', {
-        to: WATCHMAN,
+        to: recipients,
         alertType: alert.alertType,
       })
     } catch (error) {
