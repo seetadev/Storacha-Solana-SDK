@@ -8,11 +8,7 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react'
-import {
-  DiscordLogoIcon,
-  GithubLogoIcon,
-  TwitterLogoIcon,
-} from '@phosphor-icons/react'
+import { DiscordLogoIcon, GithubLogoIcon } from '@phosphor-icons/react'
 import type { ReactElement, ReactNode } from 'react'
 
 export const HomeFooter = () => {
@@ -125,13 +121,6 @@ export const HomeFooter = () => {
                 icon={<GithubLogoIcon />}
               >
                 GitHub
-              </LinkItem>
-              <LinkItem
-                href="https://x.com/usetoju"
-                isExternal
-                icon={<TwitterLogoIcon />}
-              >
-                Twitter
               </LinkItem>
               <LinkItem
                 href="https://discord.gg/5YPxMnAf"
