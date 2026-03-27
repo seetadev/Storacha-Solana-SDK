@@ -86,7 +86,7 @@ USDC uses 6 decimal places on all EVM chains.
 - [Documentation](https://docs.toju.network)
 - [Pricing](https://docs.toju.network/pricing)
 - [x402 Protocol](https://x402.org)
-- [GitHub](https://github.com/seetadev/Storacha-Solana-SDK)
+- [GitHub](https://github.com/tojunetwork/afara)
 
 ## Contributing
 

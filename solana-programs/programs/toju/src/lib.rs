@@ -12,10 +12,10 @@ use solana_security_txt::security_txt;
 security_txt! {
     name: "toju",
     project_url: "https://toju.network",
-    contacts: "email:support@toju.network,link:https://github.com/seetadev/Storacha-Solana-SDK/issues",
-    policy: "https://github.com/seetadev/Storacha-Solana-SDK/blob/main/SECURITY.md",
+    contacts: "email:support@toju.network,link:https://github.com/tojunetwork/afara/issues",
+    policy: "https://github.com/tojunetwork/afara/blob/main/SECURITY.md",
     preferred_languages: "en",
-    source_code: "https://github.com/seetadev/Storacha-Solana-SDK/tree/main/solana-programs",
+    source_code: "https://github.com/tojunetwork/afara/tree/main/solana-programs",
     auditors: "None"
 }
 
