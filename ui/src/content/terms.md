@@ -1,6 +1,6 @@
 # Terms of Use
 
-**Last Updated:** January 2026
+**Last Updated:** March 2026
 
 ## 1. Introduction
 
@@ -126,7 +126,7 @@ Refund = (Remaining Days / Total Days) × Original Payment - Processing Fee
 
 ### 6.4 Requesting a Refund
 
-To request a refund, open an issue on our [GitHub repository](https://github.com/tojunetwork/afara/issues) with:
+To request a refund, open an issue on our [GitHub repository](https://github.com/seetadev/Storacha-Solana-SDK/issues) with:
 - Your wallet address
 - Transaction signature(s)
 - CID(s) of the uploaded content
@@ -179,7 +179,7 @@ We reserve the right to:
 As an open-source project, we use GitHub for transparency and community engagement:
 
 **For bug reports and feature requests:**
-Open an issue [here](https://github.com/tojunetwork/afara/issues)
+Open an issue [here](https://github.com/seetadev/Storacha-Solana-SDK/issues)
 
 **For documentation:**
 Visit: [docs.toju.network](https://docs.toju.network)
@@ -245,7 +245,7 @@ If any provision of these terms is found unenforceable, the remaining provisions
 ## 14. Contact
 
 For questions about these Terms of Use:
-- GitHub: [github.com/tojunetwork/afara](https://github.com/tojunetwork/afara)
+- GitHub: [github.com/seetadev/Storacha-Solana-SDK](https://github.com/seetadev/Storacha-Solana-SDK)
 - Email: [support@toju.network](mailto:support@toju.network)
 - Website: [toju.network](https://toju.network)
 
