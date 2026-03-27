@@ -169,7 +169,7 @@ export default defineConfig({
 - [Documentation](https://docs.toju.network)
 - [SDK Reference](https://docs.toju.network/sdk/overview)
 - [Pricing](https://docs.toju.network/pricing)
-- [GitHub](https://github.com/seetadev/Storacha-Solana-SDK)
+- [GitHub](https://github.com/tojunetwork/afara)
 
 ## Contributing
 

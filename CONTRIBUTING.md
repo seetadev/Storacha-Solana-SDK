@@ -38,8 +38,8 @@ All feature branches should be created from and merged into `dev`. After testing
 ### 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/seetadev/storacha-solana-sdk.git
-cd storacha-solana-sdk
+git clone https://github.com/tojunetwork/afara.git
+cd afara
 git checkout dev  # Work on the dev branch for staging/testnet
 pnpm install
 ```

@@ -116,7 +116,7 @@ export const HomeFooter = () => {
             </Text>
             <Stack spacing="0.8em">
               <LinkItem
-                href="https://github.com/seetadev/storacha-solana-sdk"
+                href="https://github.com/tojunetwork/afara"
                 isExternal
                 icon={<GithubLogoIcon />}
               >

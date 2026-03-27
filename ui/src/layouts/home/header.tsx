@@ -100,7 +100,7 @@ export const HomeHeader = () => {
                 <Button
                   as="a"
                   background="none"
-                  href="https://github.com/seetadev/storacha-solana-sdk"
+                  href="https://github.com/tojunetwork/afara"
                   target="_blank"
                   color="var(--text-muted)"
                   borderRadius="8px"

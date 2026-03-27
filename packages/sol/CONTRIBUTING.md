@@ -5,7 +5,7 @@
 1. Clone the repo and install dependencies from the root:
 
 ```bash
-git clone https://github.com/seetadev/storacha-solana-sdk.git
+git clone https://github.com/tojunetwork/afara.git
 cd storacha-solana-sdk
 pnpm install
 ```
@@ -61,4 +61,4 @@ Your SDK changes will be reflected immediately after rebuilding.
 
 ## Questions?
 
-Open an issue or reach out on [GitHub Discussions](https://github.com/seetadev/Storacha-Solana-SDK/discussions).
+Open an issue or reach out on [GitHub Discussions](https://github.com/tojunetwork/afara/discussions).
