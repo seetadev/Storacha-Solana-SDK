@@ -46,8 +46,8 @@
     "ethers": "^6.16.0"
   },
   "devDependencies": {
-    "knip": "^5.72.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.8.3"
+    "knip": "^5.88.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   }
 }
