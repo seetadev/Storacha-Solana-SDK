@@ -6,37 +6,70 @@ import {
 import { logger } from './logger.js'
 
 /**
- * pre-computes the Storacha/IPFS-compatible CID for a file/directory
- *
- * This is necessary for us to ensure that a deposit is actually made before
- * delegations to store data is provided.
+ * Builds a CAR from a file map and returns the root CID + raw CAR bytes.
+ * Use this when you need both the CID and the bytes to upload to a pinning service.
+ */
+export async function buildCAR(
+  fileMap: Record<string, Uint8Array>,
+): Promise<{ cid: string; carBuffer: Uint8Array }> {
+  const chunks: Uint8Array[] = []
+  let rootCID: any
+
+  const encoderStream =
+    Object.keys(fileMap).length === 1
+      ? createFileEncoderStream(new Blob([Object.values(fileMap)[0]]))
+      : createDirectoryEncoderStream(
+          Object.entries(fileMap).map(([name, content]) => ({
+            name,
+            stream: () =>
+              new ReadableStream({
+                start(controller) {
+                  controller.enqueue(content)
+                  controller.close()
+                },
+              }),
+          })),
+        )
+
+  await encoderStream
+    .pipeThrough(
+      new TransformStream({
+        transform(block, controller) {
+          rootCID = block.cid
+          controller.enqueue(block)
+        },
+      }),
+    )
+    .pipeThrough(new CAREncoderStream())
+    .pipeTo(
+      new WritableStream({
+        write(chunk) {
+          chunks.push(new Uint8Array(chunk))
+        },
+      }),
+    )
+
+  const total = chunks.reduce((sum, c) => sum + c.length, 0)
+  const carBuffer = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    carBuffer.set(chunk, offset)
+    offset += chunk.length
+  }
+
+  return { cid: rootCID.toString(), carBuffer }
+}
+
+/**
+ * Pre-computes the CID for a file or directory without retaining the CAR bytes.
+ * Used in the deposit flow where only the CID is needed.
  */
 export async function computeCID(
   fileMap: Record<string, Uint8Array>,
 ): Promise<string> {
   try {
-    if (Object.keys(fileMap).length === 1) {
-      const [_, content] = Object.entries(fileMap)[0]
-      const file = new Blob([content])
-
-      let rootCID: any
-
-      await createFileEncoderStream(file)
-        .pipeThrough(
-          new TransformStream({
-            transform(block, controller) {
-              rootCID = block.cid
-              controller.enqueue(block)
-            },
-          }),
-        )
-        .pipeThrough(new CAREncoderStream())
-        .pipeTo(new WritableStream())
-
-      return rootCID.toString()
-    }
-
-    return await computeDirectoryCID(fileMap)
+    const { cid } = await buildCAR(fileMap)
+    return cid
   } catch (error) {
     logger.error('Error computing CID', {
       error: error instanceof Error ? error.message : String(error),
@@ -45,50 +78,4 @@ export async function computeCID(
       `Failed to compute CID: ${error instanceof Error ? error.message : String(error)}`,
     )
   }
-}
-
-/**
- * Compute CID for directory (multiple files)
- * This matches how Storacha handles directory uploads
- */
-async function computeDirectoryCID(
-  fileMap: Record<string, Uint8Array>,
-): Promise<string> {
-  // need to "pack" the files into an ipfs-compatible format
-  const files = Object.entries(fileMap).map(([name, content]) => ({
-    name,
-    // would've just passed the destructured `content` as is below instead of this
-    // but TS complains that ipfs-car's FileLike needs to be inferred
-    stream: () =>
-      new ReadableStream({
-        start(controller) {
-          controller.enqueue(content)
-          controller.close()
-        },
-      }),
-  }))
-
-  let rootCID: any
-  let blockCount = 0
-
-  await createDirectoryEncoderStream(files)
-    .pipeThrough(
-      new TransformStream({
-        transform(block, controller) {
-          blockCount++
-          // For directories, we want the final CID that represents the directory itself
-          // This is usually the last block, but we can also check if it's a directory type
-          rootCID = block.cid
-          controller.enqueue(block)
-        },
-      }),
-    )
-    .pipeThrough(new CAREncoderStream())
-    .pipeTo(new WritableStream())
-
-  logger.info('Directory CID computed', {
-    blockCount,
-    rootCid: rootCID?.toString(),
-  })
-  return rootCID.toString()
 }

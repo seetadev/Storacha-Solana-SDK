@@ -4,7 +4,7 @@ import { ExactEvmScheme } from '@x402/evm/exact/server'
 import { paymentMiddleware } from '@x402/express'
 import { getAmountInUSD } from '../utils/constant.js'
 import { logger } from '../utils/logger.js'
-import { getPricingConfig } from '../utils/storacha.js'
+import { getPricingConfig } from '../utils/pricing.js'
 
 const isMainnet = process.env.X402_NETWORK === 'mainnet'
 const BASE_NETWORK = isMainnet ? 'eip155:8453' : 'eip155:84532'

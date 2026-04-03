@@ -17,7 +17,7 @@ import {
   ONE_BILLION_LAMPORTS,
 } from '../utils/constant.js'
 import { logger } from '../utils/logger.js'
-import { getPricingConfig } from '../utils/storacha.js'
+import { getPricingConfig } from '../utils/pricing.js'
 import { createStorageRenewalTransaction } from './solana.controller.js'
 
 /**

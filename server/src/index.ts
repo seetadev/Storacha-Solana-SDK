@@ -15,7 +15,6 @@ import { solanaRouter } from './routes/solana.route.js'
 import { storageRouter } from './routes/storage.route.js'
 import { transactionsRouter } from './routes/transactions.route.js'
 import { uploadsRouter } from './routes/upload.route.js'
-import { userRouter } from './routes/user.route.js'
 import { logger } from './utils/logger.js'
 import { ensureConfigInitialized } from './utils/solana/index.js'
 
@@ -32,6 +31,8 @@ function validateEnv() {
     'QSTASH_CURRENT_SIGNING_KEY',
     'QSTASH_NEXT_SIGNING_KEY',
     'RESEND_API_KEY',
+    'PINATA_JWT',
+    'PINATA_GATEWAY',
   ]
   const missing = requiredVars.filter((key) => !process.env[key])
 
@@ -88,7 +89,6 @@ app.use(apiLimiter)
 app.use('/console', consoleRouter)
 app.use('/upload', uploadsRouter)
 app.use('/storage', storageRouter)
-app.use('/user', userRouter)
 app.use('/solana', solanaRouter)
 app.use('/jobs', jobsRouter)
 app.use('/health', serverRouter)

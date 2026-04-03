@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 import { UsageService } from '../services/usage/usage.service.js'
 import { logger } from '../utils/logger.js'
 import { getEscrowBalance, withdrawFees } from '../utils/solana/index.js'
-import { initStorachaClient } from '../utils/storacha.js'
 
 /**
  * get usage history
@@ -10,12 +9,8 @@ import { initStorachaClient } from '../utils/storacha.js'
 export const getUsageHistory = async (req: Request, res: Response) => {
   try {
     const days = parseInt(req.query.days as string, 10) || 30
-
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
+    const usageService = new UsageService()
     const history = await usageService.getUsageHistory(days)
-
     return res.status(200).json({
       success: true,
       data: history,
@@ -34,24 +29,23 @@ export const getUsageHistory = async (req: Request, res: Response) => {
  */
 export const getCurrentUsage = async (_req: Request, res: Response) => {
   try {
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
+    const usageService = new UsageService()
 
-    const [storachaUsage, internalUsage] = await Promise.all([
-      usageService.getStorachaUsage(),
+    const [pinataUsage, internalUsage] = await Promise.all([
+      usageService.getUsage(),
       usageService.calculateInternalUsage(),
     ])
 
-    const storachaBytes = storachaUsage.finalSize
     const planLimit = usageService.planLimit
-    const utilization = planLimit > 0 ? (storachaBytes / planLimit) * 100 : 0
+    const utilization =
+      planLimit > 0 ? (pinataUsage.totalSizeBytes / planLimit) * 100 : 0
 
     return res.status(200).json({
       success: true,
       data: {
-        storacha: {
-          totalBytes: storachaBytes,
+        pinata: {
+          totalBytes: pinataUsage.totalSizeBytes,
+          pinCount: pinataUsage.pinCount,
           planLimit,
           utilizationPercentage: utilization,
         },
@@ -60,10 +54,10 @@ export const getCurrentUsage = async (_req: Request, res: Response) => {
           activeUploads: internalUsage.activeUploads,
         },
         discrepancy: {
-          bytes: storachaBytes - internalUsage.totalBytes,
+          bytes: pinataUsage.totalSizeBytes - internalUsage.totalBytes,
           percentage:
             internalUsage.totalBytes > 0
-              ? ((storachaBytes - internalUsage.totalBytes) /
+              ? ((pinataUsage.totalSizeBytes - internalUsage.totalBytes) /
                   internalUsage.totalBytes) *
                 100
               : 0,
@@ -84,11 +78,8 @@ export const getCurrentUsage = async (_req: Request, res: Response) => {
  */
 export const getUnresolvedAlerts = async (_req: Request, res: Response) => {
   try {
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
+    const usageService = new UsageService()
     const alerts = await usageService.getUnresolvedAlerts()
-
     return res.status(200).json({
       success: true,
       data: alerts,
@@ -111,12 +102,8 @@ export const resolveAlert = async (req: Request, res: Response) => {
       Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
       10,
     )
-
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
+    const usageService = new UsageService()
     await usageService.resolveAlert(alertId)
-
     return res.status(200).json({
       success: true,
       message: 'alert resolved',
@@ -136,8 +123,6 @@ export const resolveAlert = async (req: Request, res: Response) => {
 export const getEscrowVaultBalance = async (_req: Request, res: Response) => {
   try {
     const balance = await getEscrowBalance()
-
-    // convert bigint to string for JSON serialization
     return res.status(200).json({
       success: true,
       data: {
@@ -145,7 +130,6 @@ export const getEscrowVaultBalance = async (_req: Request, res: Response) => {
         totalClaimed: balance.totalClaimed.toString(),
         availableBalance: balance.availableBalance.toString(),
         accountLamports: balance.accountLamports.toString(),
-
         availableBalanceSOL: Number(balance.availableBalance) / 1e9,
         totalDepositsSOL: Number(balance.totalDeposits) / 1e9,
         totalClaimedSOL: Number(balance.totalClaimed) / 1e9,
