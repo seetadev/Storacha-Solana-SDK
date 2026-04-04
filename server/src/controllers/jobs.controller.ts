@@ -4,7 +4,7 @@ import {
   getExpiredDeposits,
   getUploadsGroupedByEmail,
   updateDeletionStatus,
-} from '../db/uploads-table.js'
+} from '../db/uploads.js'
 import { sendBatchExpirationWarningEmail } from '../services/email/resend.service.js'
 import { unpinCID } from '../services/storage/pinata.service.js'
 import { UsageService } from '../services/usage/usage.service.js'

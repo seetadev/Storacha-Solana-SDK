@@ -336,15 +336,14 @@ export async function renewStorageTxn(
     },
   )
 
-  if (!confirmRenewalTx.ok) {
-    console.error('Failed to confirm renewal')
-  }
+  if (!confirmRenewalTx.ok) console.error('Failed to confirm renewal')
+  const confirmationData = await confirmRenewalTx.json().catch(() => ({}))
 
   return {
     success: true,
     cid,
     signature: signature as Signature,
-    url: `https://w3s.link/ipfs/${cid}`,
+    url: confirmationData?.url || '',
     message: 'Storage renewed successfully',
   }
 }

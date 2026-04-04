@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { configTable, uploads } from '../db/schema.js'
-import { getUserHistory, saveTransaction } from '../db/uploads-table.js'
+import { getUserHistory, saveTransaction } from '../db/uploads.js'
 import {
   getUsdfcContractAddress,
   verifyErc20Transfer,

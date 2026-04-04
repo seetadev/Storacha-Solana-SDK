@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { gatewayUrl } from '../services/storage/pinata.service.js'
 import { PaginationContext } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { db } from './db.js'
@@ -59,8 +60,18 @@ export const getUserHistory = async (
     const buildPageUrl = (p: number) =>
       `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}&chain=${chain}`
 
+    const records = data.map((record) => ({
+      ...record,
+      url: gatewayUrl(
+        record.contentCid,
+        record.fileType === 'directory'
+          ? undefined
+          : (record.fileName ?? undefined),
+      ),
+    }))
+
     return {
-      data,
+      data: records,
       total,
       page,
       pageSize: limit,
