@@ -73,10 +73,7 @@ export function useUploadHistory() {
             filename: deposit.fileName || 'Unknown File',
             size: Number(deposit.fileSize) || 0,
             type: deposit.fileType || 'application/octet-stream',
-            url:
-              deposit.fileType === 'directory'
-                ? `https://w3s.link/ipfs/${deposit.contentCid}`
-                : `https://w3s.link/ipfs/${deposit.contentCid}${deposit.fileName ? `/${deposit.fileName}` : ''}`,
+            url: deposit.url || '',
 
             uploadedAt: deposit.createdAt,
             signature: deposit.transactionHash || '',
