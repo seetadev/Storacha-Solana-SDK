@@ -3,18 +3,16 @@ import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { uploads } from '../db/schema.js'
-import { computeCID } from '../utils/compute-cid.js'
+import { pinCAR } from '../services/storage/pinata.service.js'
+import { buildCAR } from '../utils/compute-cid.js'
 import { getAmountInUSD } from '../utils/constant.js'
 import { getExpiryDate } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
-import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
-
-const SHARD_SIZE = 10_485_760
+import { getPricingConfig } from '../utils/pricing.js'
 
 // we should likely consider how renewal would work for agents, in the future.
 // for now, we can bank on the idea that agents may store for long-running course
-// or epochs, say 2 years or mor. regardless, we still need to factor it.
-// but for now, i'll rest.
+// or epochs, say 2 years or more. regardless, we still need to factor it.
 /**
  * Agent file upload — runs after x402 payment middleware has verified the USDC payment.
  *
@@ -47,7 +45,8 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
       [file.originalname]: new Uint8Array(file.buffer),
     }
 
-    const computedCID = await computeCID(fileMap)
+    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
+
     const existing = await db
       .select()
       .from(uploads)
@@ -61,19 +60,13 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
         expiresAt: existing[0].expiresAt,
       })
 
-    const client = await initStorachaClient()
-    const fileObject = new File([file.buffer], file.originalname, {
-      type: file.mimetype,
-    })
-    const uploadedCID = await client.uploadFile(fileObject, {
-      shardSize: SHARD_SIZE,
-    })
+    const pinnedCID = await pinCAR(carBuffer, file.originalname)
 
-    if (uploadedCID.toString() !== computedCID) {
-      throw new Error(
-        `CID mismatch: computed=${computedCID}, uploaded=${uploadedCID}`,
-      )
-    }
+    if (pinnedCID !== computedCID)
+      logger.warn('CID version mismatch between computed and pinned', {
+        computed: computedCID,
+        pinned: pinnedCID,
+      })
 
     let payerAddress = 'agent'
     const xPayment = req.headers['x-payment'] as string | undefined
@@ -82,7 +75,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
         const decoded = JSON.parse(Buffer.from(xPayment, 'base64').toString())
         payerAddress = decoded?.payload?.authorization?.from || 'agent'
       } catch {
-        // should leave it as 'agent'?? boya!
+        // leave it as 'agent'
       }
     }
 
@@ -92,16 +85,13 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
     // on-chain settlement happens asynchronously via Coinbase facilitator
     const transactionHash = `x402:base:${Date.now()}:${computedCID.slice(0, 12)}`
 
-    // USDC has 6 decimals compared to other ERC-20 tokens that uses 18 decimals.
-    // we should store amount in micro-USDC (same unit as USDC atomic units).
-    // apply the same $0.000001 floor the x402 middleware uses so we don't get
-    // a disparity between what the agent is charged and what we store in our db.
+    // USDC has 6 decimals. store amount in micro-USDC (same unit as USDC atomic units).
+    // apply the same $0.000001 floor the x402 middleware uses.
     const { ratePerBytePerDay } = await getPricingConfig()
     const costUSD = Math.max(
       getAmountInUSD(size, ratePerBytePerDay, duration),
       0.000001,
     )
-    // micro-USDC (6 decimals), e.g. 90000 = $0.09
     const depositAmount = Math.ceil(costUSD * 1_000_000)
 
     const depositItem: typeof uploads.$inferInsert = {

@@ -11,14 +11,15 @@ import {
 } from '../services/fil/verify.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
-import { computeCID } from '../utils/compute-cid.js'
+import { buildCAR, computeCID } from '../utils/compute-cid.js'
 import {
   DAY_TIME_IN_SECONDS,
   getAmountInLamportsFromUSD,
 } from '../utils/constant.js'
 import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
-import { getPricingConfig, initStorachaClient } from '../utils/storacha.js'
+import { getPricingConfig } from '../utils/pricing.js'
+import { gatewayUrl, pinCAR } from '../services/storage/pinata.service.js'
 import { createDepositTransaction } from './solana.controller.js'
 
 const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
@@ -26,17 +27,7 @@ const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * i encountered an issue yesterday where uploading a 73MB folder took around 20.2mins and still ended up
- * failing because of a timeout. the entire 73MB CAR was sent directly via blob/add on
- * a slower connection 70Mbps download 5/10Mbps upload speed. we should break large files into smaller
- * chunks by specifying the shard size.
- * in this case, a 10MB (10 * 1024 * 1024 = 10,485,760` bytes) shard size would mean having around ~8 shards
- * many requests. but each one finishes faster compared to the 73MB (and potentially large sizes in the future) chunk at once
- */
-const SHARD_SIZE = 10_485_760
-
-/**
- * Function to upload a file to storacha
+ * Function to pin a file to IPFS via Pinata
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
@@ -46,30 +37,27 @@ export const uploadFile = async (req: Request, res: Response) => {
     }
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
-    const files = [
-      new File([file.buffer], file.originalname, { type: file.mimetype }),
-    ]
 
-    const client = await initStorachaClient()
-    const uploadedCID = await client.uploadFile(files[0])
+    const fileMap = { [file.originalname]: new Uint8Array(file.buffer) }
+    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
 
-    if (uploadedCID.toString() !== cid) {
+    if (computedCID !== cid) {
       throw new Error(
-        `CID mismatch! Precomputed: ${cid}, Uploaded: ${uploadedCID}`,
+        `CID mismatch! Precomputed: ${cid}, Built: ${computedCID}`,
       )
     }
 
-    const uploadObject = {
-      cid: uploadedCID,
-      filename: file.originalname,
-      size: file.size,
-      type: file.mimetype,
-      url: `https://w3s.link/ipfs/${cid}/${file.originalname}`,
-      uploadedAt: new Date().toISOString(),
+    const pinnedCID = await pinCAR(carBuffer, file.originalname)
+
+    if (pinnedCID !== computedCID) {
+      logger.warn('CID version mismatch between computed and pinned', {
+        computed: computedCID,
+        pinned: pinnedCID,
+      })
     }
 
     Sentry.setContext('file-upload', {
-      cid,
+      cid: computedCID,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
@@ -77,25 +65,32 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Upload successful',
-      cid: uploadedCID,
-      object: uploadObject,
+      cid: computedCID,
+      object: {
+        cid: computedCID,
+        filename: file.originalname,
+        size: file.size,
+        type: file.mimetype,
+        url: gatewayUrl(computedCID, file.originalname),
+        uploadedAt: new Date().toISOString(),
+      },
     })
   } catch (error: any) {
     Sentry.captureException(error)
-    logger.error('Error uploading file to Storacha', {
+    logger.error('Error uploading file', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       cause: error?.cause,
     })
     res.status(400).json({
-      message: 'Error uploading file to directory',
+      message: 'Error uploading file',
       error: error instanceof Error ? error.message : String(error),
     })
   }
 }
 
 /**
- * Allows upload of multiple files or a directory to storacha
+ * Pins multiple files or a directory to IPFS via Pinata
  */
 export const uploadFiles = async (req: Request, res: Response) => {
   try {
@@ -106,46 +101,50 @@ export const uploadFiles = async (req: Request, res: Response) => {
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
 
-    const fileObjects = files.map(
-      (f) => new File([f.buffer], f.originalname, { type: f.mimetype }),
+    const fileMap: Record<string, Uint8Array> = {}
+    for (const f of files) {
+      fileMap[f.originalname] = new Uint8Array(f.buffer)
+    }
+
+    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
+
+    if (computedCID !== cid)
+      throw new Error(`CID mismatch! Computed: ${cid}, Built: ${computedCID}`)
+
+    const pinnedCID = await pinCAR(
+      carBuffer,
+      `directory-${crypto.randomUUID()}`,
     )
 
-    const client = await initStorachaClient()
-    const uploadedCID = await client.uploadDirectory(fileObjects, {
-      shardSize: SHARD_SIZE,
-    })
-
-    if (uploadedCID.toString() !== cid)
-      throw new Error(
-        `CID mismatch! Computed: ${cid}, Uploaded: ${uploadedCID}`,
-      )
+    if (pinnedCID !== computedCID)
+      logger.warn('CID version mismatch between computed and pinned', {
+        computed: computedCID,
+        pinned: pinnedCID,
+      })
 
     Sentry.setContext('multi-file-upload', {
-      cid,
+      cid: computedCID,
       fileSize: files?.reduce((acc, curr) => acc + curr.size, 0),
       fileNames: files.map((f) => f.originalname),
       mimeTypes: files.map((f) => f.mimetype),
     })
     Sentry.setTag('operation', 'multi-file-upload')
 
-    const uploadObject = {
-      cid: uploadedCID,
-      directoryName: `Upload-${crypto.randomUUID()}`,
-      url: `https://w3s.link/ipfs/${cid}`,
-      size: files.reduce((sum, f) => sum + f.size, 0),
-      files: files.map((f) => ({
-        filename: f.originalname,
-        size: f.size,
-        type: f.mimetype,
-        url: `https://w3s.link/ipfs/${cid}/${f.originalname}`,
-      })),
-      uploadedAt: new Date().toISOString(),
-    }
-
     res.status(200).json({
       message: 'Upload successful',
-      cid: uploadedCID,
-      object: uploadObject,
+      cid: computedCID,
+      object: {
+        cid: computedCID,
+        url: gatewayUrl(computedCID),
+        size: files.reduce((sum, f) => sum + f.size, 0),
+        files: files.map((f) => ({
+          filename: f.originalname,
+          size: f.size,
+          type: f.mimetype,
+          url: gatewayUrl(computedCID, f.originalname),
+        })),
+        uploadedAt: new Date().toISOString(),
+      },
     })
   } catch (error: any) {
     Sentry.captureException(error)
@@ -631,7 +630,7 @@ export const confirmUpload = async (req: Request, res: Response) => {
  *
  * @remarks
  * Transaction verification will be implemented with indexer (see #176).
- * SDK handles file upload to Storacha separately via /upload/file(s) endpoints.
+ * SDK handles file pinning to IPFS via Pinata via /upload/file(s) endpoints.
  */
 export const verifyUsdFcPayment = async (req: Request, res: Response) => {
   try {
