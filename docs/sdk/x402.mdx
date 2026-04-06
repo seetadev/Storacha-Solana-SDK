@@ -26,7 +26,7 @@ The flow under the hood:
     Coinbase's public facilitator verifies and settles the USDC transfer on Base
   </Step>
   <Step title="File stored">
-    Server uploads to IPFS via Storacha and returns the CID
+    Server pins to IPFS and returns the CID
   </Step>
 </Steps>
 
@@ -184,7 +184,7 @@ const storeFileTool = tool(
   },
   {
     name: "store_file_ipfs",
-    description: "Store a file on IPFS via decentralized storage (Storacha) and pay with USDC autonomously on Base.",
+    description: "Store a file on IPFS via decentralized storage and pay with USDC autonomously on Base.",
     schema: z.object({
       filePath: z.string().describe("Absolute path to the file to store"),
       durationDays: z.number().describe("How many days to store the file"),

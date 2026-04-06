@@ -230,7 +230,7 @@ const result = await client.createDeposit({
 ```
 
 <Note>
-  Multiple files are packaged as a directory with a single root CID. See [CID Computation](/concepts/cid-computation) for details.
+  Multiple files are packaged as a directory on IPFS. Pinata returns a single root CID for the directory. See [Content Identifiers](/concepts/cid-computation) for details.
 </Note>
 
 ## Error Handling
@@ -312,36 +312,32 @@ Common errors and solutions:
 What happens when you call `createDeposit`:
 
 <Steps>
-  <Step title="Client-Side CID Computation">
-    Files are processed in the browser to compute the CID
+  <Step title="Pin to IPFS">
+    Server receives your files and pins them to IPFS. The server returns the authoritative CID for your content.
   </Step>
-  
-  <Step title="Upload to IPFS">
-    Files are uploaded to Storacha's IPFS nodes
+
+  <Step title="Build Transaction">
+    A Solana transaction is built using that CID along with the payment amount and duration
   </Step>
-  
-  <Step title="Create Transaction">
-    A Solana transaction is built with payment details
-  </Step>
-  
+
   <Step title="Sign Transaction">
     Your `signTransaction` callback is invoked
   </Step>
-  
+
   <Step title="Submit to Network">
     Transaction is submitted to Solana blockchain
   </Step>
-  
+
   <Step title="Wait for Confirmation">
     SDK waits for transaction confirmation
   </Step>
-  
-  <Step title="Server Processing">
-    Server receives deposit event and records it in the database
+
+  <Step title="Confirm Upload">
+    Server marks the upload active in the database, linking the transaction signature to the pinned CID
   </Step>
-  
+
   <Step title="Return Result">
-    CID, signature, and URL are returned to your app
+    CID, transaction signature, and gateway URL are returned to your app
   </Step>
 </Steps>
 
