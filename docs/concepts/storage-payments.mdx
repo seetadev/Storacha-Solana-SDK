@@ -33,8 +33,8 @@ We implement a pay-as-you-go model for decentralized storage using blockchain pa
     For SOL: a deposit is created on the Solana blockchain via our smart contract. For USDFC: a token transfer is sent on Filecoin.
   </Step>
   
-  <Step title="Storage Delegation">
-    The server uses UCAN delegation to store your files on Storacha. If you're curious about how UCANs work in practice, see [An up-close look at UCANs in the wild](https://www.meje.dev/blog/ucans-in-the-wild).
+  <Step title="Storage Provisioned">
+    We pin your files to IPFS. The CID is linked to your payment and stored in our database.
   </Step>
 </Steps>
 
@@ -46,7 +46,7 @@ Storage costs are calculated using this formula:
 Cost (SOL) = (File Size in MB × Duration in Days × Base Rate) + Transaction Fee
 ```
 
-The base rate is dynamically calculated to cover Storacha storage costs while keeping prices competitive.
+The base rate is dynamically calculated to cover IPFS storage costs while keeping prices competitive.
 
 <Info>
   You can estimate costs before uploading using the `estimateStorageCost` SDK method.
@@ -59,29 +59,29 @@ sequenceDiagram
     participant User
     participant Wallet
     participant Server
+    participant IPFS
     participant Contract
-    participant Storacha
 
-    User->>Server: Request cost estimate
-    Server-->>User: Return cost (SOL or USDFC)
+    User->>Server: Upload files + request deposit instructions
+    Server->>IPFS: Pin files
+    IPFS-->>Server: Return CID
+    Server-->>User: Return CID + payment instructions
     User->>Wallet: Sign transaction
     Wallet->>Contract: Send payment (SOL deposit or USDFC transfer)
-    User->>Server: Submit files + transaction signature
+    User->>Server: Submit transaction signature
     Server->>Contract: Verify payment onchain
-    Server->>Storacha: Upload files with UCAN
-    Storacha-->>Server: Return CID
-    Server-->>User: Confirm upload with CID
+    Server-->>User: Confirm upload with CID + URL
 ```
 
 ## Payment Model
 
 When you pay for storage:
 
-1. **Payment is processed** — SOL via our smart contract, or USDFC via direct token transfer
-2. **Storage is provisioned** immediately on Storacha
+1. **Files are pinned** to IPFS before the deposit is created
+2. **Payment is processed** — SOL via our smart contract, or USDFC via direct token transfer
 3. **Files are accessible** for the full duration you paid for
 
-Your payment covers the cost of storing your data on Storacha through our infrastructure. The smart contract (SOL) provides on-chain accounting and deposit verification, while USDFC payments are direct token transfers.
+Your payment covers the cost of storing your data on IPFS through our infrastructure. The smart contract (SOL) provides on-chain accounting and deposit verification, while USDFC payments are direct token transfers.
 
 This model ensures:
 - No recurring subscriptions or credit cards needed
@@ -114,7 +114,7 @@ Coming soon:
 - **Additional chains**: Based on community demand
 
 <Note>
-  All payment methods store data on the same Storacha network. You choose whichever chain you prefer &mdash; the storage experience is identical.
+  All payment methods store data on the same IPFS network. You choose whichever chain you prefer &mdash; the storage experience is identical.
 </Note>
 
 ## Benefits

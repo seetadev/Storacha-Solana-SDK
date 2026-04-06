@@ -354,7 +354,7 @@ export const HomePage = () => {
                 }}
                 fontWeight="bold"
               >
-                Storacha
+                Pinata
               </Text>
             </HStack>
             <HStack cursor="pointer">

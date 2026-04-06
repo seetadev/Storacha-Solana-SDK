@@ -4,7 +4,7 @@ description: 'How we use CIDs to bind payments to specific content'
 ---
 
 <Tip>
-  **TL;DR**: we computes your file's CID (content hash) before you pay. This prevents uploading without payment or substituting different content after paying. Think of it as a cryptographic receipt - you're committing to pay for *this specific content*, not just "some files."
+  **TL;DR**: we pin your files to IPFS first, and the returned CID becomes the authoritative identifier. That CID goes into the on-chain deposit — binding your payment to the exact content that was pinned.
 </Tip>
 
 ## What is a CID?
@@ -19,58 +19,45 @@ In traditional cloud storage, you pay for space regardless of what you store. Wi
 
 ### The Problem We're Solving
 
-Without CID pre-computation, we run into a couple of issues:
-- **Upload without paying**: Store files on IPFS first, then never actually pay
+Without binding payments to a specific CID, we'd run into issues like:
+- **Upload without paying**: Pin files to IPFS first, then never actually pay
 - **Pay once, upload many**: Reuse a single payment for multiple different files
-- **Content substitution**: Pay for one file, upload something completely different
-- **No verification**: Server can't prove the payment matches the content stored
+- **Content substitution**: Pay for one file, store something completely different
 
-Solving this required implementing CID pre-computation, which is particularly complex for multi-file uploads.
+### The Pin-First Approach
 
-### How we hacked this
-
-We compute the CID **before** creating the blockchain deposit, making it a **cryptographic commitment**:
+We pin files to IPFS **before** creating the on-chain deposit, making the CID a **cryptographic commitment**:
 
 ```
 User selects files
      ↓
-Server receives files
+Server pins files to IPFS
      ↓
-Server computes CID
+Server returns authoritative CID
      ↓
-CID is included in blockchain deposit transaction
+CID is included in the on-chain deposit
      ↓
-User pays SOL (locked to this specific CID)
+User pays (locked to this specific CID)
      ↓
-Files uploaded to Storacha
-     ↓
-Server verifies uploaded CID matches committed CID
+Server marks upload active
 ```
 
-If the CID doesn't match, the upload is rejected.
+The CID in the deposit is exactly what was pinned — no separate verification step needed.
 
 ## How It Works
 
-### 1. CID Computation
+### 1. CID from IPFS
 
-When you upload files, the server:
+When you upload files, we pin them to IPFS and receive the authoritative CID back:
 
-```typescript
-// Creates a map of filename → file bytes
-const fileMap: Record<string, Uint8Array> = {
-  'file1.jpg': Uint8Array.from(file1Buffer),
-  'file2.pdf': Uint8Array.from(file2Buffer),
-};
-
-// Computes IPFS-compatible CID
-const cid = await computeCID(fileMap);
-// Returns: "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+```
+bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi
 ```
 
-This uses the same algorithm as IPFS:
+IPFS uses:
 - **SHA-256** hashing
 - **dagPB** codec (IPFS directory structure)
-- **CAR** (Content Addressable aRchive) format
+- **UnixFS** for file and directory representation
 
 ### 2. CID in Blockchain Deposit
 
@@ -97,24 +84,9 @@ This means:
 - Different CID = different deposit account
 - Can't reuse deposits for different content
 
-### 3. Verification on Upload
+### 3. Payment Confirmed
 
-When files are actually stored on Storacha:
-
-```typescript
-// Upload file to IPFS
-const uploadedCID = await client.uploadFile(files);
-
-// Verify it matches
-if (uploadedCID !== precomputedCID) {
-  throw new Error('CID mismatch! Upload rejected.');
-}
-```
-
-This double-check ensures:
-- You uploaded the exact content you paid for
-- No tampering occurred
-- Payment is bound to verified content
+Once the on-chain transaction is confirmed, we mark the upload active in our database. The CID is now permanently linked to your payment — accessible for the full duration you paid for.
 
 ## Benefits
 
@@ -166,16 +138,7 @@ const deposit2 = createDeposit({ cid: "bafyabc..." }); // ❌ Fails
 
 ### Prevents Content Substitution
 
-```typescript
-// User commits to uploading cat.jpg (CID: bafyabc...)
-await createDeposit({ cid: "bafyabc..." });
-
-// User tries to upload dog.jpg instead
-await uploadToStoracha(dogFile);
-// Server computes CID: bafyxyz...
-// Verification fails: bafyxyz !== bafyabc
-// Upload rejected ❌
-```
+Because we pin files to IPFS before building the deposit, the CID in the on-chain deposit is always exactly what was pinned. There's no window to swap content after paying — the pin and the payment reference the same CID.
 
 ### Enables Renewals
 
@@ -231,16 +194,10 @@ await renewStorageDuration({
     - Prevents duplicate deposits
   </Accordion>
 
-  <Accordion title="Why Server-Side Computation?">
-    You might wonder: why not compute CID in the browser?
+  <Accordion title="Why Pin First?">
+    Pinning before creating the deposit means the CID in the on-chain record is always the real IPFS CID — not a locally computed estimate that might differ from what the storage backend produces.
 
-    **Reasons for server-side:**
-    1. **File Size**: Large files could exhaust browser memory
-    2. **Consistency**: Server ensures correct IPFS compatibility
-    3. **Performance**: Server has more resources for hashing
-    4. **Immediate Verification**: Server validates before blockchain transaction
-
-    **Tradeoff**: This requires trusting the server's CID computation. Future versions could add browser-side verification for transparency.
+    Different IPFS implementations can produce different CIDs for the same content depending on chunk size, codec settings, and directory encoding. By pinning first and using the returned CID, we eliminate that mismatch entirely.
   </Accordion>
 </AccordionGroup>
 
