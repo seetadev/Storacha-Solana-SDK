@@ -1,6 +1,10 @@
+import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
+import { db } from '../db/db.js'
+import { uploads } from '../db/schema.js'
 import {
   batchUpdateWarningSentAt,
+  getAbandonedPendingUploads,
   getExpiredDeposits,
   getUploadsGroupedByEmail,
   updateDeletionStatus,
@@ -158,6 +162,56 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
       message: 'Failed to process expired uploads deletion',
       error: error instanceof Error ? error.message : 'Unknown error',
     })
+  }
+}
+
+/**
+ * Unpins and removes pending uploads that were never paid for.
+ * Runs daily — cleans up files pinned during deposit but abandoned before payment.
+ */
+export const deleteAbandonedUploads = async (_req: Request, res: Response) => {
+  try {
+    logger.info('Running abandoned uploads cleanup job')
+    const abandoned = await getAbandonedPendingUploads(24)
+
+    if (!abandoned || abandoned.length === 0) {
+      logger.info('No abandoned uploads to clean up')
+      return res
+        .status(200)
+        .json({ success: true, message: 'No abandoned uploads to clean up' })
+    }
+
+    logger.info('Found abandoned uploads to clean up', {
+      count: abandoned.length,
+    })
+
+    for (const record of abandoned) {
+      try {
+        await unpinCID(record.contentCid)
+        await db.delete(uploads).where(eq(uploads.id, record.id))
+        logger.info('Removed abandoned upload', {
+          id: record.id,
+          cid: record.contentCid,
+        })
+      } catch (error) {
+        logger.error('Failed to remove abandoned upload', {
+          id: record.id,
+          cid: record.contentCid,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: 'Abandoned uploads cleaned up' })
+  } catch (error) {
+    logger.error('Error in deleteAbandonedUploads job', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res
+      .status(500)
+      .json({ success: false, message: 'Failed to clean up abandoned uploads' })
   }
 }
 

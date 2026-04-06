@@ -14,24 +14,27 @@ function getClient(): PinataSDK {
 export function gatewayUrl(cid: string, filename?: string): string {
   const base = process.env.PINATA_GATEWAY
   if (!base) throw new Error('PINATA_GATEWAY env var not set')
-  return filename ? `${base}/ipfs/${cid}/${filename}` : `${base}/ipfs/${cid}`
+  return filename
+    ? `${base}/ipfs/${cid}/${encodeURIComponent(filename)}`
+    : `${base}/ipfs/${cid}`
 }
 
 /**
- * Pins a CAR buffer to Pinata.
- * The .car() builder flag tells Pinata to treat the upload as a CAR
- * and use its root CID as the pin hash — so the returned CID matches
- * our pre-computed CID from buildCAR.
+ * Pins one or more files as a directory to Pinata.
+ * Always uses fileArray so the returned CID is a directory CID,
+ * matching what computeCID produces via createDirectoryEncoderStream.
  */
-export async function pinCAR(
-  carBuffer: Uint8Array,
-  name: string,
+export async function pinFiles(
+  fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
+  directoryName: string,
 ): Promise<string> {
   const pinata = getClient()
-  const blob = new Blob([carBuffer], { type: 'application/vnd.ipld.car' })
-  const file = new File([blob], `${name}.car`)
-  const result = await pinata.upload.public.file(file).name(name).car()
-  logger.info('pinata: CAR pinned', { cid: result.cid, name })
+  const files = Object.entries(fileMap).map(
+    ([name, { buffer, mimetype }]) =>
+      new File([buffer], name, { type: mimetype }),
+  )
+  const result = await pinata.upload.public.fileArray(files).name(directoryName)
+  logger.info('pinata: directory pinned', { cid: result.cid, directoryName })
   return result.cid
 }
 

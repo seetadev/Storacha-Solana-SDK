@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { uploads } from '../db/schema.js'
-import { pinCAR } from '../services/storage/pinata.service.js'
-import { buildCAR } from '../utils/compute-cid.js'
+import { pinFiles } from '../services/storage/pinata.service.js'
+import { computeCID } from '../utils/compute-cid.js'
 import { getAmountInUSD } from '../utils/constant.js'
 import { getExpiryDate } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
@@ -45,7 +45,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
       [file.originalname]: new Uint8Array(file.buffer),
     }
 
-    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
+    const computedCID = await computeCID(fileMap)
 
     const existing = await db
       .select()
@@ -60,10 +60,18 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
         expiresAt: existing[0].expiresAt,
       })
 
-    const pinnedCID = await pinCAR(carBuffer, file.originalname)
+    const pinnedCID = await pinFiles(
+      {
+        [file.originalname]: {
+          buffer: new Uint8Array(file.buffer),
+          mimetype: file.mimetype,
+        },
+      },
+      file.originalname,
+    )
 
     if (pinnedCID !== computedCID)
-      logger.warn('CID version mismatch between computed and pinned', {
+      logger.warn('CID mismatch between pre-computed and pinned', {
         computed: computedCID,
         pinned: pinnedCID,
       })

@@ -11,7 +11,6 @@ import {
 } from '../services/fil/verify.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
-import { buildCAR, computeCID } from '../utils/compute-cid.js'
 import {
   DAY_TIME_IN_SECONDS,
   getAmountInLamportsFromUSD,
@@ -19,7 +18,7 @@ import {
 import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig } from '../utils/pricing.js'
-import { gatewayUrl, pinCAR } from '../services/storage/pinata.service.js'
+import { gatewayUrl, pinFiles } from '../services/storage/pinata.service.js'
 import { createDepositTransaction } from './solana.controller.js'
 
 const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
@@ -38,26 +37,25 @@ export const uploadFile = async (req: Request, res: Response) => {
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
 
-    const fileMap = { [file.originalname]: new Uint8Array(file.buffer) }
-    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
+    const pinnedCID = await pinFiles(
+      {
+        [file.originalname]: {
+          buffer: new Uint8Array(file.buffer),
+          mimetype: file.mimetype,
+        },
+      },
+      file.originalname,
+    )
 
-    if (computedCID !== cid) {
-      throw new Error(
-        `CID mismatch! Precomputed: ${cid}, Built: ${computedCID}`,
-      )
-    }
-
-    const pinnedCID = await pinCAR(carBuffer, file.originalname)
-
-    if (pinnedCID !== computedCID) {
-      logger.warn('CID version mismatch between computed and pinned', {
-        computed: computedCID,
+    if (pinnedCID !== cid) {
+      logger.warn('CID mismatch between pre-computed and pinned', {
+        precomputed: cid,
         pinned: pinnedCID,
       })
     }
 
     Sentry.setContext('file-upload', {
-      cid: computedCID,
+      cid: cid,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
@@ -65,13 +63,13 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Upload successful',
-      cid: computedCID,
+      cid: cid,
       object: {
-        cid: computedCID,
+        cid: cid,
         filename: file.originalname,
         size: file.size,
         type: file.mimetype,
-        url: gatewayUrl(computedCID, file.originalname),
+        url: gatewayUrl(cid, file.originalname),
         uploadedAt: new Date().toISOString(),
       },
     })
@@ -101,29 +99,27 @@ export const uploadFiles = async (req: Request, res: Response) => {
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
 
-    const fileMap: Record<string, Uint8Array> = {}
+    const fileMap: Record<string, { buffer: Uint8Array; mimetype: string }> = {}
     for (const f of files) {
-      fileMap[f.originalname] = new Uint8Array(f.buffer)
+      fileMap[f.originalname] = {
+        buffer: new Uint8Array(f.buffer),
+        mimetype: f.mimetype,
+      }
     }
 
-    const { cid: computedCID, carBuffer } = await buildCAR(fileMap)
-
-    if (computedCID !== cid)
-      throw new Error(`CID mismatch! Computed: ${cid}, Built: ${computedCID}`)
-
-    const pinnedCID = await pinCAR(
-      carBuffer,
+    const pinnedCID = await pinFiles(
+      fileMap,
       `directory-${crypto.randomUUID()}`,
     )
 
-    if (pinnedCID !== computedCID)
-      logger.warn('CID version mismatch between computed and pinned', {
-        computed: computedCID,
+    if (pinnedCID !== cid)
+      logger.warn('CID mismatch between pre-computed and pinned', {
+        precomputed: cid,
         pinned: pinnedCID,
       })
 
     Sentry.setContext('multi-file-upload', {
-      cid: computedCID,
+      cid,
       fileSize: files?.reduce((acc, curr) => acc + curr.size, 0),
       fileNames: files.map((f) => f.originalname),
       mimeTypes: files.map((f) => f.mimetype),
@@ -132,16 +128,16 @@ export const uploadFiles = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Upload successful',
-      cid: computedCID,
+      cid,
       object: {
-        cid: computedCID,
-        url: gatewayUrl(computedCID),
+        cid,
+        url: gatewayUrl(cid),
         size: files.reduce((sum, f) => sum + f.size, 0),
         files: files.map((f) => ({
           filename: f.originalname,
           size: f.size,
           type: f.mimetype,
-          url: gatewayUrl(computedCID, f.originalname),
+          url: gatewayUrl(cid, f.originalname),
         })),
         uploadedAt: new Date().toISOString(),
       },
@@ -219,12 +215,17 @@ export const deposit = async (req: Request, res: Response) => {
       amountInLamports,
     })
 
-    const computedCID = await computeCID(fileMap)
+    const pinnedCID = await pinFiles(
+      fileMap,
+      fileArray.length === 1
+        ? fileArray[0].originalname
+        : directoryName || `dir-${Date.now()}`,
+    )
 
     const existingUpload = await db
       .select()
       .from(uploads)
-      .where(eq(uploads.contentCid, computedCID))
+      .where(eq(uploads.contentCid, pinnedCID))
       .limit(1)
 
     if (existingUpload.length > 0 && existingUpload[0].transactionHash)
@@ -238,7 +239,7 @@ export const deposit = async (req: Request, res: Response) => {
       totalSize,
       fileCount: fileArray.length,
       duration: duration_days,
-      cid: computedCID,
+      cid: pinnedCID,
     })
 
     Sentry.setTag('operation', 'deposit')
@@ -248,46 +249,69 @@ export const deposit = async (req: Request, res: Response) => {
       throw new Error(`Invalid deposit amount calculated: ${amountInLamports}`)
     }
 
+    const expiresAt = getExpiryDate(duration_days)
+    const fileName =
+      fileArray.length === 1 ? fileArray[0].originalname : directoryName || null
+    const fileType =
+      fileArray.length === 1 ? fileArray[0].mimetype : 'directory'
+
+    if (existingUpload.length === 0) {
+      await db.insert(uploads).values({
+        depositAmount: amountInLamports,
+        durationDays: duration_days,
+        contentCid: pinnedCID,
+        depositKey: publicKey,
+        depositSlot: 1,
+        lastClaimedSlot: 1,
+        expiresAt,
+        createdAt: new Date().toISOString(),
+        userEmail: sanitizedEmail || null,
+        fileName,
+        fileType,
+        fileSize: totalSize,
+        transactionHash: null,
+        deletionStatus: 'pending',
+        warningSentAt: null,
+        paymentChain: 'sol',
+        paymentToken: 'SOL',
+      })
+    } else {
+      // pending record exists — refresh metadata in case user retries with updated params
+      await db
+        .update(uploads)
+        .set({
+          depositAmount: amountInLamports,
+          durationDays: duration_days,
+          depositKey: publicKey,
+          expiresAt,
+          userEmail: sanitizedEmail || null,
+          fileName,
+          fileType,
+          fileSize: totalSize,
+          deletionStatus: 'pending',
+        })
+        .where(eq(uploads.contentCid, pinnedCID))
+    }
+
     const depositInstructions = await createDepositTransaction({
       publicKey,
       fileSize: totalSize,
-      contentCID: computedCID,
+      contentCID: pinnedCID,
       durationDays: duration_days,
       depositAmount: amountInLamports,
     })
 
-    const backupExpirationDate = getExpiryDate(duration_days)
-
-    // pass deposit meta later in the upload flow for db writes
-    // after a succesful confirmation
-    const depositMetadata = {
-      depositAmount: amountInLamports,
-      durationDays: duration_days,
-      depositKey: publicKey,
-      userEmail: sanitizedEmail || null,
-      fileName:
-        fileArray.length === 1
-          ? fileArray[0].originalname
-          : directoryName || null,
-      fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
-      fileSize: totalSize,
-      expiresAt: backupExpirationDate,
-      paymentChain: 'sol',
-      paymentToken: 'SOL',
-    }
-
     res.status(200).json({
       message: 'Deposit instruction ready — sign to finalize upload',
-      cid: computedCID,
+      cid: pinnedCID,
       instructions: depositInstructions,
       fileCount: fileArray.length,
-      totalSize: totalSize,
+      totalSize,
       files: fileArray.map((f) => ({
         name: f.originalname,
         size: f.size,
         type: f.mimetype,
       })),
-      depositMetadata,
     })
   } catch (error) {
     Sentry.captureException(error)
@@ -304,7 +328,7 @@ export const deposit = async (req: Request, res: Response) => {
 type FileMeta = {
   totalSize: number
   fileArray: Express.Multer.File[]
-  fileMap: Record<string, Uint8Array>
+  fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>
 }
 
 /**
@@ -338,11 +362,14 @@ const fileBuilder = (
 
   if (fileArray.length === 0) throw new Error('No files selected')
 
-  const fileMap: Record<string, Uint8Array> = {}
+  const fileMap: Record<string, { buffer: Uint8Array; mimetype: string }> = {}
   let totalSize = 0
 
   for (const file of fileArray) {
-    fileMap[file.originalname] = new Uint8Array(file.buffer)
+    fileMap[file.originalname] = {
+      buffer: new Uint8Array(file.buffer),
+      mimetype: file.mimetype,
+    }
     totalSize += file.size
   }
 
@@ -389,12 +416,25 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       amountInUSDFC: amountInUSDFC.toString(),
     })
 
-    const computedCID = await computeCID(fileMap)
+    // this is a reference to what i've seen in the filecoin-pin repo.
+    // javascript has another number type, apparently — BigNum/Int
+    if (amountInUSDFC <= 0n)
+      throw new Error(`Invalid deposit amount calculated: ${amountInUSDFC}`)
+
+    const durationNum = Number(duration)
+    if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
+
+    const pinnedCID = await pinFiles(
+      fileMap,
+      fileArray.length === 1
+        ? fileArray[0].originalname
+        : directoryName || `dir-${Date.now()}`,
+    )
 
     const existingUpload = await db
       .select()
       .from(uploads)
-      .where(eq(uploads.contentCid, computedCID))
+      .where(eq(uploads.contentCid, pinnedCID))
       .limit(1)
 
     if (existingUpload.length > 0 && existingUpload[0].transactionHash)
@@ -408,7 +448,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       totalSize,
       fileCount: fileArray.length,
       duration: duration_days,
-      cid: computedCID,
+      cid: pinnedCID,
       chain: 'FIL',
     })
 
@@ -416,30 +456,48 @@ export const depositUsdFC = async (req: Request, res: Response) => {
     Sentry.setTag('file_count', fileArray.length)
     Sentry.setTag('payment_chain', 'fil')
 
-    // this is a reference to what i've seen in the filecoin-pin repo.
-    // javascript has another number type, apparently — BigNum/Int
-    if (amountInUSDFC <= 0n)
-      throw new Error(`Invalid deposit amount calculated: ${amountInUSDFC}`)
+    const expiresAt = getExpiryDate(duration_days)
+    const fileName =
+      fileArray.length === 1 ? fileArray[0].originalname : directoryName || null
+    const fileType =
+      fileArray.length === 1 ? fileArray[0].mimetype : 'directory'
 
-    const durationNum = Number(duration)
-    if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
-
-    const backupExpirationDate = getExpiryDate(duration_days)
-
-    const depositMetadata = {
-      depositAmount: amountInUSDFC.toString(),
-      durationDays: duration_days,
-      depositKey: userAddress,
-      userEmail: userEmail || null,
-      fileName:
-        fileArray.length === 1
-          ? fileArray[0].originalname
-          : directoryName || null,
-      fileType: fileArray.length === 1 ? fileArray[0].mimetype : 'directory',
-      fileSize: totalSize,
-      expiresAt: backupExpirationDate,
-      paymentChain: 'fil',
-      paymentToken: 'USDFC',
+    if (existingUpload.length === 0) {
+      await db.insert(uploads).values({
+        depositAmount: Number(amountInUSDFC),
+        durationDays: duration_days,
+        contentCid: pinnedCID,
+        depositKey: userAddress,
+        depositSlot: 0,
+        lastClaimedSlot: 0,
+        expiresAt,
+        createdAt: new Date().toISOString(),
+        userEmail: userEmail || null,
+        fileName,
+        fileType,
+        fileSize: totalSize,
+        transactionHash: null,
+        deletionStatus: 'pending',
+        warningSentAt: null,
+        paymentChain: 'fil',
+        paymentToken: 'USDFC',
+      })
+    } else {
+      // pending record exists — refresh metadata in case user retries with updated params
+      await db
+        .update(uploads)
+        .set({
+          depositAmount: Number(amountInUSDFC),
+          durationDays: duration_days,
+          depositKey: userAddress,
+          expiresAt,
+          userEmail: userEmail || null,
+          fileName,
+          fileType,
+          fileSize: totalSize,
+          deletionStatus: 'pending',
+        })
+        .where(eq(uploads.contentCid, pinnedCID))
     }
 
     const isMainnet = process.env.NODE_ENV === 'production'
@@ -449,18 +507,17 @@ export const depositUsdFC = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Payment details ready — transfer USDFC to proceed with upload',
-      cid: computedCID,
+      cid: pinnedCID,
       amountUSDFC: amountInUSDFC.toString(),
       recipientAddress: config[0].filecoinWallet,
       usdfcContractAddress,
       fileCount: fileArray.length,
-      totalSize: totalSize,
+      totalSize,
       files: fileArray.map((f) => ({
         name: f.originalname,
         size: f.size,
         type: f.mimetype,
       })),
-      depositMetadata,
     })
   } catch (error) {
     Sentry.captureException(error)
@@ -518,21 +575,16 @@ export const getUploadHistory = async (req: Request, res: Response) => {
 }
 
 /**
- * Function to create DB record and save transaction hash after payment is confirmed
+ * Marks a pending upload as confirmed after the Solana transaction is verified.
+ * The file is already pinned on Pinata from the deposit step.
  */
 export const confirmUpload = async (req: Request, res: Response) => {
   try {
-    const { cid, transactionHash, depositMetadata } = req.body
+    const { cid, transactionHash } = req.body
 
     if (!cid || !transactionHash) {
       return res.status(400).json({
         message: 'CID and transaction hash are required',
-      })
-    }
-
-    if (!depositMetadata) {
-      return res.status(400).json({
-        message: 'Deposit metadata is required',
       })
     }
 
@@ -542,71 +594,44 @@ export const confirmUpload = async (req: Request, res: Response) => {
       .where(eq(uploads.contentCid, cid))
       .limit(1)
 
-    if (existing.length > 0) {
-      // exists but has no transaction hash, update it
-      if (!existing[0].transactionHash) {
-        const updated = await db
-          .update(uploads)
-          .set({ transactionHash: transactionHash })
-          .where(eq(uploads.contentCid, cid))
-          .returning()
+    if (existing.length === 0)
+      return res.status(404).json({
+        message: 'No pending upload found for this CID',
+      })
 
-        await saveTransaction({
-          depositId: updated[0].id,
-          contentCid: cid,
-          transactionHash: transactionHash,
-          transactionType: 'initial_deposit',
-          amountInLamports: updated[0].depositAmount,
-          durationDays: updated[0].durationDays,
-        })
-
-        return res.status(200).json({
-          verified: true,
-          message: 'Transaction hash updated successfully',
-          deposit: updated[0],
-        })
-      }
-
+    if (existing[0].transactionHash)
       return res.status(409).json({
         message: 'This upload has already been confirmed',
         deposit: existing[0],
       })
-    }
 
-    const depositItem: typeof uploads.$inferInsert = {
-      depositAmount: depositMetadata.depositAmount,
-      durationDays: depositMetadata.durationDays,
-      contentCid: cid,
-      depositKey: depositMetadata.depositKey,
-      depositSlot: 1,
-      lastClaimedSlot: 1,
-      expiresAt: depositMetadata.expiresAt,
-      createdAt: new Date().toISOString(),
-      userEmail: depositMetadata.userEmail,
-      fileName: depositMetadata.fileName,
-      fileType: depositMetadata.fileType,
-      fileSize: depositMetadata.fileSize,
-      transactionHash: transactionHash,
-      deletionStatus: 'active',
-      warningSentAt: null,
-      paymentChain: depositMetadata.paymentChain || 'sol',
-      paymentToken: depositMetadata.paymentToken || 'SOL',
-    }
-
-    const inserted = await db.insert(uploads).values(depositItem).returning()
+    const [confirmedUpload] = await db
+      .update(uploads)
+      .set({ transactionHash, deletionStatus: 'active' })
+      .where(eq(uploads.contentCid, cid))
+      .returning()
 
     await saveTransaction({
-      depositId: inserted[0].id,
+      depositId: confirmedUpload.id,
       contentCid: cid,
-      transactionHash: transactionHash,
+      transactionHash,
       transactionType: 'initial_deposit',
-      amountInLamports: inserted[0].depositAmount,
-      durationDays: inserted[0].durationDays,
+      amountInLamports: confirmedUpload.depositAmount,
+      durationDays: confirmedUpload.durationDays,
     })
 
+    const url = gatewayUrl(
+      cid,
+      confirmedUpload.fileType === 'directory'
+        ? undefined
+        : (confirmedUpload.fileName ?? undefined),
+    )
+
     return res.status(200).json({
-      message: 'Upload confirmed and saved successfully',
-      deposit: inserted[0],
+      verified: true,
+      message: 'Upload confirmed successfully',
+      deposit: confirmedUpload,
+      url,
     })
   } catch (err) {
     Sentry.captureException(err)
@@ -625,24 +650,23 @@ export const confirmUpload = async (req: Request, res: Response) => {
  *
  * @param req.body.cid - Content identifier of the uploaded files
  * @param req.body.transactionHash - Filecoin transaction hash of the USDFC transfer
- * @param req.body.depositMetadata - Metadata from depositUsdFC response
  * @returns Confirmation message with deposit record
  *
  * @remarks
  * Transaction verification will be implemented with indexer (see #176).
  * SDK handles file pinning to IPFS via Pinata via /upload/file(s) endpoints.
  */
+/**
+ * Verifies USDFC payment transaction and marks the pending upload as confirmed.
+ * The file is already pinned on Pinata from the deposit step.
+ */
 export const verifyUsdFcPayment = async (req: Request, res: Response) => {
   try {
-    const { cid, transactionHash, depositMetadata } = req.body
+    const { cid, transactionHash } = req.body
 
     if (!cid || !transactionHash)
       return res.status(400).json({
         message: 'The CID and transaction hash are required',
-      })
-    if (!depositMetadata)
-      return res.status(400).json({
-        message: 'Deposit metadata for this USDFC transaction is required',
       })
 
     const existing = await db
@@ -651,96 +675,54 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
       .where(eq(uploads.contentCid, cid))
       .limit(1)
 
-    if (existing.length > 0) {
-      if (!existing[0].transactionHash) {
-        const updated = await db
-          .update(uploads)
-          .set({ transactionHash: transactionHash })
-          .where(eq(uploads.contentCid, cid))
-          .returning()
+    if (existing.length === 0)
+      return res.status(404).json({
+        message: 'No pending upload found for this CID',
+      })
 
-        await saveTransaction({
-          depositId: updated[0].id,
-          contentCid: cid,
-          transactionHash: transactionHash,
-          transactionType: 'initial_deposit',
-          amountInLamports: updated[0].depositAmount,
-          durationDays: updated[0].durationDays,
-        })
-
-        return res.status(200).json({
-          message: 'Transaction hash updated successfully',
-          deposit: updated[0],
-        })
-      }
-
+    if (existing[0].transactionHash)
       return res.status(409).json({
         message: 'This upload has already been confirmed',
         deposit: existing[0],
       })
-    }
 
     const config = await db.select().from(configTable)
     if (!config[0].filecoinWallet)
       throw new Error('Filecoin wallet not configured')
 
-    const treasury = config[0].filecoinWallet
-    const userAddress = depositMetadata.depositKey
-
-    const USDFC_CONTRACT = getUsdfcContractAddress()
-
-    const expectedAmount = BigInt(depositMetadata.depositAmount)
-
     const { verified } = await verifyErc20Transfer({
       transactionHash,
-      from: userAddress,
-      to: treasury,
-      contractAddress: USDFC_CONTRACT,
-      expectedAmount,
+      from: existing[0].depositKey,
+      to: config[0].filecoinWallet,
+      contractAddress: getUsdfcContractAddress(),
+      expectedAmount: BigInt(existing[0].depositAmount),
     })
 
-    if (!verified) {
+    if (!verified)
       return res.status(400).json({
         message:
           'USDFC transfer verification failed. Transaction may not exist, may have failed, or the amount/recipient does not match.',
       })
-    }
 
-    const depositItem: typeof uploads.$inferInsert = {
-      depositAmount: depositMetadata.depositAmount,
-      durationDays: depositMetadata.durationDays,
-      contentCid: cid,
-      depositKey: depositMetadata.depositKey,
-      depositSlot: 0,
-      lastClaimedSlot: 0,
-      expiresAt: depositMetadata.expiresAt,
-      createdAt: new Date().toISOString(),
-      userEmail: depositMetadata.userEmail,
-      fileName: depositMetadata.fileName,
-      fileType: depositMetadata.fileType,
-      fileSize: depositMetadata.fileSize,
-      transactionHash: transactionHash,
-      deletionStatus: 'active',
-      warningSentAt: null,
-      paymentChain: 'fil',
-      paymentToken: 'USDFC',
-    }
-
-    const inserted = await db.insert(uploads).values(depositItem).returning()
+    const [confirmedUpload] = await db
+      .update(uploads)
+      .set({ transactionHash, deletionStatus: 'active' })
+      .where(eq(uploads.contentCid, cid))
+      .returning()
 
     await saveTransaction({
-      depositId: inserted[0].id,
+      depositId: confirmedUpload.id,
       contentCid: cid,
-      transactionHash: transactionHash,
+      transactionHash,
       transactionType: 'initial_deposit',
-      amountInLamports: Number(depositMetadata.depositAmount),
-      durationDays: inserted[0].durationDays,
+      amountInLamports: confirmedUpload.depositAmount,
+      durationDays: confirmedUpload.durationDays,
     })
 
     return res.status(200).json({
       verified: true,
       message: 'USDFC payment verified and upload confirmed successfully',
-      deposit: inserted[0],
+      deposit: confirmedUpload,
     })
   } catch (error) {
     Sentry.captureException(error)

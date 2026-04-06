@@ -40,10 +40,6 @@ export async function createDepositTxn(
     if (userEmail) formData.append('userEmail', userEmail)
     if (args.directoryName) formData.append('directoryName', args.directoryName)
 
-    const isMultipleFiles = file.length > 1
-
-    let _uploadErr
-
     const depositReq = await fetch(`${apiEndpoint}/upload/deposit`, {
       method: 'POST',
       body: formData,
@@ -94,7 +90,9 @@ export async function createDepositTxn(
           )
 
         throw new Error(
-          'Transaction failed during simulation. Please try again.',
+          logs.length
+            ? `Transaction simulation failed:\n${logs.join('\n')}`
+            : 'Transaction failed during simulation. Please try again.',
         )
       }
 
@@ -129,7 +127,6 @@ export async function createDepositTxn(
         body: JSON.stringify({
           cid: depositRes.cid,
           transactionHash: signature,
-          depositMetadata: depositRes.depositMetadata,
         }),
       })
 
@@ -146,59 +143,14 @@ export async function createDepositTxn(
       )
     }
 
-    if (depositRes.error) {
-      _uploadErr = depositRes.error
-    }
-
-    const uploadForm = new FormData()
-    file.forEach((f) => uploadForm.append('file', f))
-
-    let fileUploadReq
-    // calls the upload functionality on our server with the file when deposit is successful
-    if (isMultipleFiles) {
-      fileUploadReq = await fetch(
-        `${apiEndpoint}/upload/files?cid=${encodeURIComponent(depositRes.cid)}`,
-        {
-          method: 'POST',
-          body: uploadForm,
-        },
-      )
-    } else {
-      fileUploadReq = await fetch(
-        `${apiEndpoint}/upload/file?cid=${encodeURIComponent(depositRes.cid)}`,
-        {
-          method: 'POST',
-          body: uploadForm,
-        },
-      )
-    }
-
-    if (!fileUploadReq.ok) {
-      let err = 'Unknown error'
-      try {
-        const data: DepositResult = await fileUploadReq.json()
-        err = data.message || data.error || err
-      } catch {}
-      throw new Error('Deposit API error: ' + err)
-    }
-
-    const fileUploadRes: Pick<DepositResult, 'object' | 'cid' | 'message'> =
-      await fileUploadReq?.json()
+    const confirmData = await confirmRes.json().catch(() => ({}))
 
     return {
       signature: signature as Signature,
       success: true,
       cid: depositRes.cid,
-      url: fileUploadRes.object.url,
-      message: fileUploadRes.object.message,
-      fileInfo: fileUploadRes.object
-        ? {
-            filename: fileUploadRes.object.fileInfo?.filename || '',
-            size: fileUploadRes?.object?.fileInfo?.size || 0,
-            uploadedAt: fileUploadRes?.object?.fileInfo?.uploadedAt || '',
-            type: fileUploadRes?.object?.fileInfo?.type || '',
-          }
-        : undefined,
+      url: confirmData?.url || '',
+      message: confirmData?.message || '',
     }
   } catch (error) {
     console.error(error)
