@@ -22,6 +22,8 @@ jobs.post(
   jobsController.deleteAbandonedUploads,
 )
 
+jobs.post('/destroy', verifyQStashRequest, jobsController.destroy)
+
 jobs.post(
   '/usage/snapshot',
   verifyQStashRequest,
