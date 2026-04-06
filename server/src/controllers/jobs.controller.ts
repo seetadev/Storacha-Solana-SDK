@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, not } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { uploads } from '../db/schema.js'
@@ -209,9 +209,49 @@ export const deleteAbandonedUploads = async (_req: Request, res: Response) => {
     logger.error('Error in deleteAbandonedUploads job', {
       error: error instanceof Error ? error.message : String(error),
     })
-    return res
-      .status(500)
-      .json({ success: false, message: 'Failed to clean up abandoned uploads' })
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to clean up abandoned uploads',
+    })
+  }
+}
+
+export const destroy = async (_req: Request, res: Response) => {
+  const isMainnet = (process.env.SOLANA_RPC_URL || '').includes('mainnet')
+  if (isMainnet) {
+    logger.warn('drugs?!!')
+    return res.status(403).json({ message: 'not allowed' })
+  }
+
+  try {
+    logger.info('destroying uploads')
+
+    const allUploads = await db
+      .select()
+      .from(uploads)
+      .where(not(eq(uploads.deletionStatus, 'deleted')))
+
+    logger.info('found uploads to destroy', { count: allUploads.length })
+
+    for (const record of allUploads) {
+      try {
+        await unpinCID(record.contentCid)
+        await db.delete(uploads).where(eq(uploads.id, record.id))
+      } catch (error) {
+        logger.error('failed to destroy this one, ugh!', {
+          id: record.id,
+          cid: record.contentCid,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    return res.status(200).json({ success: true, nuked: allUploads.length })
+  } catch (error) {
+    logger.error('destroyer job failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res.status(500).json({ success: false, message: 'nuke failed' })
   }
 }
 
