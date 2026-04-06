@@ -63,7 +63,6 @@ export async function createDepositTxn(
       {
         transactionHash: txHash,
         cid: depositRes.cid,
-        depositMetadata: depositRes.depositMetadata,
       },
       apiEndpoint,
     )
@@ -73,55 +72,12 @@ export async function createDepositTxn(
         verifyRes.message || 'Payment verification failed on server',
       )
 
-    const uploadData = new FormData()
-    file.forEach((file) => uploadData.append('file', file))
-    let fileUploadReq
-    const isMultipleFiles = file.length > 1
-
-    if (isMultipleFiles) {
-      fileUploadReq = await fetch(
-        `${apiEndpoint}/upload/files?cid=${encodeURIComponent(depositRes.cid)}`,
-        {
-          method: 'POST',
-          body: uploadData,
-        },
-      )
-    } else {
-      fileUploadReq = await fetch(
-        `${apiEndpoint}/upload/file?cid=${encodeURIComponent(depositRes.cid)}`,
-        {
-          method: 'POST',
-          body: uploadData,
-        },
-      )
-    }
-
-    if (!fileUploadReq.ok) {
-      let err = 'Unknown error'
-      try {
-        const data: DepositResponse = await fileUploadReq.json()
-        err = data.message || err
-      } catch {}
-      throw new Error('Deposit API error: ' + err)
-    }
-
-    const uploadResponse: Pick<DepositResponse, 'object' | 'cid' | 'message'> =
-      await fileUploadReq?.json()
-
     return {
       success: true,
       transactionHash: txHash,
       cid: depositRes.cid,
-      url: uploadResponse.object.url,
-      message: uploadResponse.object.message,
-      fileInfo: uploadResponse.object
-        ? {
-            type: uploadResponse?.object?.fileInfo?.type || '',
-            size: uploadResponse?.object?.fileInfo?.size || 0,
-            uploadedAt: uploadResponse?.object?.fileInfo?.uploadedAt || '',
-            filename: uploadResponse?.object?.fileInfo?.filename || '',
-          }
-        : undefined,
+      url: verifyRes.url || '',
+      message: verifyRes.message || '',
     }
   } catch (error) {
     const errorMessage =
@@ -155,7 +111,7 @@ export async function verifyPayment(
   args: VerifyPaymentArgs,
   apiEndpoint: string,
 ): Promise<VerifyPaymentResponse> {
-  const { transactionHash, cid, depositMetadata } = args
+  const { transactionHash, cid } = args
 
   const verifyReq = await fetch(`${apiEndpoint}/upload/fil/verify-payment`, {
     method: 'POST',
@@ -165,7 +121,6 @@ export async function verifyPayment(
     body: JSON.stringify({
       transactionHash,
       cid,
-      depositMetadata,
     }),
   })
 

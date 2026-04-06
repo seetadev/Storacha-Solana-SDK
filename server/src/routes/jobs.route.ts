@@ -17,6 +17,12 @@ jobs.post(
 )
 
 jobs.post(
+  '/remove-debtors',
+  verifyQStashRequest,
+  jobsController.deleteAbandonedUploads,
+)
+
+jobs.post(
   '/usage/snapshot',
   verifyQStashRequest,
   jobsController.dailyUsageSnapshot,

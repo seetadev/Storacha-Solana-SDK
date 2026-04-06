@@ -3,11 +3,12 @@ import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { configTable, uploads } from '../db/schema.js'
-import { renewStorageDuration, saveTransaction } from '../db/uploads-table.js'
+import { renewStorageDuration, saveTransaction } from '../db/uploads.js'
 import {
   getUsdfcContractAddress,
   verifyErc20Transfer,
 } from '../services/fil/verify.service.js'
+import { gatewayUrl } from '../services/storage/pinata.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import {
   getAmountInLamportsFromUSD,
@@ -17,7 +18,7 @@ import {
   ONE_BILLION_LAMPORTS,
 } from '../utils/constant.js'
 import { logger } from '../utils/logger.js'
-import { getPricingConfig } from '../utils/storacha.js'
+import { getPricingConfig } from '../utils/pricing.js'
 import { createStorageRenewalTransaction } from './solana.controller.js'
 
 /**
@@ -226,6 +227,12 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: 'Storage renewed successfully',
       deposit: updated,
+      url: gatewayUrl(
+        updated.contentCid,
+        updated.fileType === 'directory'
+          ? undefined
+          : (updated.fileName ?? undefined),
+      ),
     })
   } catch (error) {
     logger.error('Error confirming renewal', {
@@ -391,6 +398,12 @@ export const confirmRenewalUsdFC = async (req: Request, res: Response) => {
       verified: true,
       message: 'Storage renewed successfully with USDFC',
       deposit: updated,
+      url: gatewayUrl(
+        updated.contentCid,
+        updated.fileType === 'directory'
+          ? undefined
+          : (updated.fileName ?? undefined),
+      ),
     })
   } catch (error) {
     Sentry.captureException(error)

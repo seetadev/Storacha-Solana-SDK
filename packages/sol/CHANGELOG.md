@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- upload flow now pins to pinata at deposit time — the file upload step after confirm is no longer needed and has been removed
+
+  breaking: deposit response no longer includes depositMetadata
+  breaking: confirm no longer accepts depositMetadata in the request body
+  breaking: url is now returned from the confirm/verify-payment response instead of the file upload response
+
+### Patch Changes
+
+- 38a0367: renewal response now returns the gateway url from the server instead of a hardcoded w3s.link url
+
 ## 0.1.6
 
 ### Patch Changes

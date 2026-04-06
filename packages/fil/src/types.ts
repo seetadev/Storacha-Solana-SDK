@@ -82,8 +82,6 @@ export interface DepositResponse {
     size: number
     type: string
   }>
-  /** Metadata for database insertion */
-  depositMetadata: DepositMetadata
 }
 
 /**
@@ -124,8 +122,6 @@ export interface VerifyPaymentArgs {
   transactionHash: string
   /** CID of the uploaded content */
   cid: string
-  /** Deposit metadata from server response */
-  depositMetadata: DepositMetadata
 }
 
 /**
@@ -140,6 +136,8 @@ export interface VerifyPaymentResponse {
   transactionHash: string
   /** CID of the uploaded content */
   cid: string
+  /** Gateway URL to access the file */
+  url?: string
 }
 
 /**

@@ -1,16 +1,18 @@
-import { UnknownLink } from '@storacha/client/types'
-import { Link } from '@ucanto/core/schema'
+import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
+import { db } from '../db/db.js'
+import { uploads } from '../db/schema.js'
 import {
   batchUpdateWarningSentAt,
+  getAbandonedPendingUploads,
   getExpiredDeposits,
   getUploadsGroupedByEmail,
   updateDeletionStatus,
-} from '../db/uploads-table.js'
+} from '../db/uploads.js'
 import { sendBatchExpirationWarningEmail } from '../services/email/resend.service.js'
+import { unpinCID } from '../services/storage/pinata.service.js'
 import { UsageService } from '../services/usage/usage.service.js'
 import { logger } from '../utils/logger.js'
-import { initStorachaClient } from '../utils/storacha.js'
 
 /**
  * Checks for uploads needing expiration warnings and sends batched emails
@@ -103,7 +105,7 @@ export const sendExpirationWarnings = async (_req: Request, res: Response) => {
 }
 
 /**
- * Deletes expired deposits from Storacha
+ * Deletes expired uploads from Pinata and marks them as deleted in the DB
  */
 export const deleteExpiredUploads = async (_req: Request, res: Response) => {
   try {
@@ -121,7 +123,6 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
     logger.info('Found expired uploads to delete', {
       count: expiredDeposits.length,
     })
-    const client = await initStorachaClient()
 
     for (const deposit of expiredDeposits) {
       try {
@@ -133,10 +134,7 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
           status: deposit.deletionStatus,
         })
 
-        const cid = Link.parse(deposit.contentCid)
-        await client.remove(cid as UnknownLink, {
-          shards: true,
-        })
+        await unpinCID(deposit.contentCid)
         await updateDeletionStatus(deposit.id, 'deleted')
         logger.info('Successfully deleted this upload', {
           depositId: deposit.id,
@@ -168,19 +166,64 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
 }
 
 /**
+ * Unpins and removes pending uploads that were never paid for.
+ * Runs daily — cleans up files pinned during deposit but abandoned before payment.
+ */
+export const deleteAbandonedUploads = async (_req: Request, res: Response) => {
+  try {
+    logger.info('Running abandoned uploads cleanup job')
+    const abandoned = await getAbandonedPendingUploads(24)
+
+    if (!abandoned || abandoned.length === 0) {
+      logger.info('No abandoned uploads to clean up')
+      return res
+        .status(200)
+        .json({ success: true, message: 'No abandoned uploads to clean up' })
+    }
+
+    logger.info('Found abandoned uploads to clean up', {
+      count: abandoned.length,
+    })
+
+    for (const record of abandoned) {
+      try {
+        await unpinCID(record.contentCid)
+        await db.delete(uploads).where(eq(uploads.id, record.id))
+        logger.info('Removed abandoned upload', {
+          id: record.id,
+          cid: record.contentCid,
+        })
+      } catch (error) {
+        logger.error('Failed to remove abandoned upload', {
+          id: record.id,
+          cid: record.contentCid,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: 'Abandoned uploads cleaned up' })
+  } catch (error) {
+    logger.error('Error in deleteAbandonedUploads job', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res
+      .status(500)
+      .json({ success: false, message: 'Failed to clean up abandoned uploads' })
+  }
+}
+
+/**
  * daily usage snapshot job
  * runs every day at 9am UTC
  */
 export const dailyUsageSnapshot = async (_req: Request, res: Response) => {
   try {
     logger.info('running daily usage snapshot job')
-
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
-
+    const usageService = new UsageService()
     await usageService.createDailySnapshot()
-
     return res.status(200).json({
       success: true,
       message: 'daily usage snapshot completed',
@@ -201,13 +244,8 @@ export const dailyUsageSnapshot = async (_req: Request, res: Response) => {
 export const weeklyUsageComparison = async (_req: Request, res: Response) => {
   try {
     logger.info('running weekly usage comparison job')
-
-    const storachaClient = await initStorachaClient()
-    const usageService = new UsageService(storachaClient)
-    await usageService.initialize()
-
+    const usageService = new UsageService()
     await usageService.compareUsage()
-
     return res.status(200).json({
       success: true,
       message: 'weekly usage comparison completed',

@@ -1,5 +1,3 @@
-import { Client as StorachaClient } from '@storacha/client'
-import { AccountDID, PlanGetSuccess } from '@storacha/client/types'
 import { eq, sql } from 'drizzle-orm'
 import { Resend } from 'resend'
 import { db } from '../../db/db.js'
@@ -9,6 +7,7 @@ import {
   usageAlerts,
   usageComparison,
 } from '../../db/schema.js'
+import { getPinataUsage } from '../storage/pinata.service.js'
 import { logger } from '../../utils/logger.js'
 
 const { EMAIL_FROM, WATCHMAN } = process.env!
@@ -22,39 +21,13 @@ const recipients: string | string[] = (() => {
 })()
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const KiB = 1024
-const MiB = 1024 * KiB
-const GiB = 1024 * MiB
-const TiB = 1024 * GiB
-
-/**
- * known plan capacities by product DID.
- *
- * storacha plans with overages enabled return limit: 0 from plan/get,
- * meaning "unlimited with overage charges." the actual included capacity
- * must be mapped from the product DID. for forge plans (strict limits),
- * plan/get returns the real byte limit.
- *
- * see: https://github.com/storacha/specs/pull/150
- */
-const PLAN_CAPACITIES: Record<string, number> = {
-  'did:web:starter.storacha.network': 5 * GiB,
-  'did:web:lite.storacha.network': 100 * GiB,
-  'did:web:business.storacha.network': 2 * TiB,
-}
-
-interface UsageReport {
-  finalSize: number
-  initialSize: number
-}
-
 export class UsageService {
-  private client: StorachaClient
   private planLimitBytes: number
 
-  constructor(client: StorachaClient, planLimitBytes: number = 5 * GiB) {
-    this.client = client
-    this.planLimitBytes = planLimitBytes // default 5GiB size
+  constructor() {
+    // Default to 1GB free tier. Set PINATA_PLAN_LIMIT_MB env var when upgrading.
+    const mb = parseInt(process.env.PINATA_PLAN_LIMIT_MB ?? '1024', 10)
+    this.planLimitBytes = mb * 1024 * 1024
   }
 
   get planLimit(): number {
@@ -62,115 +35,17 @@ export class UsageService {
   }
 
   /**
-   * get plan limit from storacha using plan/get capability.
-   *
-   * if limit is 0, it means overages are enabled and the plan is
-   * virtually unlimited. we use the product DID to look up the
-   * included capacity instead.
-   *
-   * @returns limit in bytes, or null if unlimited
+   * Fetch current storage usage from Pinata.
    */
-  private async fetchPlanLimit(): Promise<number | null> {
+  async getUsage(): Promise<{
+    totalSizeBytes: number
+    pinCount: number
+  }> {
     try {
-      const accountDID = process.env.STORACHA_ACCOUNT_DID as AccountDID
-
-      if (!accountDID) {
-        logger.warn(
-          'STORACHA_ACCOUNT_DID not set, using default plan limit. Set STORACHA_ACCOUNT_DID in environment variables.',
-        )
-        return 5 * GiB
-      }
-
-      const plan: PlanGetSuccess =
-        await this.client.capability.plan.get(accountDID)
-
-      // used to have TS complain about an error here before.
-      // previous comment no longer needed. this too would go away later. browse the commit
-      // history for your perusal if you want.
-      const limitBytes = parseInt(plan.limit, 10)
-
-      // limit: 0 means overages enabled — look up included capacity from product DID
-      if (limitBytes === 0) {
-        const product = plan.product
-        const knownLimit = product ? PLAN_CAPACITIES[product] : undefined
-
-        if (knownLimit) {
-          logger.info('plan has overages enabled, using known capacity', {
-            product,
-            limitBytes: knownLimit,
-            limitGB: (knownLimit / 1e9).toFixed(2),
-          })
-          return knownLimit
-        }
-
-        logger.warn('unknown product DID, using default capacity', {
-          product,
-          defaultGB: '5.00',
-        })
-        return 5 * GiB
-      }
-
-      // forge plans return the actual byte limit
-      logger.info('plan limit fetched from storacha', {
-        accountDID,
-        limitBytes,
-        limitGB: (limitBytes / 1e9).toFixed(2),
-      })
-
-      return limitBytes
+      return await getPinataUsage()
     } catch (error) {
-      logger.error('failed to fetch plan limit from storacha', { error })
-      return 5 * GiB
-    }
-  }
-
-  /**
-   * init the service
-   */
-  async initialize(): Promise<void> {
-    const fetchedLimit = await this.fetchPlanLimit()
-    if (fetchedLimit !== null) {
-      this.planLimitBytes = fetchedLimit
-      logger.info('usage service initialized with plan limit', {
-        limitBytes: this.planLimitBytes,
-        limitGB: (this.planLimitBytes / 1e9).toFixed(2),
-      })
-    } else {
-      logger.info('usage service initialized with unlimited plan')
-    }
-  }
-
-  /**
-   * fetch current usage from storacha using capability.usage.report
-   */
-  async getStorachaUsage(
-    from: Date = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    to: Date = new Date(),
-  ): Promise<UsageReport> {
-    try {
-      const currentSpace = this.client.currentSpace()
-      if (!currentSpace) throw new Error('no storacha space available')
-
-      const spaceDid = currentSpace.did()
-      const report = await this.client.capability.usage.report(spaceDid, {
-        from,
-        to,
-      })
-
-      // report is Record<DID, UsageData>, get the first/only entry
-      const usageData = Object.values(report)[0]
-
-      if (!usageData) {
-        throw new Error('no usage data returned from storacha')
-      }
-
-      return {
-        finalSize: usageData.size.final,
-        initialSize: usageData.size.initial,
-      }
-    } catch (error) {
-      logger.error('failed to fetch storacha usage report', { error })
-      throw new Error('failed to fetch storacha usage')
+      logger.error('failed to fetch pinata usage', { error })
+      throw new Error('failed to fetch pinata usage')
     }
   }
 
@@ -200,21 +75,19 @@ export class UsageService {
    */
   async createDailySnapshot(): Promise<void> {
     try {
-      const [storachaUsage, internalUsage] = await Promise.all([
-        this.getStorachaUsage(),
+      const [pinataUsage, internalUsage] = await Promise.all([
+        this.getUsage(),
         this.calculateInternalUsage(),
       ])
 
-      const storachaBytes = storachaUsage.finalSize
+      const storedBytes = pinataUsage.totalSizeBytes
       const utilization =
-        this.planLimitBytes > 0
-          ? (storachaBytes / this.planLimitBytes) * 100
-          : 0
+        this.planLimitBytes > 0 ? (storedBytes / this.planLimitBytes) * 100 : 0
 
       await db.insert(usage).values({
         totalBytesStored: internalUsage.totalBytes,
         totalActiveUploads: internalUsage.activeUploads,
-        storachaReportedBytes: storachaBytes,
+        storachaReportedBytes: storedBytes,
         storachaPlanLimit: this.planLimitBytes,
         utilizationPercentage: utilization,
       })
@@ -222,15 +95,11 @@ export class UsageService {
       logger.info('daily usage snapshot created', {
         totalBytes: internalUsage.totalBytes,
         activeUploads: internalUsage.activeUploads,
-        storachaReportedBytes: storachaBytes,
+        pinataReportedBytes: storedBytes,
         utilization: `${utilization.toFixed(2)}%`,
       })
 
-      await this.checkThresholds(
-        utilization,
-        storachaBytes,
-        this.planLimitBytes,
-      )
+      await this.checkThresholds(storedBytes, this.planLimitBytes, utilization)
     } catch (error) {
       logger.error('failed to create daily snapshot', { error })
       throw error
@@ -238,17 +107,17 @@ export class UsageService {
   }
 
   /**
-   * weekly comparison between our data and the capability report
+   * weekly comparison between our internal data and the pinata report
    */
   async compareUsage(): Promise<void> {
     try {
-      const [storachaUsage, internalUsage] = await Promise.all([
-        this.getStorachaUsage(),
+      const [pinataUsage, internalUsage] = await Promise.all([
+        this.getUsage(),
         this.calculateInternalUsage(),
       ])
 
-      const storachaBytes = storachaUsage.finalSize
-      const discrepancy = storachaBytes - internalUsage.totalBytes
+      const pinataBytes = pinataUsage.totalSizeBytes
+      const discrepancy = pinataBytes - internalUsage.totalBytes
       const discrepancyPercentage =
         internalUsage.totalBytes > 0
           ? (Math.abs(discrepancy) / internalUsage.totalBytes) * 100
@@ -263,19 +132,19 @@ export class UsageService {
 
       await db.insert(usageComparison).values({
         ourCalculatedBytes: internalUsage.totalBytes,
-        storachaReportedBytes: storachaBytes,
+        storachaReportedBytes: pinataBytes,
         discrepancyBytes: discrepancy,
         discrepancyPercentage,
         status,
         notes:
           status !== 'ok'
-            ? `discrepancy of ${(discrepancy / 1e9).toFixed(2)} GB (${discrepancyPercentage.toFixed(2)}%)` // 1e9 = 1GB in bytes
+            ? `discrepancy of ${(discrepancy / 1e9).toFixed(2)} GB (${discrepancyPercentage.toFixed(2)}%)`
             : null,
       })
 
       logger.info('usage comparison completed', {
         ourBytes: internalUsage.totalBytes,
-        storachaBytes,
+        pinataBytes,
         discrepancy,
         status,
       })
@@ -297,9 +166,9 @@ export class UsageService {
    * check utilization thresholds and create alerts
    */
   private async checkThresholds(
-    utilization: number,
     bytesStored: number,
     planLimit: number,
+    utilization: number,
   ): Promise<void> {
     const thresholds = [
       { level: 80, type: 'threshold_80', alertLevel: 'warning' as const },
@@ -309,7 +178,6 @@ export class UsageService {
 
     for (const threshold of thresholds) {
       if (utilization >= threshold.level) {
-        // check if alert already exists and is unresolved
         const existingAlert = await db
           .select()
           .from(usageAlerts)
@@ -363,7 +231,7 @@ export class UsageService {
               ${alert.alertLevel === 'critical' ? '🔴' : '⚠️'} storage ${alert.alertLevel} alert
             </h2>
             <p style="color: #949495; margin-bottom: 24px; font-size: 16px;">${alert.message}</p>
-            
+
             ${
               alert.utilizationPercentage
                 ? `
@@ -385,7 +253,7 @@ export class UsageService {
             `
                 : ''
             }
-            
+
             <p style="color: #949495; font-size: 12px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #141414;">
               alert type: ${alert.alertType}<br/>
               created: ${new Date().toISOString()}

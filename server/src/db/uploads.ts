@@ -1,4 +1,5 @@
-import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm'
+import { gatewayUrl } from '../services/storage/pinata.service.js'
 import { PaginationContext } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { db } from './db.js'
@@ -59,8 +60,18 @@ export const getUserHistory = async (
     const buildPageUrl = (p: number) =>
       `${ctx?.baseUrl}${ctx?.path}?userAddress=${userAddress}&page=${p}&limit=${limit}&chain=${chain}`
 
+    const records = data.map((record) => ({
+      ...record,
+      url: gatewayUrl(
+        record.contentCid,
+        record.fileType === 'directory'
+          ? undefined
+          : (record.fileName ?? undefined),
+      ),
+    }))
+
     return {
-      data,
+      data: records,
       total,
       page,
       pageSize: limit,
@@ -264,6 +275,39 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
   } catch (error) {
     logger.error('Failed to renew storage duration', {
       error: error instanceof Error ? error.message : String(error),
+    })
+    return null
+  }
+}
+
+/**
+ * Find pending uploads older than the given age in hours.
+ * These are files pinned to Pinata but never paid for — safe to unpin and remove.
+ * @param abandonedAfterHowManyHours - Age threshold in hours (default: 24)
+ */
+export const getAbandonedPendingUploads = async (
+  abandonedAfterHowManyHours: number = 24,
+) => {
+  try {
+    const cutoff = new Date(
+      Date.now() - abandonedAfterHowManyHours * 60 * 60 * 1000,
+    ).toISOString()
+
+    const records = await db
+      .select()
+      .from(uploads)
+      .where(
+        and(
+          eq(uploads.deletionStatus, 'pending'),
+          isNull(uploads.transactionHash),
+          lt(uploads.createdAt, cutoff),
+        ),
+      )
+
+    return records
+  } catch (err) {
+    logger.error('Error getting abandoned pending uploads', {
+      error: err instanceof Error ? err.message : String(err),
     })
     return null
   }

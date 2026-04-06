@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { getTransactionsForCID } from '../db/uploads-table.js'
+import { getTransactionsForCID } from '../db/uploads.js'
 import { logger } from '../utils/logger.js'
 
 /**

@@ -1,41 +1,9 @@
-import * as Client from '@storacha/client'
-import { create } from '@storacha/client'
-import { Signer } from '@storacha/client/principal/ed25519'
-import * as Proof from '@storacha/client/proof'
-import { StoreMemory } from '@storacha/client/stores/memory'
 import { db } from '../db/db.js'
 import { configTable } from '../db/schema.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { QuoteInput } from '../types.js'
 import { getAmountInLamportsFromUSD, getAmountInUSD } from './constant.js'
 import { logger } from './logger.js'
-
-/**
- * Initializes a Storacha client using user-provided key and proof.
- *
- * @returns {Promise<Client.Client>} Initialized W3UP client
- */
-export async function initStorachaClient(): Promise<Client.Client> {
-  const principal = Signer.parse(process.env.STORACHA_KEY!)
-  const store = new StoreMemory()
-  const client = await create({ principal, store })
-
-  const proof = await Proof.parse(process.env.STORACHA_PROOF!)
-  const space = await client.addSpace(proof)
-  await client.setCurrentSpace(space.did())
-
-  // we had errors on the server because the proof for this delegation
-  // wasn't provided. the plan/get capability cannot be scoped to the server (space DID?) agent
-  // so the appropriate thing to do is to get the plan proof separately with sacap: https://github.com/kaf-lamed-beyt/sacap
-  // since it is an account-level capability (did:mailto...) so the
-  // plan limit call in the usage service doesn't error.
-  if (process.env.STORACHA_PLAN_PROOF) {
-    const planProof = await Proof.parse(process.env.STORACHA_PLAN_PROOF)
-    await client.addProof(planProof)
-  }
-
-  return client
-}
 
 /**
  * This function returns the amount it will cost to upload the file, keep it for minimum duration

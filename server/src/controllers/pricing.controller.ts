@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaymentChain, QuoteOutput } from '../types.js'
 import { logger } from '../utils/logger.js'
-import { getQuoteForFileUpload } from '../utils/storacha.js'
+import { getQuoteForFileUpload } from '../utils/pricing.js'
 
 /**
  * Function to get Quote For File Upload
