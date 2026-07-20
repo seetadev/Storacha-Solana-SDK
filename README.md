@@ -114,6 +114,3 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 Apache-2.0
 
 
-## Help us Scale
-
-<a href="https://filecoin.drips.network/app/projects/github/tojunetwork/afara" target="_blank"><img src="https://filecoin.drips.network/api/embed/project/https%3A%2F%2Fgithub.com%2Ftojunetwork%2Fafara/support.png?background=dark&style=drips&text=me&stat=support" alt="Support Storacha-Solana-SDK on drips.network" height="32"></a>
