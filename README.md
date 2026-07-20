@@ -1,10 +1,10 @@
 # toju: pay-as-you-go decentralized storage on IPFS
 
-**toju** is a crypto-native onramp for decentralized storage on IPFS via Storacha. pay with SOL, USDFC, or USDC — no credit cards, no subscriptions. toju also supports agentic payments via the x402 protocol, enabling AI agents to pay for storage autonomously.
+**toju** is a crypto-native onramp for decentralized storage on IPFS via Storacha. pay with SOL, USDFC, or USDC, no credit cards, no subscriptions. toju also supports agentic payments via the x402 protocol, enabling AI agents to pay for storage autonomously.
 
 ## Features
 
-* **Native SOL payments** for storage — no credit cards, subscriptions, or off-chain billing
+* **Native SOL payments** for storage, no credit cards, subscriptions, or off-chain billing
 * **Filecoin-backed IPFS storage via Storacha**, ensuring decentralized, verifiable persistence
 * **Pay-as-you-go pricing**, lowering friction for real storage usage and experimentation
 * **Storage lifecycle management**, including automatic cleanup of expired files
