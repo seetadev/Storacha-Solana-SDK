@@ -1,0 +1,52 @@
+{
+  "name": "@toju.network/algo",
+  "version": "0.1.0",
+  "description": "Agent-friendly client for storing files on IPFS via toju, paying autonomously with ALGO using the x402 protocol on Algorand.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "module": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tojunetwork/afara",
+    "directory": "packages/algo"
+  },
+  "keywords": [
+    "x402",
+    "algo",
+    "algorand",
+    "storacha",
+    "ipfs",
+    "agent",
+    "ai-agent",
+    "decentralized-storage",
+    "autonomous-payments"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --minify --dts",
+    "dev": "pnpm build --watch"
+  },
+  "author": "toju.network",
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "algosdk": "^3.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}
