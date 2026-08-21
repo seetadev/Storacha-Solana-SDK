@@ -28,7 +28,7 @@ export const getQuoteForFileUpload = async ({
 
   let totalCost: number
 
-  if (chain === 'fil') {
+  if (chain === 'fil' || chain === 'algo') {
     totalCost = getAmountInUSD(
       sizeInBytes,
       RATE_PER_BYTE_PER_UNIT,

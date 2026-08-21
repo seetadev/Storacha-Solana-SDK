@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { getAlgoPrice } from '../services/price/algo-price.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaymentChain, QuoteOutput } from '../types.js'
 import { logger } from '../utils/logger.js'
@@ -21,8 +22,14 @@ export const GetQuoteForFileUpload = async (req: Request, res: Response) => {
       sizeInBytes: size,
       chain: chain as PaymentChain,
     })
+
+    const responseQuote: Record<string, unknown> = { ...QuoteObject }
+    if (chain === 'algo') {
+      responseQuote.algoPrice = await getAlgoPrice()
+    }
+
     return res.status(200).json({
-      quote: QuoteObject,
+      quote: responseQuote,
       success: true,
     })
   } catch (err) {

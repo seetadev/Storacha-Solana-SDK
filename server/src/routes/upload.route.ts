@@ -1,7 +1,9 @@
 import express from 'express'
 import multer from 'multer'
 import * as agentController from '../controllers/agent.controller.js'
+import * as algoAgentController from '../controllers/algo-agent.controller.js'
 import * as uploadsController from '../controllers/upload.controller.js'
+import { algoX402Middleware } from '../middlewares/algo-x402.middleware.js'
 import { uploadLimiter } from '../middlewares/rate-limit.middleware.js'
 import { agentPaymentMiddleware } from '../middlewares/x402.middleware.js'
 
@@ -42,4 +44,13 @@ uploadsRouter.post(
   '/agent',
   upload.single('file'),
   agentController.uploadAgentFile,
+)
+
+// Algorand x402 — middleware is applied directly on this route only (not router-wide)
+// so it doesn't interfere with any other upload routes.
+uploadsRouter.post(
+  '/algo-agent',
+  upload.single('file'),
+  algoX402Middleware(),
+  algoAgentController.uploadAlgoAgentFile,
 )

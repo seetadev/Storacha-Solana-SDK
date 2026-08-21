@@ -1,4 +1,4 @@
-export type PaymentChain = 'sol' | 'fil'
+export type PaymentChain = 'sol' | 'fil' | 'algo'
 
 export type QuoteInput = {
   sizeInBytes: number
