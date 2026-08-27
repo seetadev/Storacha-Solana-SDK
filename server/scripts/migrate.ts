@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { config } from 'dotenv'
+import { access } from 'fs/promises'
 import { readdir, readFile } from 'fs/promises'
 import path from 'path'
 
@@ -9,10 +10,32 @@ const envFile = env === 'production' ? '.env.prod' : '.env'
 console.log(`Running migrations for ${env} environment...`)
 console.log(`Loading config from: ${envFile}`)
 
-config({ path: envFile })
+// Load env file only when the file actually exists; if DATABASE_URL is
+// already set in the process environment (e.g. from a CI/CD secret or a
+// Docker --env flag) we honour that value without requiring a file.
+try {
+  await access(envFile)
+  config({ path: envFile })
+  console.log(`Loaded env from ${envFile}`)
+} catch {
+  if (process.env.DATABASE_URL) {
+    console.log(
+      `${envFile} not found — using DATABASE_URL from the process environment`,
+    )
+  } else {
+    // Fall back to .env so local runs without a .env.prod still work
+    const fallback = '.env'
+    console.log(`${envFile} not found — falling back to ${fallback}`)
+    config({ path: fallback })
+  }
+}
 
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL not found in environment')
+  console.error(
+    `\nERROR: DATABASE_URL is not set.\n` +
+      `  • For production: create server/${envFile} and add DATABASE_URL=<your-prod-db-url>\n` +
+      `  • Or export DATABASE_URL in your shell / CI environment before running this script.\n`,
+  )
   process.exit(1)
 }
 
@@ -61,9 +84,11 @@ const main = async () => {
       const migrationSQL = await readFile(filePath, 'utf-8')
 
       // split by statement breakpoint and execute each statement
+      // Strip trailing semicolons — the Neon serverless HTTP client silently
+      // drops DDL statements that end with a semicolon in sql.unsafe() mode.
       const statements = migrationSQL
         .split('--> statement-breakpoint')
-        .map((s) => s.trim())
+        .map((s) => s.trim().replace(/;$/, ''))
         .filter((s) => s.length > 0)
 
       for (const statement of statements) {

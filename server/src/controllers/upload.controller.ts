@@ -18,7 +18,16 @@ import {
 import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig } from '../utils/pricing.js'
-import { gatewayUrl, pinFiles } from '../services/storage/pinata.service.js'
+import { gatewayUrl, pinFiles } from '../services/storage/meshkit.service.js'
+
+/** Extract optional per-request Kubo node overrides from headers. */
+function extractNodeHeaders(req: {
+  headers: Record<string, string | string[] | undefined>
+}) {
+  const nodeUrl = req.headers['x-kubo-node-url'] as string | undefined
+  const gatewayBase = req.headers['x-ipfs-gateway-url'] as string | undefined
+  return { nodeUrl, gatewayBase }
+}
 import { createDepositTransaction } from './solana.controller.js'
 
 const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
@@ -26,7 +35,7 @@ const MIN_DURATION_SECONDS = DAY_TIME_IN_SECONDS // 1 day
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * Function to pin a file to IPFS via Pinata
+ * Function to pin a file to IPFS via the local Kubo node (meshkit)
  */
 export const uploadFile = async (req: Request, res: Response) => {
   try {
@@ -37,6 +46,8 @@ export const uploadFile = async (req: Request, res: Response) => {
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
 
+    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
+
     const pinnedCID = await pinFiles(
       {
         [file.originalname]: {
@@ -45,6 +56,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         },
       },
       file.originalname,
+      nodeUrl,
     )
 
     if (pinnedCID !== cid) {
@@ -69,7 +81,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         filename: file.originalname,
         size: file.size,
         type: file.mimetype,
-        url: gatewayUrl(cid, file.originalname),
+        url: gatewayUrl(cid, file.originalname, gatewayBase, nodeUrl),
         uploadedAt: new Date().toISOString(),
       },
     })
@@ -88,7 +100,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 }
 
 /**
- * Pins multiple files or a directory to IPFS via Pinata
+ * Pins multiple files or a directory to IPFS via the local Kubo node (meshkit)
  */
 export const uploadFiles = async (req: Request, res: Response) => {
   try {
@@ -98,6 +110,8 @@ export const uploadFiles = async (req: Request, res: Response) => {
 
     const cid = req.query.cid as string
     if (!cid) return res.status(400).json({ message: 'CID is required' })
+
+    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
 
     const fileMap: Record<string, { buffer: Uint8Array; mimetype: string }> = {}
     for (const f of files) {
@@ -110,6 +124,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
     const pinnedCID = await pinFiles(
       fileMap,
       `directory-${crypto.randomUUID()}`,
+      nodeUrl,
     )
 
     if (pinnedCID !== cid)
@@ -131,13 +146,13 @@ export const uploadFiles = async (req: Request, res: Response) => {
       cid,
       object: {
         cid,
-        url: gatewayUrl(cid),
+        url: gatewayUrl(cid, undefined, gatewayBase, nodeUrl),
         size: files.reduce((sum, f) => sum + f.size, 0),
         files: files.map((f) => ({
           filename: f.originalname,
           size: f.size,
           type: f.mimetype,
-          url: gatewayUrl(cid, f.originalname),
+          url: gatewayUrl(cid, f.originalname, gatewayBase, nodeUrl),
         })),
         uploadedAt: new Date().toISOString(),
       },
@@ -164,6 +179,7 @@ export const deposit = async (req: Request, res: Response) => {
     const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
     const { publicKey, duration, userEmail, directoryName } = req.body
+    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
 
     // input validation
     try {
@@ -220,6 +236,7 @@ export const deposit = async (req: Request, res: Response) => {
       fileArray.length === 1
         ? fileArray[0].originalname
         : directoryName || `dir-${Date.now()}`,
+      nodeUrl,
     )
 
     const existingUpload = await db
@@ -274,6 +291,7 @@ export const deposit = async (req: Request, res: Response) => {
         warningSentAt: null,
         paymentChain: 'sol',
         paymentToken: 'SOL',
+        kuboNodeUrl: nodeUrl || null,
       })
     } else {
       // pending record exists — refresh metadata in case user retries with updated params
@@ -388,6 +406,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
     const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
 
     const { userAddress, duration, userEmail, directoryName } = req.body
+    const { nodeUrl } = extractNodeHeaders(req)
     const durationInSeconds = parseInt(duration as string, 10)
     const config = await db.select().from(configTable)
     const { ratePerBytePerDay } = await getPricingConfig()
@@ -429,6 +448,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
       fileArray.length === 1
         ? fileArray[0].originalname
         : directoryName || `dir-${Date.now()}`,
+      nodeUrl,
     )
 
     const existingUpload = await db
@@ -481,6 +501,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
         warningSentAt: null,
         paymentChain: 'fil',
         paymentToken: 'USDFC',
+        kuboNodeUrl: nodeUrl || null,
       })
     } else {
       // pending record exists — refresh metadata in case user retries with updated params
@@ -576,7 +597,7 @@ export const getUploadHistory = async (req: Request, res: Response) => {
 
 /**
  * Marks a pending upload as confirmed after the Solana transaction is verified.
- * The file is already pinned on Pinata from the deposit step.
+ * The file is already pinned on the local Kubo node from the deposit step.
  */
 export const confirmUpload = async (req: Request, res: Response) => {
   try {
@@ -625,6 +646,8 @@ export const confirmUpload = async (req: Request, res: Response) => {
       confirmedUpload.fileType === 'directory'
         ? undefined
         : (confirmedUpload.fileName ?? undefined),
+      undefined,
+      confirmedUpload.kuboNodeUrl ?? undefined,
     )
 
     return res.status(200).json({
@@ -654,11 +677,11 @@ export const confirmUpload = async (req: Request, res: Response) => {
  *
  * @remarks
  * Transaction verification will be implemented with indexer (see #176).
- * SDK handles file pinning to IPFS via Pinata via /upload/file(s) endpoints.
+ * SDK handles file pinning to IPFS via the local Kubo node via /upload/file(s) endpoints.
  */
 /**
  * Verifies USDFC payment transaction and marks the pending upload as confirmed.
- * The file is already pinned on Pinata from the deposit step.
+ * The file is already pinned on the local Kubo node from the deposit step.
  */
 export const verifyUsdFcPayment = async (req: Request, res: Response) => {
   try {

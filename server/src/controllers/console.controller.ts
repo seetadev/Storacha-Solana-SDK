@@ -31,21 +31,21 @@ export const getCurrentUsage = async (_req: Request, res: Response) => {
   try {
     const usageService = new UsageService()
 
-    const [pinataUsage, internalUsage] = await Promise.all([
+    const [ipfsUsage, internalUsage] = await Promise.all([
       usageService.getUsage(),
       usageService.calculateInternalUsage(),
     ])
 
     const planLimit = usageService.planLimit
     const utilization =
-      planLimit > 0 ? (pinataUsage.totalSizeBytes / planLimit) * 100 : 0
+      planLimit > 0 ? (ipfsUsage.totalSizeBytes / planLimit) * 100 : 0
 
     return res.status(200).json({
       success: true,
       data: {
-        pinata: {
-          totalBytes: pinataUsage.totalSizeBytes,
-          pinCount: pinataUsage.pinCount,
+        ipfs: {
+          totalBytes: ipfsUsage.totalSizeBytes,
+          pinCount: ipfsUsage.pinCount,
           planLimit,
           utilizationPercentage: utilization,
         },
@@ -54,10 +54,10 @@ export const getCurrentUsage = async (_req: Request, res: Response) => {
           activeUploads: internalUsage.activeUploads,
         },
         discrepancy: {
-          bytes: pinataUsage.totalSizeBytes - internalUsage.totalBytes,
+          bytes: ipfsUsage.totalSizeBytes - internalUsage.totalBytes,
           percentage:
             internalUsage.totalBytes > 0
-              ? ((pinataUsage.totalSizeBytes - internalUsage.totalBytes) /
+              ? ((ipfsUsage.totalSizeBytes - internalUsage.totalBytes) /
                   internalUsage.totalBytes) *
                 100
               : 0,

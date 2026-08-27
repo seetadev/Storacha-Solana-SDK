@@ -10,7 +10,7 @@ import {
   updateDeletionStatus,
 } from '../db/uploads.js'
 import { sendBatchExpirationWarningEmail } from '../services/email/resend.service.js'
-import { unpinCID } from '../services/storage/pinata.service.js'
+import { unpinCID } from '../services/storage/meshkit.service.js'
 import { UsageService } from '../services/usage/usage.service.js'
 import { logger } from '../utils/logger.js'
 
@@ -105,7 +105,7 @@ export const sendExpirationWarnings = async (_req: Request, res: Response) => {
 }
 
 /**
- * Deletes expired uploads from Pinata and marks them as deleted in the DB
+ * Deletes expired uploads from the local Kubo node and marks them as deleted in the DB
  */
 export const deleteExpiredUploads = async (_req: Request, res: Response) => {
   try {
@@ -134,7 +134,7 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
           status: deposit.deletionStatus,
         })
 
-        await unpinCID(deposit.contentCid)
+        await unpinCID(deposit.contentCid, deposit.kuboNodeUrl ?? undefined)
         await updateDeletionStatus(deposit.id, 'deleted')
         logger.info('Successfully deleted this upload', {
           depositId: deposit.id,
@@ -167,7 +167,7 @@ export const deleteExpiredUploads = async (_req: Request, res: Response) => {
 
 /**
  * Unpins and removes pending uploads that were never paid for.
- * Runs daily — cleans up files pinned during deposit but abandoned before payment.
+ * Runs daily — cleans up files pinned to Kubo during deposit but abandoned before payment.
  */
 export const deleteAbandonedUploads = async (_req: Request, res: Response) => {
   try {
@@ -187,7 +187,7 @@ export const deleteAbandonedUploads = async (_req: Request, res: Response) => {
 
     for (const record of abandoned) {
       try {
-        await unpinCID(record.contentCid)
+        await unpinCID(record.contentCid, record.kuboNodeUrl ?? undefined)
         await db.delete(uploads).where(eq(uploads.id, record.id))
         logger.info('Removed abandoned upload', {
           id: record.id,
@@ -235,7 +235,7 @@ export const destroy = async (_req: Request, res: Response) => {
 
     for (const record of allUploads) {
       try {
-        await unpinCID(record.contentCid)
+        await unpinCID(record.contentCid, record.kuboNodeUrl ?? undefined)
         await db.delete(uploads).where(eq(uploads.id, record.id))
       } catch (error) {
         logger.error('failed to destroy this one, ugh!', {

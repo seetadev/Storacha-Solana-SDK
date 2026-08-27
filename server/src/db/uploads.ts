@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm'
-import { gatewayUrl } from '../services/storage/pinata.service.js'
+import { gatewayUrl } from '../services/storage/meshkit.service.js'
 import { PaginationContext } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { db } from './db.js'
@@ -67,6 +67,8 @@ export const getUserHistory = async (
         record.fileType === 'directory'
           ? undefined
           : (record.fileName ?? undefined),
+        undefined,
+        record.kuboNodeUrl ?? undefined,
       ),
     }))
 
@@ -282,7 +284,7 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
 
 /**
  * Find pending uploads older than the given age in hours.
- * These are files pinned to Pinata but never paid for — safe to unpin and remove.
+ * These are files pinned to the local Kubo node but never paid for — safe to unpin and remove.
  * @param abandonedAfterHowManyHours - Age threshold in hours (default: 24)
  */
 export const getAbandonedPendingUploads = async (
