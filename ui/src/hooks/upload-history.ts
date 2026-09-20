@@ -1,70 +1,63 @@
-import { useAuthContext, useChainContext } from '@/hooks/context'
 import type { DashboardStats, UploadedFile } from '@/lib/types'
-import { IS_DEV } from '@/lib/utils'
-import {
-  Environment as FilEnvironment,
-  useUpload as useFilDeposit,
-} from '@toju.network/fil'
-import { useUpload as useSolUpload } from '@toju.network/sol'
+import { getApiBase, getMeshkitGuestId } from '@/lib/meshkit-guest'
 import useSWR from 'swr'
-import { useConnection } from 'wagmi'
 
 export function useUploadHistory() {
-  const { user: solAddress, network } = useAuthContext()
-  const { address: filAddress } = useConnection()
-
-  const { selectedChain } = useChainContext()
-
-  const currentUserAddress = selectedChain === 'sol' ? solAddress : filAddress
-
-  const solClient = useSolUpload(network)
-  const filClient = useFilDeposit(
-    import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
-      ? FilEnvironment.mainnet
-      : FilEnvironment.calibration,
-    IS_DEV ? import.meta.env.VITE_API_URL : (undefined as any),
-  )
-
-  const client = selectedChain === 'sol' ? solClient : filClient
+  const guestId = getMeshkitGuestId()
+  const apiBase = getApiBase()
 
   const { data, error, isLoading, mutate } = useSWR(
-    currentUserAddress
-      ? ['upload-history', currentUserAddress, network, selectedChain]
-      : null,
+    guestId ? ['upload-history-meshkit', guestId, apiBase] : null,
     async () => {
-      if (!currentUserAddress) return null
+      const url = new URL(`${apiBase}/upload/history`)
+      url.searchParams.set('userAddress', guestId)
+      url.searchParams.set('page', '1')
+      url.searchParams.set('limit', '50')
+      url.searchParams.set('chain', 'mesh')
 
-      const historyData = await client.getUserUploadHistory(
-        currentUserAddress,
-        1,
-        20,
-      )
+      const res = await fetch(url.toString())
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(
+          (body as { message?: string }).message || 'Failed to load history',
+        )
+      }
+
+      const historyData = await res.json()
 
       if (!historyData.data || historyData.data.length === 0) {
         return {
-          files: [],
+          files: [] as UploadedFile[],
           stats: {
             totalFiles: 0,
             totalStorage: 0,
             totalSpent: 0,
             activeFiles: 0,
-          },
+          } satisfies DashboardStats,
         }
       }
 
-      const transformedFiles: Array<UploadedFile> = historyData.data.map(
-        (deposit: any) => {
+      const transformedFiles: UploadedFile[] = historyData.data.map(
+        (deposit: {
+          id: number
+          contentCid: string
+          fileName?: string | null
+          fileSize?: number | null
+          fileType?: string | null
+          url?: string
+          createdAt: string
+          transactionHash?: string | null
+          durationDays: number
+          depositAmount: number
+          deletionStatus?: string | null
+          expiresAt?: string | null
+        }) => {
           let status: 'active' | 'expired' | 'pending' = 'active'
           if (deposit.deletionStatus === 'deleted') {
             status = 'expired'
           } else if (deposit.expiresAt) {
             const expirationDate = new Date(deposit.expiresAt)
-            const now = new Date()
-            if (expirationDate < now) {
-              status = 'expired'
-            } else if (deposit.deletionStatus === 'warned') {
-              status = 'active'
-            }
+            if (expirationDate < new Date()) status = 'expired'
           }
 
           return {
@@ -74,43 +67,33 @@ export function useUploadHistory() {
             size: Number(deposit.fileSize) || 0,
             type: deposit.fileType || 'application/octet-stream',
             url: deposit.url || '',
-
             uploadedAt: deposit.createdAt,
             signature: deposit.transactionHash || '',
             duration: deposit.durationDays,
-            cost: Number(deposit.depositAmount) / 1_000_000_000,
+            cost: 0,
             status,
           }
         },
       )
 
-      const totalStorage = transformedFiles.reduce(
-        (sum, file) => sum + file.size,
-        0,
-      )
-      const totalSpent = transformedFiles.reduce(
-        (sum, file) => sum + file.cost,
-        0,
-      )
+      const totalStorage = transformedFiles.reduce((sum, f) => sum + f.size, 0)
       const activeFiles = transformedFiles.filter(
-        (file) => file.status === 'active',
+        (f) => f.status === 'active',
       ).length
-
-      const stats: DashboardStats = {
-        totalFiles: transformedFiles.length,
-        totalStorage,
-        totalSpent,
-        activeFiles,
-      }
 
       return {
         files: transformedFiles,
-        stats,
+        stats: {
+          totalFiles: transformedFiles.length,
+          totalStorage,
+          totalSpent: 0,
+          activeFiles,
+        } satisfies DashboardStats,
       }
     },
     {
       revalidateOnFocus: true,
-      dedupingInterval: 10000,
+      dedupingInterval: 10_000,
     },
   )
 

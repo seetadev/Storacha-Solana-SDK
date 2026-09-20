@@ -15,6 +15,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LayoutAppIndexRouteImport } from './routes/_layout/app/index'
 import { Route as LayoutAppTransactionsRouteImport } from './routes/_layout/app/transactions'
+import { Route as LayoutAppSepoliaRouteImport } from './routes/_layout/app/sepolia'
 import { Route as LayoutAppMetricsRouteImport } from './routes/_layout/app/metrics'
 import { Route as LayoutAppHistoryRouteImport } from './routes/_layout/app/history'
 
@@ -47,6 +48,11 @@ const LayoutAppTransactionsRoute = LayoutAppTransactionsRouteImport.update({
   path: '/app/transactions',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAppSepoliaRoute = LayoutAppSepoliaRouteImport.update({
+  id: '/app/sepolia',
+  path: '/app/sepolia',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAppMetricsRoute = LayoutAppMetricsRouteImport.update({
   id: '/app/metrics',
   path: '/app/metrics',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/app/history': typeof LayoutAppHistoryRoute
   '/app/metrics': typeof LayoutAppMetricsRoute
+  '/app/sepolia': typeof LayoutAppSepoliaRoute
   '/app/transactions': typeof LayoutAppTransactionsRoute
   '/app/': typeof LayoutAppIndexRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/app/history': typeof LayoutAppHistoryRoute
   '/app/metrics': typeof LayoutAppMetricsRoute
+  '/app/sepolia': typeof LayoutAppSepoliaRoute
   '/app/transactions': typeof LayoutAppTransactionsRoute
   '/app': typeof LayoutAppIndexRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_layout/app/history': typeof LayoutAppHistoryRoute
   '/_layout/app/metrics': typeof LayoutAppMetricsRoute
+  '/_layout/app/sepolia': typeof LayoutAppSepoliaRoute
   '/_layout/app/transactions': typeof LayoutAppTransactionsRoute
   '/_layout/app/': typeof LayoutAppIndexRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app/history'
     | '/app/metrics'
+    | '/app/sepolia'
     | '/app/transactions'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app/history'
     | '/app/metrics'
+    | '/app/sepolia'
     | '/app/transactions'
     | '/app'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_layout/app/history'
     | '/_layout/app/metrics'
+    | '/_layout/app/sepolia'
     | '/_layout/app/transactions'
     | '/_layout/app/'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAppTransactionsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/app/sepolia': {
+      id: '/_layout/app/sepolia'
+      path: '/app/sepolia'
+      fullPath: '/app/sepolia'
+      preLoaderRoute: typeof LayoutAppSepoliaRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/app/metrics': {
       id: '/_layout/app/metrics'
       path: '/app/metrics'
@@ -189,6 +208,7 @@ declare module '@tanstack/react-router' {
 interface LayoutRouteChildren {
   LayoutAppHistoryRoute: typeof LayoutAppHistoryRoute
   LayoutAppMetricsRoute: typeof LayoutAppMetricsRoute
+  LayoutAppSepoliaRoute: typeof LayoutAppSepoliaRoute
   LayoutAppTransactionsRoute: typeof LayoutAppTransactionsRoute
   LayoutAppIndexRoute: typeof LayoutAppIndexRoute
 }
@@ -196,6 +216,7 @@ interface LayoutRouteChildren {
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAppHistoryRoute: LayoutAppHistoryRoute,
   LayoutAppMetricsRoute: LayoutAppMetricsRoute,
+  LayoutAppSepoliaRoute: LayoutAppSepoliaRoute,
   LayoutAppTransactionsRoute: LayoutAppTransactionsRoute,
   LayoutAppIndexRoute: LayoutAppIndexRoute,
 }

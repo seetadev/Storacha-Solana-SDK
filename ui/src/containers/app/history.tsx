@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react'
 import {
   CopyIcon,
+  DownloadSimpleIcon,
   FileIcon,
   ImageIcon,
   LinkIcon,
@@ -19,14 +20,19 @@ import {
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useNodeContext } from '@/hooks/context'
 import { useUploadHistory } from '@/hooks/upload-history'
+import { getApiBase } from '@/lib/meshkit-guest'
 import type { Filter } from '@/lib/types'
 import { formatFileSize } from '@/lib/utils'
 
 export const UploadHistory = () => {
   const { files, isLoading } = useUploadHistory()
+  const { activeNode } = useNodeContext()
+  const apiBase = getApiBase()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<Filter>('all')
+  const [retrievingCid, setRetrievingCid] = useState<string | null>(null)
 
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
@@ -44,13 +50,49 @@ export const UploadHistory = () => {
     expirationDate.setDate(expirationDate.getDate() + duration)
     const now = new Date()
     const diffTime = expirationDate.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success('CID copied to clipboard')
+  }
+
+  const retrieveFile = async (cid: string, filename: string) => {
+    setRetrievingCid(cid)
+    const toastId = toast.loading('Retrieving via MeshKit…')
+    try {
+      const res = await fetch(
+        `${apiBase}/upload/retrieve/${encodeURIComponent(cid)}`,
+        {
+          headers: { 'X-Kubo-Node-URL': activeNode.apiUrl },
+        },
+      )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(
+          (err as { error?: string; message?: string }).error ||
+            (err as { message?: string }).message ||
+            'Retrieve failed',
+        )
+      }
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objectUrl)
+      toast.success('Retrieved via MeshKit', { id: toastId })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Retrieve failed', {
+        id: toastId,
+      })
+    } finally {
+      setRetrievingCid(null)
+    }
   }
 
   const filteredFiles = files.filter((file) => {
@@ -65,7 +107,7 @@ export const UploadHistory = () => {
     return (
       <Box textAlign="center" py="4em">
         <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
-          Loading your files...
+          Loading your MeshKit uploads…
         </Text>
       </Box>
     )
@@ -76,7 +118,7 @@ export const UploadHistory = () => {
       <HStack spacing="1em">
         <Box position="relative" flex="1">
           <Input
-            placeholder="Search files..."
+            placeholder="Search files…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             pl="2.5em"
@@ -86,16 +128,12 @@ export const UploadHistory = () => {
             borderRadius="var(--radius-md)"
             color="var(--text-inverse)"
             fontSize="var(--font-size-sm)"
-            _hover={{
-              borderColor: 'var(--border-hover)',
-            }}
+            _hover={{ borderColor: 'var(--border-hover)' }}
             _focus={{
               borderColor: 'var(--primary-500)',
               boxShadow: '0 0 0 1px var(--primary-500)',
             }}
-            _placeholder={{
-              color: 'var(--text-tertiary)',
-            }}
+            _placeholder={{ color: 'var(--text-tertiary)' }}
           />
           <Box
             position="absolute"
@@ -167,7 +205,7 @@ export const UploadHistory = () => {
           >
             {searchTerm || filterStatus !== 'all'
               ? 'No files match your criteria'
-              : 'No files uploaded yet'}
+              : 'No MeshKit uploads yet'}
           </Text>
         </Box>
       ) : (
@@ -236,16 +274,6 @@ export const UploadHistory = () => {
                     justify="space-between"
                     fontSize="var(--font-size-xs)"
                   >
-                    <Text color="var(--text-tertiary)">Cost</Text>
-                    <Text color="var(--text-muted)">
-                      {file.cost.toFixed(6)} SOL
-                    </Text>
-                  </HStack>
-
-                  <HStack
-                    justify="space-between"
-                    fontSize="var(--font-size-xs)"
-                  >
                     <Text color="var(--text-tertiary)">Status</Text>
                     <Box
                       px="0.5em"
@@ -270,11 +298,7 @@ export const UploadHistory = () => {
                               : 'var(--success)'
                         }
                       >
-                        {isExpired
-                          ? 'Expired'
-                          : isExpiringSoon
-                            ? `${daysRemaining}d left`
-                            : `${daysRemaining}d left`}
+                        {isExpired ? 'Expired' : `${daysRemaining}d left`}
                       </Text>
                     </Box>
                   </HStack>
@@ -295,17 +319,32 @@ export const UploadHistory = () => {
                       onClick={() => copyToClipboard(file.cid)}
                     />
                     <IconButton
-                      aria-label="View file"
-                      icon={<LinkIcon size={16} />}
+                      aria-label="Retrieve via MeshKit"
+                      icon={<DownloadSimpleIcon size={16} />}
                       size="sm"
                       variant="ghost"
                       color="var(--text-muted)"
+                      isLoading={retrievingCid === file.cid}
                       _hover={{
                         bg: 'var(--lght-grey)',
                         color: 'var(--primary-500)',
                       }}
-                      onClick={() => window.open(file.url, '_blank')}
+                      onClick={() => retrieveFile(file.cid, file.filename)}
                     />
+                    {file.url && (
+                      <IconButton
+                        aria-label="Open gateway"
+                        icon={<LinkIcon size={16} />}
+                        size="sm"
+                        variant="ghost"
+                        color="var(--text-muted)"
+                        _hover={{
+                          bg: 'var(--lght-grey)',
+                          color: 'var(--primary-500)',
+                        }}
+                        onClick={() => window.open(file.url, '_blank')}
+                      />
+                    )}
                   </HStack>
                 </Stack>
               </Box>

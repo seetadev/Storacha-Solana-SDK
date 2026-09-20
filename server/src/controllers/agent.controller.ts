@@ -72,10 +72,10 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
       nodeUrl,
     )
 
-    if (pinnedCID !== computedCID)
+    if (pinnedCID.primaryCid !== computedCID)
       logger.warn('CID mismatch between pre-computed and pinned', {
         computed: computedCID,
-        pinned: pinnedCID,
+        pinned: pinnedCID.primaryCid,
       })
 
     let payerAddress = 'agent'

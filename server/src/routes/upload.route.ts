@@ -39,6 +39,20 @@ uploadsRouter.post('/confirm', uploadsController.confirmUpload)
 uploadsRouter.post('/fil/verify-payment', uploadsController.verifyUsdFcPayment)
 
 uploadsRouter.post(
+  '/meshkit',
+  uploadLimiter,
+  upload.fields([{ name: 'file' }]),
+  uploadsController.uploadMeshkit,
+)
+uploadsRouter.post(
+  '/sepolia',
+  uploadLimiter,
+  upload.fields([{ name: 'file' }]),
+  uploadsController.uploadMeshkit,
+)
+uploadsRouter.get('/retrieve/:cid', uploadsController.retrieveMeshkit)
+
+uploadsRouter.post(
   '/agent',
   upload.single('file'),
   agentController.uploadAgentFile,

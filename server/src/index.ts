@@ -19,7 +19,7 @@ import { logger } from './utils/logger.js'
 import { ensureConfigInitialized } from './utils/solana/index.js'
 
 dotenv.config()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5040
 
 /**
  *  Validate all required env variables upfront
@@ -47,7 +47,13 @@ const app = express()
 const corsOptions: cors.CorsOptions = {
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'], // OPTIONS is required for preflight requests
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-Kubo-Node-URL',
+    'X-IPFS-Gateway-URL',
+  ],
   exposedHeaders: ['Content-Length', 'Content-Type'],
   maxAge: 3600, // cache preflight response for 1 hour
 }

@@ -1,11 +1,18 @@
-import {
-  createMeshkitClient,
-  init,
-  setupGracefulShutdown,
-} from '@ipfs-meshkit/meshkit'
+import { init, setupGracefulShutdown } from '@ipfs-meshkit/meshkit'
 import { logger } from '../../utils/logger.js'
 
 type KuboClient = Awaited<ReturnType<typeof init>>['meshkit']
+
+export type PinnedFile = {
+  name: string
+  cid: string
+  mimetype: string
+}
+
+export type PinFilesResult = {
+  primaryCid: string
+  files: PinnedFile[]
+}
 
 /**
  * Pool of initialised meshkit clients keyed by a stable, sorted URL string.
@@ -137,40 +144,66 @@ export function gatewayUrl(
 
 /**
  * Uploads every file in fileMap to the target Kubo node and pins each one
- * using meshkit.upload() + meshkit.pin().
+ * using meshkit.upload() + meshkit.pin() — the MeshKit Kubo round-trip.
  *
- * Returns the CID of the first (or only) file — the canonical identifier
- * stored on-chain and in the database.
+ * Each file gets its own CID (MeshKit uploads raw bytes, not directories).
+ * `primaryCid` is the first file's CID for DB / legacy callers.
  *
+ * @param encryptPassword  Optional AES-256-GCM password (MeshKit encrypt option).
  * @param nodeUrl  Optional override from X-Kubo-Node-URL request header.
- *                 When absent, falls back to KUBO_NODES / KUBO_API_URL / local.
  */
 export async function pinFiles(
   fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
   directoryName: string,
   nodeUrl?: string,
-): Promise<string> {
+  encryptPassword?: string,
+): Promise<PinFilesResult> {
   const client = await getClientForNodes(nodeUrl ? [nodeUrl] : undefined)
+  const uploadOpts = encryptPassword
+    ? { encrypt: { password: encryptPassword } }
+    : undefined
 
-  let primaryCid = ''
+  const files: PinnedFile[] = []
 
-  for (const [name, { buffer }] of Object.entries(fileMap)) {
-    const cid = await client.upload(new Uint8Array(buffer))
+  for (const [name, { buffer, mimetype }] of Object.entries(fileMap)) {
+    const cid = await client.upload(new Uint8Array(buffer), uploadOpts)
     await client.pin(cid)
-
-    if (!primaryCid) primaryCid = cid
-
+    files.push({ name, cid, mimetype })
     logger.info('meshkit: file uploaded and pinned', { name, cid, nodeUrl })
   }
 
+  const primaryCid = files[0]?.cid ?? ''
+
   logger.info('meshkit: all files pinned', {
     directoryName,
-    fileCount: Object.keys(fileMap).length,
+    fileCount: files.length,
     primaryCid,
     nodeUrl,
+    encrypted: Boolean(encryptPassword),
   })
 
-  return primaryCid
+  return { primaryCid, files }
+}
+
+/**
+ * Retrieves file bytes by CID via meshkit.retrieve().
+ * Pass `password` when the content was uploaded with MeshKit encryption.
+ */
+export async function retrieveFile(
+  cid: string,
+  nodeUrl?: string,
+  password?: string,
+): Promise<Uint8Array> {
+  const client = await getClientForNodes(nodeUrl ? [nodeUrl] : undefined)
+  const retrieveOpts = password ? { password } : undefined
+  const bytes = await client.retrieve(cid, retrieveOpts)
+  logger.info('meshkit: file retrieved', {
+    cid,
+    byteLength: bytes.byteLength,
+    nodeUrl,
+    decrypted: Boolean(password),
+  })
+  return bytes
 }
 
 /**

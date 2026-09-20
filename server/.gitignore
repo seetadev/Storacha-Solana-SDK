@@ -64,3 +64,4 @@ docker-compose.override.yml
 # Optional: Test output
 test-output/
 .jest/
+.ipfs/

@@ -18,7 +18,11 @@ import {
 import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
 import { getPricingConfig } from '../utils/pricing.js'
-import { gatewayUrl, pinFiles } from '../services/storage/meshkit.service.js'
+import {
+  gatewayUrl,
+  pinFiles,
+  retrieveFile,
+} from '../services/storage/meshkit.service.js'
 
 /** Extract optional per-request Kubo node overrides from headers. */
 function extractNodeHeaders(req: {
@@ -48,7 +52,7 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
 
-    const pinnedCID = await pinFiles(
+    const { primaryCid: pinnedCID } = await pinFiles(
       {
         [file.originalname]: {
           buffer: new Uint8Array(file.buffer),
@@ -67,7 +71,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     }
 
     Sentry.setContext('file-upload', {
-      cid: cid,
+      cid: pinnedCID,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
@@ -75,13 +79,13 @@ export const uploadFile = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Upload successful',
-      cid: cid,
+      cid: pinnedCID,
       object: {
-        cid: cid,
+        cid: pinnedCID,
         filename: file.originalname,
         size: file.size,
         type: file.mimetype,
-        url: gatewayUrl(cid, file.originalname, gatewayBase, nodeUrl),
+        url: gatewayUrl(pinnedCID, file.originalname, gatewayBase, nodeUrl),
         uploadedAt: new Date().toISOString(),
       },
     })
@@ -121,7 +125,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
       }
     }
 
-    const pinnedCID = await pinFiles(
+    const { primaryCid: pinnedCID, files: pinnedFiles } = await pinFiles(
       fileMap,
       `directory-${crypto.randomUUID()}`,
       nodeUrl,
@@ -134,7 +138,7 @@ export const uploadFiles = async (req: Request, res: Response) => {
       })
 
     Sentry.setContext('multi-file-upload', {
-      cid,
+      cid: pinnedCID,
       fileSize: files?.reduce((acc, curr) => acc + curr.size, 0),
       fileNames: files.map((f) => f.originalname),
       mimeTypes: files.map((f) => f.mimetype),
@@ -143,16 +147,17 @@ export const uploadFiles = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: 'Upload successful',
-      cid,
+      cid: pinnedCID,
       object: {
-        cid,
-        url: gatewayUrl(cid, undefined, gatewayBase, nodeUrl),
+        cid: pinnedCID,
+        url: gatewayUrl(pinnedCID, undefined, gatewayBase, nodeUrl),
         size: files.reduce((sum, f) => sum + f.size, 0),
-        files: files.map((f) => ({
-          filename: f.originalname,
-          size: f.size,
+        files: pinnedFiles.map((f) => ({
+          filename: f.name,
+          size: fileMap[f.name]?.buffer.byteLength ?? 0,
           type: f.mimetype,
-          url: gatewayUrl(cid, f.originalname, gatewayBase, nodeUrl),
+          cid: f.cid,
+          url: gatewayUrl(f.cid, f.name, gatewayBase, nodeUrl),
         })),
         uploadedAt: new Date().toISOString(),
       },
@@ -231,7 +236,7 @@ export const deposit = async (req: Request, res: Response) => {
       amountInLamports,
     })
 
-    const pinnedCID = await pinFiles(
+    const { primaryCid: pinnedCID } = await pinFiles(
       fileMap,
       fileArray.length === 1
         ? fileArray[0].originalname
@@ -443,7 +448,7 @@ export const depositUsdFC = async (req: Request, res: Response) => {
     const durationNum = Number(duration)
     if (!Number.isFinite(durationNum)) throw new Error('Invalid duration')
 
-    const pinnedCID = await pinFiles(
+    const { primaryCid: pinnedCID } = await pinFiles(
       fileMap,
       fileArray.length === 1
         ? fileArray[0].originalname
@@ -754,6 +759,196 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
     })
     return res.status(500).json({
       message: 'Error verifying USDFC payment',
+    })
+  }
+}
+
+/**
+ * MeshKit upload — pin files to the local/remote Kubo node with no payment.
+ *
+ * Body:  userAddress   (required) — guest or wallet id for history
+ *        encryptPassword (optional) — MeshKit AES-256-GCM encrypt-on-upload
+ *        userEmail     (optional)
+ *        directoryName (optional)
+ * Files: file (multipart, one or many)
+ * Headers: X-Kubo-Node-URL / X-IPFS-Gateway-URL (optional)
+ *
+ * Each file is uploaded+pinned via meshkit.upload/pin and stored as its own
+ * CID row so retrieve works per file.
+ */
+export const uploadMeshkit = async (req: Request, res: Response) => {
+  try {
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
+    const { userAddress, userEmail, directoryName, encryptPassword } = req.body
+    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
+
+    if (!userAddress) {
+      return res.status(400).json({ message: 'userAddress is required' })
+    }
+
+    // deposit_key is varchar(44) — keep guest/wallet ids within that limit
+    const depositKey = String(userAddress).slice(0, 44)
+
+    const dirLabel =
+      fileArray.length === 1
+        ? fileArray[0].originalname
+        : directoryName || `dir-${Date.now()}`
+
+    const { primaryCid, files: pinnedFiles } = await pinFiles(
+      fileMap,
+      dirLabel,
+      nodeUrl,
+      typeof encryptPassword === 'string' && encryptPassword.length > 0
+        ? encryptPassword
+        : undefined,
+    )
+
+    const oneYearFromNow = new Date()
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+    const expiresAt = oneYearFromNow.toISOString().split('T')[0]
+    const createdAt = new Date().toISOString()
+
+    const responseFiles = []
+
+    for (const pinned of pinnedFiles) {
+      const original = fileArray.find((f) => f.originalname === pinned.name)
+      const size =
+        original?.size ?? fileMap[pinned.name]?.buffer.byteLength ?? 0
+
+      await db.insert(uploads).values({
+        depositAmount: 0,
+        durationDays: 365,
+        contentCid: pinned.cid,
+        depositKey,
+        depositSlot: 0,
+        lastClaimedSlot: 0,
+        expiresAt,
+        createdAt,
+        userEmail: userEmail || null,
+        fileName: pinned.name,
+        fileType: pinned.mimetype,
+        fileSize: size,
+        transactionHash: `meshkit:${pinned.cid.slice(0, 16)}`,
+        deletionStatus: 'active',
+        warningSentAt: null,
+        paymentChain: 'mesh',
+        paymentToken: 'NONE',
+        kuboNodeUrl: nodeUrl || null,
+      })
+
+      responseFiles.push({
+        name: pinned.name,
+        size,
+        type: pinned.mimetype,
+        cid: pinned.cid,
+        url: gatewayUrl(pinned.cid, pinned.name, gatewayBase, nodeUrl),
+        retrieveUrl: `/upload/retrieve/${encodeURIComponent(pinned.cid)}`,
+      })
+    }
+
+    Sentry.setContext('meshkit-upload', {
+      cid: primaryCid,
+      userAddress: depositKey,
+      fileCount: pinnedFiles.length,
+      totalSize,
+      encrypted: Boolean(encryptPassword),
+    })
+
+    logger.info('MeshKit upload complete', {
+      cid: primaryCid,
+      userAddress: depositKey,
+      fileCount: pinnedFiles.length,
+      totalSize,
+      nodeUrl,
+    })
+
+    return res.status(200).json({
+      message: 'Files uploaded and pinned via MeshKit',
+      cid: primaryCid,
+      url: gatewayUrl(
+        primaryCid,
+        pinnedFiles.length === 1 ? pinnedFiles[0].name : undefined,
+        gatewayBase,
+        nodeUrl,
+      ),
+      files: responseFiles,
+      totalSize,
+      encrypted: Boolean(encryptPassword),
+      uploadedAt: createdAt,
+    })
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error in MeshKit upload', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return res.status(500).json({
+      message: 'Upload failed',
+      error: error instanceof Error ? error.message : String(error),
+    })
+  }
+}
+
+/** @deprecated Use uploadMeshkit — kept as alias for older Sepolia UI path */
+export const uploadSepolia = uploadMeshkit
+
+/**
+ * Retrieve file bytes by CID via meshkit.retrieve().
+ *
+ * GET /upload/retrieve/:cid
+ * Query: password (optional) — decrypt if uploaded with encryptPassword
+ * Headers: X-Kubo-Node-URL (optional)
+ */
+export const retrieveMeshkit = async (req: Request, res: Response) => {
+  try {
+    const cid = req.params.cid as string
+    if (!cid) {
+      return res.status(400).json({ message: 'CID is required' })
+    }
+
+    const { nodeUrl } = extractNodeHeaders(req)
+    const password =
+      typeof req.query.password === 'string' && req.query.password.length > 0
+        ? req.query.password
+        : undefined
+
+    // Prefer the Kubo node recorded at upload time when no override is sent
+    let resolvedNode = nodeUrl
+    if (!resolvedNode) {
+      const [record] = await db
+        .select()
+        .from(uploads)
+        .where(eq(uploads.contentCid, cid))
+        .limit(1)
+      resolvedNode = record?.kuboNodeUrl ?? undefined
+    }
+
+    const [meta] = await db
+      .select()
+      .from(uploads)
+      .where(eq(uploads.contentCid, cid))
+      .limit(1)
+
+    const bytes = await retrieveFile(cid, resolvedNode, password)
+    const filename = meta?.fileName || 'download'
+    const mimetype = meta?.fileType || 'application/octet-stream'
+
+    res.setHeader('Content-Type', mimetype)
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(filename)}"`,
+    )
+    res.setHeader('X-IPFS-CID', cid)
+    res.setHeader('Cache-Control', 'private, max-age=3600')
+    return res.status(200).send(Buffer.from(bytes))
+  } catch (error) {
+    Sentry.captureException(error)
+    logger.error('Error retrieving via MeshKit', {
+      error: error instanceof Error ? error.message : String(error),
+      cid: req.params.cid,
+    })
+    return res.status(404).json({
+      message: 'Failed to retrieve file',
+      error: error instanceof Error ? error.message : String(error),
     })
   }
 }

@@ -10,7 +10,6 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import {
-  ArrowsLeftRightIcon,
   ChartLineIcon,
   ClockCounterClockwiseIcon,
   UploadSimpleIcon,
@@ -29,11 +28,6 @@ const navItems = [
     name: 'History',
     path: '/app/history',
     icon: ClockCounterClockwiseIcon,
-  },
-  {
-    name: 'Transactions',
-    path: '/app/transactions',
-    icon: ArrowsLeftRightIcon,
   },
   {
     name: 'Metrics',
@@ -116,6 +110,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
         {navItems.map((item, index) => {
           const isActive = activeIndex === index
           const Icon = item.icon
+          const activeColor = 'var(--primary-500)'
 
           return (
             <Link
@@ -155,9 +150,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 >
                   <Icon
                     size={20}
-                    color={
-                      isActive ? 'var(--primary-500)' : 'var(--text-muted)'
-                    }
+                    color={isActive ? activeColor : 'var(--text-muted)'}
                     weight={isActive ? 'fill' : 'regular'}
                     style={{ transition: 'color 0.2s ease-in' }}
                   />
@@ -165,7 +158,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 <Text
                   fontSize="14px"
                   fontWeight={isActive ? '500' : '400'}
-                  color={isActive ? 'var(--primary-500)' : 'var(--text-muted)'}
+                  color={isActive ? activeColor : 'var(--text-muted)'}
                   transition="color 0.2s ease-in, font-weight 0.2s ease-in"
                 >
                   {item.name}
