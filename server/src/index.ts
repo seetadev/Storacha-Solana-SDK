@@ -1,6 +1,7 @@
 // sentry requires us to have the instrument file as the topmost import
 import './instrument.js'
 
+import dns from 'node:dns'
 import * as Sentry from '@sentry/node'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -19,6 +20,9 @@ import { logger } from './utils/logger.js'
 import { ensureConfigInitialized } from './utils/solana/index.js'
 
 dotenv.config()
+// Prefer IPv4. Undici otherwise reports a bare "fetch failed" when a host
+// advertises a broken IPv6 address (common with hosted Kubo nodes).
+dns.setDefaultResultOrder('ipv4first')
 const PORT = process.env.PORT || 5040
 
 /**
@@ -53,6 +57,8 @@ const corsOptions: cors.CorsOptions = {
     'X-Requested-With',
     'X-Kubo-Node-URL',
     'X-IPFS-Gateway-URL',
+    'X-PPT-Tx-Hash',
+    'X-User-Address',
   ],
   exposedHeaders: ['Content-Length', 'Content-Type'],
   maxAge: 3600, // cache preflight response for 1 hour

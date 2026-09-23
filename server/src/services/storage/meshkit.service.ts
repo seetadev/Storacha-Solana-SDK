@@ -43,7 +43,7 @@ function isLocalUrl(url: string): boolean {
  *   1. Explicit array from the caller (X-Kubo-Node-URL request header)
  *   2. KUBO_NODES env var  — comma-separated list, supports local + remote
  *   3. KUBO_API_URL env var — single URL
- *   4. Hard-coded local fallback
+ *   4. Hard-coded Render Kubo fallback
  */
 function resolveNodeUrls(override?: string[]): string[] {
   if (override?.length) return override
@@ -54,7 +54,7 @@ function resolveNodeUrls(override?: string[]): string[] {
       .filter(Boolean)
   }
 
-  return [process.env.KUBO_API_URL ?? 'http://127.0.0.1:5001']
+  return [process.env.KUBO_API_URL ?? 'https://kubo-render.onrender.com']
 }
 
 /**
@@ -80,19 +80,17 @@ async function getClientForNodes(nodeUrls?: string[]): Promise<KuboClient> {
 
   let meshkit: KuboClient
 
-  if (needsLocalDaemon && remoteUrls.length > 0) {
-    // Local daemon as primary + remote nodes as automatic failover
-    const result = await init({ localNode: true, nodes: remoteUrls })
-    if (result.localNode) setupGracefulShutdown(result.localNode)
-    meshkit = result.meshkit
-  } else if (needsLocalDaemon) {
-    // Local daemon only
+  if (needsLocalDaemon && remoteUrls.length === 0) {
+    // Local daemon only — start or attach so dev machines without a
+    // running Kubo process can still pin.
     const result = await init({ localNode: true })
     if (result.localNode) setupGracefulShutdown(result.localNode)
     meshkit = result.meshkit
   } else {
-    // Remote node(s) only — no local daemon spawn
-    const result = await init({ nodes: remoteUrls })
+    // Talk to the listed RPC URLs. Do not spawn a daemon when a remote
+    // node is available: a dead localhost must not block that failover,
+    // and spawning `ipfs` throws before the remote node is tried.
+    const result = await init({ nodes: urls })
     meshkit = result.meshkit
   }
 
@@ -135,11 +133,161 @@ export function gatewayUrl(
     gatewayBase ??
     (nodeApiUrl ? deriveGatewayFromApiUrl(nodeApiUrl) : undefined) ??
     process.env.IPFS_GATEWAY ??
-    'http://127.0.0.1:8080'
+    'https://kubo-render.onrender.com'
 
   return filename
     ? `${base}/ipfs/${cid}?filename=${encodeURIComponent(filename)}`
     : `${base}/ipfs/${cid}`
+}
+
+function describeError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const cause = error.cause
+  const causeText =
+    cause instanceof Error
+      ? cause.message
+      : typeof cause === 'string'
+        ? cause
+        : ''
+  if (causeText && !error.message.includes(causeText)) {
+    return `${error.message} (${causeText})`
+  }
+  return error.message
+}
+
+function isTransientFetch(error: unknown): boolean {
+  const msg = describeError(error).toLowerCase()
+  return (
+    msg.includes('fetch failed') ||
+    msg.includes('econnrefused') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('timed out') ||
+    msg.includes('socket') ||
+    msg.includes('network')
+  )
+}
+
+function candidateNodeUrls(nodeUrl?: string): string[] {
+  const urls: string[] = []
+  const push = (url?: string) => {
+    const trimmed = url?.trim()
+    if (trimmed && !urls.includes(trimmed)) urls.push(trimmed)
+  }
+  push(nodeUrl)
+  for (const url of resolveNodeUrls()) push(url)
+  return urls
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Pin via Kubo's HTTP API. Used when meshkit.upload() fails with a transport
+ * error ("fetch failed") after the node already answered a health check.
+ * Encryption stays on the meshkit path — this only sends plaintext bytes.
+ */
+async function pinWithKuboHttp(
+  nodeUrl: string,
+  fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
+  directoryName: string,
+): Promise<PinFilesResult> {
+  const base = nodeUrl.replace(/\/+$/, '')
+  const files: PinnedFile[] = []
+
+  for (const [name, { buffer, mimetype }] of Object.entries(fileMap)) {
+    const form = new FormData()
+    form.append('file', new Blob([Buffer.from(buffer)]), name)
+
+    const addRes = await fetch(
+      `${base}/api/v0/add?cid-version=1&pin=false&quieter=true`,
+      { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) },
+    )
+    if (!addRes.ok) {
+      const body = await addRes.text().catch(() => '')
+      throw new Error(
+        `Kubo add failed (${addRes.status}) at ${base}: ${body.slice(0, 180)}`,
+      )
+    }
+
+    const raw = (await addRes.text()).trim()
+    const lastLine = raw.split('\n').filter(Boolean).at(-1) ?? ''
+    const parsed = JSON.parse(lastLine) as { Hash?: string }
+    const cid = parsed.Hash
+    if (!cid) throw new Error(`Kubo add at ${base} did not return a CID`)
+
+    const pinRes = await fetch(
+      `${base}/api/v0/pin/add?arg=${encodeURIComponent(cid)}`,
+      { method: 'POST', signal: AbortSignal.timeout(60_000) },
+    )
+    if (!pinRes.ok) {
+      const body = await pinRes.text().catch(() => '')
+      throw new Error(
+        `Kubo pin failed (${pinRes.status}) at ${base}: ${body.slice(0, 180)}`,
+      )
+    }
+
+    files.push({ name, cid, mimetype })
+    logger.info('kubo http: file uploaded and pinned', {
+      name,
+      cid,
+      nodeUrl: base,
+    })
+  }
+
+  const primaryCid = files[0]?.cid ?? ''
+  logger.info('kubo http: all files pinned', {
+    directoryName,
+    fileCount: files.length,
+    primaryCid,
+    nodeUrl: base,
+  })
+  return { primaryCid, files }
+}
+
+async function pinWithMeshkit(
+  client: KuboClient,
+  fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
+  directoryName: string,
+  encryptPassword?: string,
+): Promise<PinFilesResult> {
+  const uploadOpts = encryptPassword
+    ? { encrypt: { password: encryptPassword } }
+    : undefined
+  const files: PinnedFile[] = []
+
+  for (const [name, { buffer, mimetype }] of Object.entries(fileMap)) {
+    let cid = ''
+    let lastError: unknown
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        cid = await client.upload(new Uint8Array(buffer), uploadOpts)
+        await client.pin(cid)
+        lastError = undefined
+        break
+      } catch (err) {
+        lastError = err
+        logger.warn('meshkit: upload attempt failed', {
+          name,
+          attempt,
+          error: describeError(err),
+        })
+        if (attempt === 3 || !isTransientFetch(err)) break
+        await sleep(1000 * attempt)
+      }
+    }
+    if (!cid || lastError) {
+      throw lastError instanceof Error
+        ? lastError
+        : new Error(describeError(lastError))
+    }
+    files.push({ name, cid, mimetype })
+    logger.info('meshkit: file uploaded and pinned', { name, cid })
+  }
+
+  return {
+    primaryCid: files[0]?.cid ?? '',
+    files,
+  }
 }
 
 /**
@@ -148,6 +296,11 @@ export function gatewayUrl(
  *
  * Each file gets its own CID (MeshKit uploads raw bytes, not directories).
  * `primaryCid` is the first file's CID for DB / legacy callers.
+ *
+ * The node from the request is tried first, then KUBO_NODES / the hosted
+ * fallback. A dead localhost no longer fails the upload when another node
+ * is reachable. Plaintext uploads fall back to Kubo's HTTP API when
+ * meshkit's client reports "fetch failed".
  *
  * @param encryptPassword  Optional AES-256-GCM password (MeshKit encrypt option).
  * @param nodeUrl  Optional override from X-Kubo-Node-URL request header.
@@ -158,31 +311,51 @@ export async function pinFiles(
   nodeUrl?: string,
   encryptPassword?: string,
 ): Promise<PinFilesResult> {
-  const client = await getClientForNodes(nodeUrl ? [nodeUrl] : undefined)
-  const uploadOpts = encryptPassword
-    ? { encrypt: { password: encryptPassword } }
-    : undefined
+  const urls = candidateNodeUrls(nodeUrl)
+  let meshkitError: unknown
 
-  const files: PinnedFile[] = []
-
-  for (const [name, { buffer, mimetype }] of Object.entries(fileMap)) {
-    const cid = await client.upload(new Uint8Array(buffer), uploadOpts)
-    await client.pin(cid)
-    files.push({ name, cid, mimetype })
-    logger.info('meshkit: file uploaded and pinned', { name, cid, nodeUrl })
+  try {
+    const client = await getClientForNodes(urls)
+    const pinned = await pinWithMeshkit(
+      client,
+      fileMap,
+      directoryName,
+      encryptPassword,
+    )
+    logger.info('meshkit: all files pinned', {
+      directoryName,
+      fileCount: pinned.files.length,
+      primaryCid: pinned.primaryCid,
+      nodeUrl,
+      encrypted: Boolean(encryptPassword),
+    })
+    return pinned
+  } catch (err) {
+    meshkitError = err
+    logger.warn('meshkit: pin failed', {
+      error: describeError(err),
+      urls,
+      encrypted: Boolean(encryptPassword),
+    })
   }
 
-  const primaryCid = files[0]?.cid ?? ''
+  if (encryptPassword) {
+    throw new Error(
+      `Could not pin encrypted files: ${describeError(meshkitError)}`,
+    )
+  }
 
-  logger.info('meshkit: all files pinned', {
-    directoryName,
-    fileCount: files.length,
-    primaryCid,
-    nodeUrl,
-    encrypted: Boolean(encryptPassword),
-  })
+  let httpError: unknown = meshkitError
+  for (const url of urls) {
+    try {
+      return await pinWithKuboHttp(url, fileMap, directoryName)
+    } catch (err) {
+      httpError = err
+      logger.warn('kubo http: pin failed', { url, error: describeError(err) })
+    }
+  }
 
-  return { primaryCid, files }
+  throw new Error(`Could not pin files: ${describeError(httpError)}`)
 }
 
 /**
@@ -276,17 +449,53 @@ export async function getMeshkitUsage(nodeUrl?: string): Promise<{
  * Verifies that a Kubo node at nodeUrl is reachable and responsive.
  * Used by GET /health/ipfs?nodeUrl=… to power the UI "Test connection" button.
  *
- * Routes through getClientForNodes so the exact URL is resolved correctly:
- * - Standard local port (5001) → localNode: true
- * - Any other URL (including non-standard localhost ports) → init({ nodes })
- *   which health-checks the node at init time and throws if unreachable.
+ * Uses a lightweight POST /api/v0/id probe (not full meshkit init + listPins),
+ * so hosted nodes like Render stay green even on cold starts / large pinsets.
  */
 export async function checkNodeHealth(nodeUrl: string): Promise<{
   ok: boolean
   nodeUrl: string
   pinCount: number
 }> {
-  const client = await getClientForNodes([nodeUrl])
-  const pins = await client.listPins()
-  return { ok: true, nodeUrl, pinCount: pins.length }
+  const base = nodeUrl.replace(/\/+$/, '')
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 20_000)
+
+  try {
+    const idRes = await fetch(`${base}/api/v0/id`, {
+      method: 'POST',
+      signal: controller.signal,
+    })
+
+    if (!idRes.ok) {
+      const body = await idRes.text().catch(() => '')
+      throw new Error(
+        `Kubo /id returned ${idRes.status}${body ? `: ${body.slice(0, 160)}` : ''}`,
+      )
+    }
+
+    // Optional pin count — don't fail health if this endpoint is slow/restricted
+    let pinCount = 0
+    try {
+      const pinsRes = await fetch(`${base}/api/v0/pin/ls?type=recursive`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(8_000),
+      })
+      if (pinsRes.ok) {
+        const pinsJson = (await pinsRes.json()) as {
+          Keys?: Record<string, unknown>
+        }
+        pinCount = pinsJson.Keys ? Object.keys(pinsJson.Keys).length : 0
+      }
+    } catch (err) {
+      logger.warn('meshkit: pin count skipped during health check', {
+        nodeUrl,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    return { ok: true, nodeUrl, pinCount }
+  } finally {
+    clearTimeout(timer)
+  }
 }

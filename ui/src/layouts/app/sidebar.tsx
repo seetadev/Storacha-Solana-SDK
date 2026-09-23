@@ -15,7 +15,6 @@ import {
   UploadSimpleIcon,
 } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 
 const navItems = [
@@ -47,12 +46,14 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
   const navigate = useNavigate()
   const location = useLocation()
   const pathname = location.pathname
-  const [activeIndex, setActiveIndex] = useState<number>(
-    navItems.findIndex((i) => i.path === pathname) || 0,
+  // Derived from the live route so back/forward + deep links keep the
+  // indicator and highlight in sync (no stale useState snapshot).
+  const activeIndex = Math.max(
+    0,
+    navItems.findIndex((i) => i.path === pathname),
   )
 
-  const goToRoute = (index: number, path: FileRouteTypes['to']) => {
-    setActiveIndex(index)
+  const goToRoute = (path: FileRouteTypes['to']) => {
     navigate({ to: path })
     onClose?.()
   }
@@ -127,9 +128,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 position="relative"
                 px=".4em"
                 zIndex={1}
-                onClick={() =>
-                  goToRoute(index, item.path as FileRouteTypes['to'])
-                }
+                onClick={() => goToRoute(item.path as FileRouteTypes['to'])}
                 transition="background 0.2s ease"
                 _hover={{
                   background: isActive

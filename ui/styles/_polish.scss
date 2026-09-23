@@ -1,0 +1,109 @@
+// Global color / hover / transition polish for the dark theme.
+// Chakra variant="solid" renders near-white on dark backgrounds, so
+// selectable pills use custom classes instead of the solid variant.
+
+.pill {
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  transition:
+    color var(--transition-base),
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    transform var(--transition-base);
+
+  &:hover {
+    color: var(--text-inverse);
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+}
+
+.pill-active {
+  color: var(--primary-400);
+  background-color: rgba(249, 115, 22, 0.14);
+  border-color: rgba(249, 115, 22, 0.45);
+
+  &:hover {
+    color: var(--primary-300);
+    background-color: rgba(249, 115, 22, 0.22);
+    border-color: rgba(249, 115, 22, 0.6);
+  }
+}
+
+// ---- App-wide interaction rhythm ----
+button,
+a {
+  transition:
+    color var(--transition-base),
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(249, 115, 22, 0.35);
+  color: #fff;
+}
+
+// ---- Share-row mini actions ----
+.upload-share-row button {
+  border-radius: var(--radius-md);
+
+  &:hover {
+    background-color: rgba(249, 115, 22, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+// ---- Ghost / subtle buttons ----
+button.chakra-button[variant='ghost'],
+a.chakra-button[variant='ghost'] {
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+}
+
+// ---- Thin dark scrollbars ----
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+
+  &:hover {
+    background: rgba(249, 115, 22, 0.45);
+  }
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

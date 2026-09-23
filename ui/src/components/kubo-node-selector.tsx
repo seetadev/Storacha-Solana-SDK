@@ -119,7 +119,7 @@ const NodeRow = ({
         </Text>
       )}
 
-      {node.id !== 'local-default' && (
+      {node.id !== 'local-default' && node.id !== 'render-default' && (
         <IconButton
           aria-label="Remove node"
           icon={<TrashIcon size={14} />}
@@ -177,7 +177,7 @@ const AddNodeForm = ({ onAdd, onCancel }: AddNodeFormProps) => {
         borderRadius="8px"
       />
       <Input
-        placeholder="Kubo API URL (e.g. http://kubo.aws.example.com:5001)"
+        placeholder="Kubo API URL (e.g. https://kubo-render.onrender.com)"
         value={apiUrl}
         onChange={(e) => setApiUrl(e.target.value)}
         size="sm"

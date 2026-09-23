@@ -34,11 +34,12 @@ interface FileItemProps {
 export const FileItem = ({ file, onRemove }: FileItemProps) => {
   return (
     <HStack
-      p="1em"
+      className="upload-fileitem"
+      p="0.85em 1em"
       bg="var(--bg-dark)"
       border="1px solid var(--border-dark)"
-      borderRadius="var(--radius-md)"
-      spacing="1em"
+      borderRadius="var(--radius-lg)"
+      spacing="0.9em"
       transition="all 0.2s ease"
       borderColor="rgba(255, 255, 255, 0.08)"
       _hover={{

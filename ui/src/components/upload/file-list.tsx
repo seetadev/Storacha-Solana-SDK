@@ -31,7 +31,7 @@ export const FileList = ({
   }
 
   return (
-    <VStack spacing="1em" align="stretch">
+    <VStack spacing="0.9em" align="stretch" className="upload-filelist">
       <HStack justify="space-between" align="center">
         <Text
           fontSize="var(--font-size-sm)"

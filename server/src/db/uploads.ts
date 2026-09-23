@@ -31,7 +31,7 @@ export const getUserHistory = async (
   ctx?: PaginationContext,
 ) => {
   try {
-    const userAddress = wallet
+    const userAddress = wallet.trim().toLowerCase()
     const offset = (page - 1) * limit
 
     // before the payment_chain integration, all transactions, by default should be SOL
@@ -41,15 +41,19 @@ export const getUserHistory = async (
         ? or(eq(uploads.paymentChain, chain), isNull(uploads.paymentChain))
         : eq(uploads.paymentChain, chain)
 
+    // deposit_key is stored lowercase, but older rows and checksummed
+    // queries must still match or history looks empty after a paid upload.
+    const ownerMatch = sql`lower(${uploads.depositKey}) = ${userAddress}`
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
+      .where(and(ownerMatch, paymentChainFilter))
 
     const data = await db
       .select()
       .from(uploads)
-      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
+      .where(and(ownerMatch, paymentChainFilter))
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
       .offset(offset)

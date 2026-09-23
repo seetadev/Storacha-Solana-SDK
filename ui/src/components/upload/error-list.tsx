@@ -10,6 +10,8 @@ export const ErrorList = ({ errors }: ErrorListProps) => {
 
   return (
     <VStack
+      className="upload-errors"
+      role="alert"
       spacing="0.75em"
       align="stretch"
       p="1em"

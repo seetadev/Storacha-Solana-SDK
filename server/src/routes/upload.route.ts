@@ -38,6 +38,8 @@ uploadsRouter.get('/history', uploadsController.getUploadHistory)
 uploadsRouter.post('/confirm', uploadsController.confirmUpload)
 uploadsRouter.post('/fil/verify-payment', uploadsController.verifyUsdFcPayment)
 
+uploadsRouter.get('/ppt/config', uploadsController.getPptConfig)
+
 uploadsRouter.post(
   '/meshkit',
   uploadLimiter,

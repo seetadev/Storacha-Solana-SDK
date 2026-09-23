@@ -9,6 +9,7 @@ import {
   getUsdfcContractAddress,
   verifyErc20Transfer,
 } from '../services/fil/verify.service.js'
+import { verifyPptPayment } from '../services/ppt/verify.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import { PaginationContext } from '../types.js'
 import {
@@ -17,6 +18,13 @@ import {
 } from '../utils/constant.js'
 import { getExpiryDate, getPaginationParams } from '../utils/functions.js'
 import { logger } from '../utils/logger.js'
+import {
+  PPT_FEE_AMOUNT,
+  PPT_PAYMENT_CHAIN,
+  PPT_PAYMENT_TOKEN,
+  PPT_TOKEN_ADDRESS,
+  getPptTreasury,
+} from '../utils/ppt/constants.js'
 import { getPricingConfig } from '../utils/pricing.js'
 import {
   gatewayUrl,
@@ -31,6 +39,96 @@ function extractNodeHeaders(req: {
   const nodeUrl = req.headers['x-kubo-node-url'] as string | undefined
   const gatewayBase = req.headers['x-ipfs-gateway-url'] as string | undefined
   return { nodeUrl, gatewayBase }
+}
+
+/**
+ * Require a verified 1 PPT transfer on Arbitrum Sepolia before MeshKit IO.
+ * Accepts tx hash + payer from body fields or X-PPT-Tx-Hash / X-User-Address headers.
+ */
+async function requirePptPayment(
+  req: Request,
+): Promise<
+  | { ok: true; txHash: string; payer: string }
+  | { ok: false; status: number; message: string }
+> {
+  const body = (req.body ?? {}) as Record<string, unknown>
+  const headerTx = req.headers['x-ppt-tx-hash']
+  const headerPayer = req.headers['x-user-address']
+  const queryTx =
+    typeof req.query.txHash === 'string' ? req.query.txHash : undefined
+  const queryPayer =
+    typeof req.query.userAddress === 'string'
+      ? req.query.userAddress
+      : undefined
+
+  const txHash = String(
+    body.transactionHash ?? body.txHash ?? headerTx ?? queryTx ?? '',
+  ).trim()
+  const payer = String(body.userAddress ?? headerPayer ?? queryPayer ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (!txHash || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+    return {
+      ok: false,
+      status: 402,
+      message:
+        'PPT payment required: provide transactionHash of a 1 PPT transfer on Arbitrum Sepolia',
+    }
+  }
+
+  if (!payer || !/^0x[a-f0-9]{40}$/.test(payer)) {
+    return {
+      ok: false,
+      status: 400,
+      message: 'userAddress (0x…) that paid the PPT fee is required',
+    }
+  }
+
+  const [existing] = await db
+    .select({ id: uploads.id })
+    .from(uploads)
+    .where(eq(uploads.transactionHash, txHash))
+    .limit(1)
+
+  if (existing) {
+    return {
+      ok: false,
+      status: 409,
+      message: 'This PPT transaction was already used',
+    }
+  }
+
+  const { verified, reason } = await verifyPptPayment({
+    transactionHash: txHash,
+    from: payer,
+    to: getPptTreasury(),
+    expectedAmount: PPT_FEE_AMOUNT,
+  })
+
+  if (!verified) {
+    return {
+      ok: false,
+      status: 402,
+      message: `PPT payment verification failed${reason ? `: ${reason}` : ''}`,
+    }
+  }
+
+  return { ok: true, txHash, payer }
+}
+
+/** Public PPT gate config for the UI. */
+export const getPptConfig = async (_req: Request, res: Response) => {
+  return res.status(200).json({
+    tokenAddress: PPT_TOKEN_ADDRESS,
+    treasury: getPptTreasury(),
+    chainId: 421614,
+    network: 'arbitrumSepolia',
+    feeAmount: PPT_FEE_AMOUNT.toString(),
+    feeLabel: '1 PPT',
+    decimals: 18,
+    explorer: 'https://sepolia.arbiscan.io',
+  })
 }
 import { createDepositTransaction } from './solana.controller.js'
 
@@ -764,9 +862,10 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
 }
 
 /**
- * MeshKit upload — pin files to the local/remote Kubo node with no payment.
+ * MeshKit upload — pin files after a verified 1 PPT payment on Arbitrum Sepolia.
  *
- * Body:  userAddress   (required) — guest or wallet id for history
+ * Body:  userAddress   (required) — EVM wallet that paid
+ *        transactionHash / txHash (required) — PPT transfer tx
  *        encryptPassword (optional) — MeshKit AES-256-GCM encrypt-on-upload
  *        userEmail     (optional)
  *        directoryName (optional)
@@ -778,16 +877,17 @@ export const verifyUsdFcPayment = async (req: Request, res: Response) => {
  */
 export const uploadMeshkit = async (req: Request, res: Response) => {
   try {
-    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
-    const { userAddress, userEmail, directoryName, encryptPassword } = req.body
-    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
-
-    if (!userAddress) {
-      return res.status(400).json({ message: 'userAddress is required' })
+    const payment = await requirePptPayment(req)
+    if (!payment.ok) {
+      return res.status(payment.status).json({ message: payment.message })
     }
 
-    // deposit_key is varchar(44) — keep guest/wallet ids within that limit
-    const depositKey = String(userAddress).slice(0, 44)
+    const { totalSize, fileMap, fileArray } = fileBuilder(req.files)
+    const { userEmail, directoryName, encryptPassword } = req.body
+    const { nodeUrl, gatewayBase } = extractNodeHeaders(req)
+
+    // deposit_key is varchar(44) — EVM addresses are 42 chars
+    const depositKey = payment.payer.slice(0, 44)
 
     const dirLabel =
       fileArray.length === 1
@@ -806,7 +906,9 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
     const oneYearFromNow = new Date()
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
     const expiresAt = oneYearFromNow.toISOString().split('T')[0]
-    const createdAt = new Date().toISOString()
+    // uploads.created_at is a SQL date, not a timestamp. A full ISO string
+    // is rejected and the row never lands, so history stays empty.
+    const createdAt = new Date().toISOString().split('T')[0]
 
     const responseFiles = []
 
@@ -816,7 +918,7 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
         original?.size ?? fileMap[pinned.name]?.buffer.byteLength ?? 0
 
       await db.insert(uploads).values({
-        depositAmount: 0,
+        depositAmount: 1, // 1 PPT per upload operation
         durationDays: 365,
         contentCid: pinned.cid,
         depositKey,
@@ -828,11 +930,15 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
         fileName: pinned.name,
         fileType: pinned.mimetype,
         fileSize: size,
-        transactionHash: `meshkit:${pinned.cid.slice(0, 16)}`,
+        // Only the first file row stores the tx hash (replay lock); siblings share op via payer
+        transactionHash:
+          pinned === pinnedFiles[0]
+            ? payment.txHash
+            : `${payment.txHash}:${pinned.cid.slice(0, 8)}`,
         deletionStatus: 'active',
         warningSentAt: null,
-        paymentChain: 'mesh',
-        paymentToken: 'NONE',
+        paymentChain: PPT_PAYMENT_CHAIN,
+        paymentToken: PPT_PAYMENT_TOKEN,
         kuboNodeUrl: nodeUrl || null,
       })
 
@@ -852,18 +958,20 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
       fileCount: pinnedFiles.length,
       totalSize,
       encrypted: Boolean(encryptPassword),
+      pptTx: payment.txHash,
     })
 
-    logger.info('MeshKit upload complete', {
+    logger.info('MeshKit upload complete (PPT gated)', {
       cid: primaryCid,
       userAddress: depositKey,
       fileCount: pinnedFiles.length,
       totalSize,
       nodeUrl,
+      pptTx: payment.txHash,
     })
 
     return res.status(200).json({
-      message: 'Files uploaded and pinned via MeshKit',
+      message: 'Files uploaded and pinned via MeshKit (1 PPT paid)',
       cid: primaryCid,
       url: gatewayUrl(
         primaryCid,
@@ -875,6 +983,12 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
       totalSize,
       encrypted: Boolean(encryptPassword),
       uploadedAt: createdAt,
+      payment: {
+        token: PPT_PAYMENT_TOKEN,
+        chain: PPT_PAYMENT_CHAIN,
+        amount: PPT_FEE_AMOUNT.toString(),
+        transactionHash: payment.txHash,
+      },
     })
   } catch (error) {
     Sentry.captureException(error)
@@ -893,16 +1007,22 @@ export const uploadSepolia = uploadMeshkit
 
 /**
  * Retrieve file bytes by CID via meshkit.retrieve().
+ * Requires a fresh 1 PPT payment (txHash + userAddress via query or headers).
  *
  * GET /upload/retrieve/:cid
- * Query: password (optional) — decrypt if uploaded with encryptPassword
- * Headers: X-Kubo-Node-URL (optional)
+ * Query: password (optional), txHash, userAddress
+ * Headers: X-PPT-Tx-Hash, X-User-Address, X-Kubo-Node-URL (optional)
  */
 export const retrieveMeshkit = async (req: Request, res: Response) => {
   try {
     const cid = req.params.cid as string
     if (!cid) {
       return res.status(400).json({ message: 'CID is required' })
+    }
+
+    const payment = await requirePptPayment(req)
+    if (!payment.ok) {
+      return res.status(payment.status).json({ message: payment.message })
     }
 
     const { nodeUrl } = extractNodeHeaders(req)
@@ -932,12 +1052,37 @@ export const retrieveMeshkit = async (req: Request, res: Response) => {
     const filename = meta?.fileName || 'download'
     const mimetype = meta?.fileType || 'application/octet-stream'
 
+    // Consume the PPT tx so it cannot be replayed.
+    // created_at / expires_at are SQL dates.
+    const createdAt = new Date().toISOString().split('T')[0]
+    await db.insert(uploads).values({
+      depositAmount: 1, // 1 PPT per retrieve operation
+      durationDays: 0,
+      contentCid: cid,
+      depositKey: payment.payer.slice(0, 44),
+      depositSlot: 0,
+      lastClaimedSlot: 0,
+      expiresAt: createdAt,
+      createdAt,
+      userEmail: null,
+      fileName: `retrieve:${filename}`,
+      fileType: mimetype,
+      fileSize: bytes.byteLength,
+      transactionHash: payment.txHash,
+      deletionStatus: 'active',
+      warningSentAt: null,
+      paymentChain: PPT_PAYMENT_CHAIN,
+      paymentToken: PPT_PAYMENT_TOKEN,
+      kuboNodeUrl: resolvedNode || null,
+    })
+
     res.setHeader('Content-Type', mimetype)
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${encodeURIComponent(filename)}"`,
     )
     res.setHeader('X-IPFS-CID', cid)
+    res.setHeader('X-PPT-Tx-Hash', payment.txHash)
     res.setHeader('Cache-Control', 'private, max-age=3600')
     return res.status(200).send(Buffer.from(bytes))
   } catch (error) {

@@ -8,15 +8,38 @@ const LOCAL_DEFAULT: KuboNodeConfig = {
   gatewayUrl: 'http://127.0.0.1:8080',
 }
 
+/** Hosted Kubo on Render — preferred default for MeshKit ops when local is unavailable. */
+const RENDER_DEFAULT: KuboNodeConfig = {
+  id: 'render-default',
+  label: 'Render (kubo-render)',
+  apiUrl: 'https://kubo-render.onrender.com',
+  gatewayUrl: 'https://kubo-render.onrender.com',
+}
+
+const BUILTIN_NODES: KuboNodeConfig[] = [RENDER_DEFAULT, LOCAL_DEFAULT]
+
 const STORAGE_KEY = 'toju:kubo-nodes'
 const ACTIVE_KEY = 'toju:kubo-active'
+
+function ensureBuiltinNodes(nodes: KuboNodeConfig[]): KuboNodeConfig[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  // Keep built-in URLs/labels in sync with code; preserve user-added nodes.
+  for (const builtin of BUILTIN_NODES) {
+    byId.set(builtin.id, builtin)
+  }
+  const builtins = BUILTIN_NODES.map((b) => byId.get(b.id)!)
+  const extras = nodes.filter((n) => !BUILTIN_NODES.some((b) => b.id === n.id))
+  return [...builtins, ...extras]
+}
 
 function loadNodes(): KuboNodeConfig[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as KuboNodeConfig[]
+    if (raw) {
+      return ensureBuiltinNodes(JSON.parse(raw) as KuboNodeConfig[])
+    }
   } catch {}
-  return [LOCAL_DEFAULT]
+  return [...BUILTIN_NODES]
 }
 
 function saveNodes(nodes: KuboNodeConfig[]) {
@@ -24,7 +47,13 @@ function saveNodes(nodes: KuboNodeConfig[]) {
 }
 
 function loadActiveId(): string {
-  return localStorage.getItem(ACTIVE_KEY) ?? LOCAL_DEFAULT.id
+  const stored = localStorage.getItem(ACTIVE_KEY)
+  // Prefer Render when nothing chosen yet, or when still on the old
+  // localhost-only default (common cause of failed MeshKit ops).
+  if (!stored || stored === LOCAL_DEFAULT.id) {
+    return RENDER_DEFAULT.id
+  }
+  return stored
 }
 
 function saveActiveId(id: string) {
@@ -43,17 +72,12 @@ interface NodeContextValues {
 export const NodeContext = createContext<NodeContextValues | null>(null)
 
 export const NodeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [nodes, setNodes] = useState<KuboNodeConfig[]>(() => {
-    const stored = loadNodes()
-    // always ensure local-default is present
-    const hasDefault = stored.some((n) => n.id === LOCAL_DEFAULT.id)
-    return hasDefault ? stored : [LOCAL_DEFAULT, ...stored]
-  })
+  const [nodes, setNodes] = useState<KuboNodeConfig[]>(() => loadNodes())
 
   const [activeId, setActiveId] = useState<string>(loadActiveId)
 
   const activeNode =
-    nodes.find((n) => n.id === activeId) ?? nodes[0] ?? LOCAL_DEFAULT
+    nodes.find((n) => n.id === activeId) ?? nodes[0] ?? RENDER_DEFAULT
 
   useEffect(() => {
     saveNodes(nodes)
@@ -77,9 +101,10 @@ export const NodeProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   const removeNode = useCallback((id: string) => {
-    if (id === LOCAL_DEFAULT.id) return // cannot remove the built-in default
+    // cannot remove built-in defaults
+    if (BUILTIN_NODES.some((b) => b.id === id)) return
     setNodes((prev) => prev.filter((n) => n.id !== id))
-    setActiveId((prev) => (prev === id ? LOCAL_DEFAULT.id : prev))
+    setActiveId((prev) => (prev === id ? RENDER_DEFAULT.id : prev))
   }, [])
 
   const updateNode = useCallback(
