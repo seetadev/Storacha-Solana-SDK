@@ -31,8 +31,6 @@ function validateEnv() {
     'QSTASH_CURRENT_SIGNING_KEY',
     'QSTASH_NEXT_SIGNING_KEY',
     'RESEND_API_KEY',
-    'PINATA_JWT',
-    'PINATA_GATEWAY',
   ]
   const missing = requiredVars.filter((key) => !process.env[key])
 

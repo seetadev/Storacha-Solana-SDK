@@ -7,7 +7,7 @@ import {
   usageAlerts,
   usageComparison,
 } from '../../db/schema.js'
-import { getPinataUsage } from '../storage/pinata.service.js'
+import { getMeshkitUsage } from '../storage/meshkit.service.js'
 import { logger } from '../../utils/logger.js'
 
 const { EMAIL_FROM, WATCHMAN } = process.env!
@@ -25,8 +25,13 @@ export class UsageService {
   private planLimitBytes: number
 
   constructor() {
-    // Default to 1GB free tier. Set PINATA_PLAN_LIMIT_MB env var when upgrading.
-    const mb = parseInt(process.env.PINATA_PLAN_LIMIT_MB ?? '1024', 10)
+    // Default to 1 GB. Override with IPFS_PLAN_LIMIT_MB env var.
+    const mb = parseInt(
+      process.env.IPFS_PLAN_LIMIT_MB ??
+        process.env.PINATA_PLAN_LIMIT_MB ??
+        '1024',
+      10,
+    )
     this.planLimitBytes = mb * 1024 * 1024
   }
 
@@ -35,17 +40,17 @@ export class UsageService {
   }
 
   /**
-   * Fetch current storage usage from Pinata.
+   * Fetch current storage usage from the local Kubo / meshkit node.
    */
   async getUsage(): Promise<{
     totalSizeBytes: number
     pinCount: number
   }> {
     try {
-      return await getPinataUsage()
+      return await getMeshkitUsage()
     } catch (error) {
-      logger.error('failed to fetch pinata usage', { error })
-      throw new Error('failed to fetch pinata usage')
+      logger.error('failed to fetch IPFS storage usage', { error })
+      throw new Error('failed to fetch IPFS storage usage')
     }
   }
 
@@ -95,7 +100,7 @@ export class UsageService {
       logger.info('daily usage snapshot created', {
         totalBytes: internalUsage.totalBytes,
         activeUploads: internalUsage.activeUploads,
-        pinataReportedBytes: storedBytes,
+        ipfsReportedBytes: storedBytes,
         utilization: `${utilization.toFixed(2)}%`,
       })
 
@@ -144,7 +149,7 @@ export class UsageService {
 
       logger.info('usage comparison completed', {
         ourBytes: internalUsage.totalBytes,
-        pinataBytes,
+        ipfsBytes: pinataBytes,
         discrepancy,
         status,
       })

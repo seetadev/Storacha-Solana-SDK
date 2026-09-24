@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
 import { db } from '../db/db.js'
 import { uploads } from '../db/schema.js'
-import { pinFiles } from '../services/storage/pinata.service.js'
+import { pinFiles } from '../services/storage/meshkit.service.js'
 import { computeCID } from '../utils/compute-cid.js'
 import { getAmountInUSD } from '../utils/constant.js'
 import { getExpiryDate } from '../utils/functions.js'
@@ -30,6 +30,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
 
     const size = parseInt(req.query.size as string, 10)
     const duration = parseInt(req.query.duration as string, 10)
+    const nodeUrl = req.headers['x-kubo-node-url'] as string | undefined
 
     if (Number.isNaN(size) || size <= 0)
       return res.status(400).json({
@@ -68,6 +69,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
         },
       },
       file.originalname,
+      nodeUrl,
     )
 
     if (pinnedCID !== computedCID)
@@ -120,6 +122,7 @@ export const uploadAgentFile = async (req: Request, res: Response) => {
       warningSentAt: null,
       paymentChain: 'base',
       paymentToken: 'USDC',
+      kuboNodeUrl: nodeUrl || null,
     }
 
     await db.insert(uploads).values(depositItem)

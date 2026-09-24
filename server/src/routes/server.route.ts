@@ -4,3 +4,4 @@ import * as serverController from '../controllers/server.controller.js'
 export const serverRouter = express.Router()
 
 serverRouter.get('/', serverController.getServerHealth)
+serverRouter.get('/ipfs', serverController.checkIpfsNodeHealth)
