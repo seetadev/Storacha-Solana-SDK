@@ -21,7 +21,7 @@ export const configTable = pgTable('config', {
 
 export const uploads = pgTable('uploads', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  depositKey: varchar('deposit_key', { length: 44 }).notNull(),
+  depositKey: varchar('deposit_key', { length: 58 }).notNull(),
   contentCid: text('content_cid').notNull(),
   durationDays: integer('duration_days').notNull(),
   depositAmount: bigint('deposit_amount', {
