@@ -43,6 +43,7 @@ export const uploads = pgTable('uploads', {
   warningSentAt: date('warning_sent_at'),
   paymentChain: varchar('payment_chain', { length: 10 }).default('sol'),
   paymentToken: varchar('payment_token', { length: 10 }).default('SOL'),
+  kuboNodeUrl: varchar('kubo_node_url', { length: 500 }),
 })
 
 export const transaction = pgTable('transaction', {

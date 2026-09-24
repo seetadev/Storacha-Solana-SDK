@@ -27,7 +27,8 @@ export const DropZone = ({
   return (
     <Center
       {...getRootProps()}
-      p="3em"
+      className="upload-dropzone"
+      p={{ base: '1.75em', md: '2.75em' }}
       border="2px dashed"
       borderColor={
         isDragReject
@@ -36,7 +37,7 @@ export const DropZone = ({
             ? 'var(--primary-500)'
             : 'var(--border-hover)'
       }
-      borderRadius="var(--radius-lg)"
+      borderRadius="var(--radius-xl)"
       bg={
         isDragReject
           ? 'rgba(239, 68, 68, 0.05)'
@@ -50,6 +51,10 @@ export const DropZone = ({
       textAlign="center"
       position="relative"
       overflow="hidden"
+      _focusVisible={{
+        outline: '2px solid var(--primary-500)',
+        outlineOffset: '3px',
+      }}
       _hover={{
         borderColor: isDragReject ? 'var(--error)' : 'var(--primary-500)',
         bg: isDragReject

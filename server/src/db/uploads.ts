@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm'
-import { gatewayUrl } from '../services/storage/pinata.service.js'
+import { gatewayUrl } from '../services/storage/meshkit.service.js'
 import { PaginationContext } from '../types.js'
 import { logger } from '../utils/logger.js'
 import { db } from './db.js'
@@ -31,7 +31,7 @@ export const getUserHistory = async (
   ctx?: PaginationContext,
 ) => {
   try {
-    const userAddress = wallet
+    const userAddress = wallet.trim().toLowerCase()
     const offset = (page - 1) * limit
 
     // before the payment_chain integration, all transactions, by default should be SOL
@@ -41,15 +41,19 @@ export const getUserHistory = async (
         ? or(eq(uploads.paymentChain, chain), isNull(uploads.paymentChain))
         : eq(uploads.paymentChain, chain)
 
+    // deposit_key is stored lowercase, but older rows and checksummed
+    // queries must still match or history looks empty after a paid upload.
+    const ownerMatch = sql`lower(${uploads.depositKey}) = ${userAddress}`
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(uploads)
-      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
+      .where(and(ownerMatch, paymentChainFilter))
 
     const data = await db
       .select()
       .from(uploads)
-      .where(and(eq(uploads.depositKey, userAddress), paymentChainFilter))
+      .where(and(ownerMatch, paymentChainFilter))
       .orderBy(desc(uploads.createdAt))
       .limit(limit)
       .offset(offset)
@@ -67,6 +71,8 @@ export const getUserHistory = async (
         record.fileType === 'directory'
           ? undefined
           : (record.fileName ?? undefined),
+        undefined,
+        record.kuboNodeUrl ?? undefined,
       ),
     }))
 
@@ -282,7 +288,7 @@ export const renewStorageDuration = async (cid: string, duration: number) => {
 
 /**
  * Find pending uploads older than the given age in hours.
- * These are files pinned to Pinata but never paid for — safe to unpin and remove.
+ * These are files pinned to the local Kubo node but never paid for — safe to unpin and remove.
  * @param abandonedAfterHowManyHours - Age threshold in hours (default: 24)
  */
 export const getAbandonedPendingUploads = async (

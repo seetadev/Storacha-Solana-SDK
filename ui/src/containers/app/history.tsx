@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   HStack,
-  IconButton,
   Input,
   SimpleGrid,
   Stack,
@@ -10,23 +9,39 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import {
-  CopyIcon,
+  DownloadSimpleIcon,
   FileIcon,
   ImageIcon,
-  LinkIcon,
   MagnifyingGlassIcon,
   VideoIcon,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useAccount } from 'wagmi'
+import { useNodeContext } from '@/hooks/context'
+import { PreviewPane } from '@/components/file-preview'
+import { usePptPayment } from '@/hooks/use-ppt-payment'
 import { useUploadHistory } from '@/hooks/upload-history'
+import { getApiBase } from '@/lib/meshkit-guest'
+import { waitForTxReceipt } from '@/lib/wait-tx'
 import type { Filter } from '@/lib/types'
 import { formatFileSize } from '@/lib/utils'
 
 export const UploadHistory = () => {
-  const { files, isLoading } = useUploadHistory()
+  const { address } = useAccount()
+  const { files, isLoading, error } = useUploadHistory()
+  const { activeNode } = useNodeContext()
+  const ppt = usePptPayment()
+  const apiBase = getApiBase()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<Filter>('all')
+  const [retrievingCid, setRetrievingCid] = useState<string | null>(null)
+  const [pwdByCid, setPwdByCid] = useState<Record<string, string | undefined>>(
+    {},
+  )
+  const [previewByCid, setPreviewByCid] = useState<
+    Record<string, { url: string; type: string; name: string } | undefined>
+  >({})
 
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
@@ -44,16 +59,102 @@ export const UploadHistory = () => {
     expirationDate.setDate(expirationDate.getDate() + duration)
     const now = new Date()
     const diffTime = expirationDate.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success('CID copied to clipboard')
+  const retrieveFile = async (
+    cid: string,
+    filename: string,
+    password?: string,
+  ) => {
+    if (!ppt.isConnected || !ppt.address) {
+      ppt.connectWallet()
+      toast.message('Connect MetaMask to pay 1 PPT for retrieve')
+      return
+    }
+
+    setRetrievingCid(cid)
+    const toastId = toast.loading('Paying 1 PPT for retrieve…')
+    try {
+      if (!ppt.isOnPptChain) await ppt.ensureChain()
+      const txHash = await ppt.payOnePpt()
+      await waitForTxReceipt(txHash)
+
+      toast.loading('Retrieving via MeshKit…', { id: toastId })
+
+      const url = new URL(
+        `${apiBase}/upload/retrieve/${encodeURIComponent(cid)}`,
+      )
+      if (password) {
+        url.searchParams.set('password', password)
+      }
+      url.searchParams.set('txHash', txHash)
+      url.searchParams.set('userAddress', ppt.address.toLowerCase())
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          'X-Kubo-Node-URL': activeNode.apiUrl,
+          'X-PPT-Tx-Hash': txHash,
+          'X-User-Address': ppt.address.toLowerCase(),
+        },
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(
+          (err as { error?: string; message?: string }).error ||
+            (err as { message?: string }).message ||
+            'Retrieve failed',
+        )
+      }
+      const blob = await res.blob()
+      const blobType = blob.type || 'application/octet-stream'
+
+      const viewable =
+        blobType.startsWith('image/') ||
+        blobType.startsWith('video/') ||
+        blobType.startsWith('audio/') ||
+        blobType === 'application/pdf' ||
+        blobType.startsWith('text/')
+      if (viewable) {
+        const objectUrl = URL.createObjectURL(blob)
+        setPreviewByCid((prev) => {
+          const old = prev[cid]
+          if (old) URL.revokeObjectURL(old.url)
+          return {
+            ...prev,
+            [cid]: { url: objectUrl, type: blobType, name: filename },
+          }
+        })
+        toast.success('Paid 1 PPT \u00b7 retrieved \u2014 preview below', {
+          id: toastId,
+        })
+      } else {
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(objectUrl)
+        toast.success('Paid 1 PPT \u00b7 retrieved via MeshKit', {
+          id: toastId,
+        })
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Retrieve failed', {
+        id: toastId,
+      })
+    } finally {
+      setRetrievingCid(null)
+    }
   }
 
-  const filteredFiles = files.filter((file) => {
+  const visibleFiles = files.filter(
+    (file) => !String(file.filename || '').startsWith('retrieve:'),
+  )
+
+  const filteredFiles = visibleFiles.filter((file) => {
     const matchesSearch = file.filename
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
@@ -65,7 +166,24 @@ export const UploadHistory = () => {
     return (
       <Box textAlign="center" py="4em">
         <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
-          Loading your files...
+          Loading your MeshKit uploads…
+        </Text>
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box textAlign="center" py="4em">
+        <Text color="var(--text-muted)" fontSize="var(--font-size-lg)">
+          Could not load upload history
+        </Text>
+        <Text
+          color="var(--text-muted)"
+          fontSize="var(--font-size-sm)"
+          mt="0.5em"
+        >
+          {error instanceof Error ? error.message : 'Request failed'}
         </Text>
       </Box>
     )
@@ -73,241 +191,155 @@ export const UploadHistory = () => {
 
   return (
     <VStack spacing="2em" align="stretch">
+      {!address && (
+        <HStack
+          p="0.85em 1em"
+          bg="rgba(249,115,22,0.06)"
+          border="1px solid rgba(249,115,22,0.15)"
+          borderRadius="10px"
+          justify="space-between"
+        >
+          <Text fontSize="13px" color="var(--text-muted)">
+            Connect MetaMask (Arbitrum Sepolia) to retrieve — 1 PPT each
+          </Text>
+          <Button size="sm" onClick={ppt.connectWallet}>
+            Connect
+          </Button>
+        </HStack>
+      )}
+
       <HStack spacing="1em">
         <Box position="relative" flex="1">
           <Input
-            placeholder="Search files..."
+            placeholder="Search files…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             pl="2.5em"
-            h="44px"
-            bg="var(--bg-dark)"
-            border="1px solid var(--border-hover)"
-            borderRadius="var(--radius-md)"
+            bg="rgba(255,255,255,0.04)"
+            border="1px solid rgba(255,255,255,0.1)"
             color="var(--text-inverse)"
-            fontSize="var(--font-size-sm)"
-            _hover={{
-              borderColor: 'var(--border-hover)',
-            }}
-            _focus={{
-              borderColor: 'var(--primary-500)',
-              boxShadow: '0 0 0 1px var(--primary-500)',
-            }}
-            _placeholder={{
-              color: 'var(--text-tertiary)',
-            }}
+            _placeholder={{ color: 'var(--text-muted)' }}
           />
           <Box
             position="absolute"
             left="0.75em"
             top="50%"
             transform="translateY(-50%)"
+            color="var(--text-muted)"
           >
-            <MagnifyingGlassIcon size={20} color="var(--text-muted)" />
+            <MagnifyingGlassIcon size={18} />
           </Box>
         </Box>
-
-        <HStack spacing="0.5em">
-          {(['all', 'active', 'expired'] as const).map((status) => (
-            <Button
-              key={status}
-              size="sm"
-              h="44px"
-              px="1.5em"
-              fontSize="var(--font-size-sm)"
-              fontWeight="var(--font-weight-medium)"
-              bg={
-                filterStatus === status
-                  ? 'var(--primary-500)'
-                  : 'var(--bg-dark)'
-              }
-              color={filterStatus === status ? 'white' : 'var(--text-muted)'}
-              border="1px solid"
-              borderColor={
-                filterStatus === status
-                  ? 'var(--primary-500)'
-                  : 'var(--border-dark)'
-              }
-              borderRadius="var(--radius-md)"
-              transition="all 0.2s"
-              _hover={{
-                bg:
-                  filterStatus === status
-                    ? 'var(--primary-600)'
-                    : 'var(--lght-grey)',
-                borderColor:
-                  filterStatus === status
-                    ? 'var(--primary-600)'
-                    : 'var(--border-hover)',
-              }}
-              onClick={() => setFilterStatus(status)}
-              textTransform="capitalize"
-            >
-              {status}
-            </Button>
-          ))}
-        </HStack>
       </HStack>
 
-      {filteredFiles.length === 0 ? (
-        <Box
-          textAlign="center"
-          py="4em"
-          px="2em"
-          bg="var(--bg-dark)"
-          border="1px solid var(--border-hover)"
-          borderRadius="var(--radius-lg)"
-        >
-          <FileIcon size={64} color="var(--text-tertiary)" weight="duotone" />
-          <Text
-            mt="1em"
-            color="var(--text-muted)"
-            fontSize="var(--font-size-lg)"
-            fontWeight="var(--font-weight-medium)"
+      <Stack direction="row" spacing="0.5em">
+        {(['all', 'active', 'expired'] as Array<Filter>).map((f) => (
+          <Button
+            key={f}
+            size="sm"
+            variant="ghost"
+            className={filterStatus === f ? 'pill pill-active' : 'pill'}
+            onClick={() => setFilterStatus(f)}
+            textTransform="capitalize"
           >
-            {searchTerm || filterStatus !== 'all'
-              ? 'No files match your criteria'
-              : 'No files uploaded yet'}
+            {f}
+          </Button>
+        ))}
+      </Stack>
+
+      {filteredFiles.length === 0 ? (
+        <Box textAlign="center" py="3em">
+          <Text color="var(--text-muted)">
+            {address
+              ? 'No MeshKit uploads for this wallet yet'
+              : 'Connect MetaMask to see uploads from this wallet'}
           </Text>
         </Box>
       ) : (
-        <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing="1.5em">
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing="1em">
           {filteredFiles.map((file) => {
-            const daysRemaining = calculateDaysRemaining(
+            const daysLeft = calculateDaysRemaining(
               file.uploadedAt,
               file.duration,
             )
-            const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
-            const isExpired = daysRemaining < 0
-
             return (
               <Box
-                key={file.id}
-                p="1.5em"
-                bg="var(--bg-dark)"
-                border="1px solid var(--border-hover)"
-                borderRadius="var(--radius-lg)"
-                transition="all 0.2s ease"
-                _hover={{
-                  borderColor: 'var(--border-hover)',
-                  transform: 'translateY(-2px)',
-                }}
+                key={`${file.cid}-${file.filename}`}
+                className="history-card"
+                p="1.25em"
+                bg="rgba(255,255,255,0.03)"
+                border="1px solid rgba(255,255,255,0.08)"
+                borderRadius="12px"
               >
-                <HStack spacing="1em" mb="1em">
-                  <Box
-                    p="0.75em"
-                    bg="rgba(249, 115, 22, 0.1)"
-                    borderRadius="var(--radius-md)"
-                    color="var(--primary-500)"
-                  >
+                <HStack justify="space-between" mb="0.75em" align="start">
+                  <HStack>
                     {getFileIcon(file.type)}
-                  </Box>
-                  <VStack spacing="0.25em" align="start" flex="1" minW="0">
-                    <Text
-                      fontSize="var(--font-size-sm)"
-                      fontWeight="var(--font-weight-semibold)"
-                      color="var(--text-inverse)"
-                      noOfLines={1}
-                      wordBreak="break-all"
-                    >
-                      {file.filename}
-                    </Text>
-                    <Text
-                      fontSize="var(--font-size-xs)"
-                      color="var(--text-muted)"
-                    >
-                      {formatFileSize(file.size)}
-                    </Text>
-                  </VStack>
-                </HStack>
-
-                <Stack spacing="0.75em">
-                  <HStack
-                    justify="space-between"
-                    fontSize="var(--font-size-xs)"
-                  >
-                    <Text color="var(--text-tertiary)">Uploaded</Text>
-                    <Text color="var(--text-muted)">
-                      {new Date(file.uploadedAt).toLocaleDateString()}
-                    </Text>
-                  </HStack>
-
-                  <HStack
-                    justify="space-between"
-                    fontSize="var(--font-size-xs)"
-                  >
-                    <Text color="var(--text-tertiary)">Cost</Text>
-                    <Text color="var(--text-muted)">
-                      {file.cost.toFixed(6)} SOL
-                    </Text>
-                  </HStack>
-
-                  <HStack
-                    justify="space-between"
-                    fontSize="var(--font-size-xs)"
-                  >
-                    <Text color="var(--text-tertiary)">Status</Text>
-                    <Box
-                      px="0.5em"
-                      py="0.25em"
-                      borderRadius="full"
-                      bg={
-                        isExpired
-                          ? 'rgba(239, 68, 68, 0.1)'
-                          : isExpiringSoon
-                            ? 'rgba(245, 158, 11, 0.1)'
-                            : 'rgba(16, 185, 129, 0.1)'
-                      }
-                    >
+                    <VStack align="start" spacing="0">
                       <Text
-                        fontSize="var(--font-size-xs)"
-                        fontWeight="var(--font-weight-medium)"
-                        color={
-                          isExpired
-                            ? 'var(--error)'
-                            : isExpiringSoon
-                              ? 'var(--warning)'
-                              : 'var(--success)'
-                        }
+                        fontSize="14px"
+                        fontWeight="600"
+                        color="var(--text-inverse)"
+                        noOfLines={1}
                       >
-                        {isExpired
-                          ? 'Expired'
-                          : isExpiringSoon
-                            ? `${daysRemaining}d left`
-                            : `${daysRemaining}d left`}
+                        {file.filename}
                       </Text>
+                      <Text fontSize="12px" color="var(--text-muted)">
+                        {formatFileSize(file.size)} · {daysLeft}d left
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </HStack>
+                <Button
+                  size="sm"
+                  leftIcon={<DownloadSimpleIcon size={16} />}
+                  onClick={() =>
+                    retrieveFile(
+                      file.cid,
+                      file.filename,
+                      pwdByCid[file.cid]?.trim() || undefined,
+                    )
+                  }
+                  isLoading={retrievingCid === file.cid}
+                  loadingText="1 PPT…"
+                >
+                  Retrieve · 1 PPT
+                </Button>
+                <Input
+                  type="password"
+                  placeholder="Password if encrypted"
+                  value={pwdByCid[file.cid] ?? ''}
+                  onChange={(e) =>
+                    setPwdByCid((prev) => ({
+                      ...prev,
+                      [file.cid]: e.target.value,
+                    }))
+                  }
+                  size="sm"
+                  mt="0.75em"
+                  className="upload-pwd-input"
+                  bg="rgba(255,255,255,0.04)"
+                  border="1px solid rgba(255,255,255,0.1)"
+                  color="var(--text-inverse)"
+                  _placeholder={{ color: 'var(--text-muted)' }}
+                  _focus={{
+                    borderColor: 'var(--primary-500)',
+                    boxShadow: 'none',
+                  }}
+                  borderRadius="8px"
+                />
+                {(() => {
+                  const preview = previewByCid[file.cid]
+                  if (!preview) return null
+                  return (
+                    <Box mt="0.75em" className="upload-preview" w="100%">
+                      <PreviewPane
+                        url={preview.url}
+                        type={preview.type}
+                        name={file.filename}
+                      />
                     </Box>
-                  </HStack>
-
-                  <Box w="100%" h="1px" bg="var(--border-dark)" my="0.25em" />
-
-                  <HStack spacing="0.5em">
-                    <IconButton
-                      aria-label="Copy CID"
-                      icon={<CopyIcon size={16} />}
-                      size="sm"
-                      variant="ghost"
-                      color="var(--text-muted)"
-                      _hover={{
-                        bg: 'var(--lght-grey)',
-                        color: 'var(--primary-500)',
-                      }}
-                      onClick={() => copyToClipboard(file.cid)}
-                    />
-                    <IconButton
-                      aria-label="View file"
-                      icon={<LinkIcon size={16} />}
-                      size="sm"
-                      variant="ghost"
-                      color="var(--text-muted)"
-                      _hover={{
-                        bg: 'var(--lght-grey)',
-                        color: 'var(--primary-500)',
-                      }}
-                      onClick={() => window.open(file.url, '_blank')}
-                    />
-                  </HStack>
-                </Stack>
+                  )
+                })()}
               </Box>
             )
           })}

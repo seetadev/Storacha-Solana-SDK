@@ -7,13 +7,26 @@ import {
   HardDrivesIcon,
   WalletIcon,
 } from '@phosphor-icons/react'
-import { useAuthContext } from '@/hooks/context'
-import { useSolPrice } from '@/hooks/sol-price'
+import { formatUnits } from 'viem'
+import { useAccount, useReadContract } from 'wagmi'
+import {
+  PPT_CHAIN_ID,
+  PPT_DECIMALS,
+  PPT_ERC20_ABI,
+  PPT_TOKEN_ADDRESS,
+} from '@/config/ppt'
 import { useUploadHistory } from '@/hooks/upload-history'
 
 export const Metrics = () => {
-  const { balance } = useAuthContext()
-  const { price: solPrice } = useSolPrice()
+  const { address, isConnected } = useAccount()
+  const { data: pptRaw } = useReadContract({
+    address: PPT_TOKEN_ADDRESS,
+    abi: PPT_ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    chainId: PPT_CHAIN_ID,
+    query: { enabled: !!address },
+  })
   const { stats, files, isLoading } = useUploadHistory()
 
   const formatFileSize = (bytes: number): string => {
@@ -27,6 +40,12 @@ export const Metrics = () => {
   const expiredFiles = files.filter((f) => f.status === 'expired').length
   const averageCost =
     stats.totalFiles > 0 ? stats.totalSpent / stats.totalFiles : 0
+
+  const pptBalanceLabel = !isConnected
+    ? 'Connect wallet'
+    : pptRaw != null
+      ? `${Number(formatUnits(pptRaw, PPT_DECIMALS)).toFixed(2)} PPT`
+      : '-.----'
 
   if (isLoading) {
     return (
@@ -56,9 +75,8 @@ export const Metrics = () => {
     {
       icon: CurrencyCircleDollarIcon,
       label: 'Total Spent',
-      value: `${stats.totalSpent.toFixed(4)} SOL`,
-      subValue:
-        solPrice !== null ? `≈ $${stats.totalSpent * Number(solPrice)}` : '',
+      value: `${stats.totalSpent.toFixed(2)} PPT`,
+      subValue: '1 PPT per op',
       color: 'var(--info)',
       bgColor: 'rgba(59, 130, 246, 0.1)',
     },
@@ -73,19 +91,16 @@ export const Metrics = () => {
     {
       icon: ChartLineIcon,
       label: 'Average Cost',
-      value: `${averageCost.toFixed(6)} SOL`,
+      value: `${averageCost.toFixed(2)} PPT`,
       subValue: 'per file',
       color: 'var(--primary-500)',
       bgColor: 'rgba(249, 115, 22, 0.1)',
     },
     {
       icon: WalletIcon,
-      label: 'Current Balance',
-      value: balance !== null ? `${balance.toFixed(4)} SOL` : '-.----',
-      subValue:
-        balance !== null && solPrice !== null
-          ? `≈ $${balance * Number(solPrice)}`
-          : '',
+      label: 'PPT Balance',
+      value: pptBalanceLabel,
+      subValue: 'Arbitrum Sepolia',
       color: 'var(--success)',
       bgColor: 'rgba(16, 185, 129, 0.1)',
     },
@@ -271,7 +286,7 @@ export const Metrics = () => {
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--text-inverse)"
               >
-                {stats.totalSpent.toFixed(4)} SOL
+                {stats.totalSpent.toFixed(2)} PPT
               </Text>
             </Box>
 
@@ -281,16 +296,14 @@ export const Metrics = () => {
               alignItems="center"
             >
               <Text fontSize="var(--font-size-sm)" color="var(--text-muted)">
-                USD Value:
+                Rate:
               </Text>
               <Text
                 fontSize="var(--font-size-sm)"
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--text-inverse)"
               >
-                {solPrice !== null
-                  ? `$${stats.totalSpent * Number(solPrice)}`
-                  : '--'}
+                1 PPT / op
               </Text>
             </Box>
 
@@ -307,7 +320,7 @@ export const Metrics = () => {
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--text-inverse)"
               >
-                {averageCost.toFixed(6)} SOL
+                {averageCost.toFixed(2)} PPT
               </Text>
             </Box>
 
@@ -319,14 +332,14 @@ export const Metrics = () => {
               alignItems="center"
             >
               <Text fontSize="var(--font-size-sm)" color="var(--text-muted)">
-                Current Balance:
+                PPT Balance:
               </Text>
               <Text
                 fontSize="var(--font-size-sm)"
                 fontWeight="var(--font-weight-semibold)"
                 color="var(--success)"
               >
-                {balance !== null ? `${balance.toFixed(4)} SOL` : '-.----'}
+                {pptBalanceLabel}
               </Text>
             </Box>
           </VStack>

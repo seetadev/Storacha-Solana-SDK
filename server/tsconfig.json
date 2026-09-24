@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "module": "nodenext",
-    "target": "es2020",
+    "target": "es2022",
     "moduleResolution": "nodenext",
     "types": ["jest"],
-    "lib": ["ES2021"],
+    "lib": ["ES2022"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "rootDir": "src",

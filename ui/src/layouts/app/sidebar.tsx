@@ -10,13 +10,11 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import {
-  ArrowsLeftRightIcon,
   ChartLineIcon,
   ClockCounterClockwiseIcon,
   UploadSimpleIcon,
 } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 
 const navItems = [
@@ -29,11 +27,6 @@ const navItems = [
     name: 'History',
     path: '/app/history',
     icon: ClockCounterClockwiseIcon,
-  },
-  {
-    name: 'Transactions',
-    path: '/app/transactions',
-    icon: ArrowsLeftRightIcon,
   },
   {
     name: 'Metrics',
@@ -53,12 +46,14 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
   const navigate = useNavigate()
   const location = useLocation()
   const pathname = location.pathname
-  const [activeIndex, setActiveIndex] = useState<number>(
-    navItems.findIndex((i) => i.path === pathname) || 0,
+  // Derived from the live route so back/forward + deep links keep the
+  // indicator and highlight in sync (no stale useState snapshot).
+  const activeIndex = Math.max(
+    0,
+    navItems.findIndex((i) => i.path === pathname),
   )
 
-  const goToRoute = (index: number, path: FileRouteTypes['to']) => {
-    setActiveIndex(index)
+  const goToRoute = (path: FileRouteTypes['to']) => {
     navigate({ to: path })
     onClose?.()
   }
@@ -116,6 +111,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
         {navItems.map((item, index) => {
           const isActive = activeIndex === index
           const Icon = item.icon
+          const activeColor = 'var(--primary-500)'
 
           return (
             <Link
@@ -132,9 +128,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 position="relative"
                 px=".4em"
                 zIndex={1}
-                onClick={() =>
-                  goToRoute(index, item.path as FileRouteTypes['to'])
-                }
+                onClick={() => goToRoute(item.path as FileRouteTypes['to'])}
                 transition="background 0.2s ease"
                 _hover={{
                   background: isActive
@@ -155,9 +149,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 >
                   <Icon
                     size={20}
-                    color={
-                      isActive ? 'var(--primary-500)' : 'var(--text-muted)'
-                    }
+                    color={isActive ? activeColor : 'var(--text-muted)'}
                     weight={isActive ? 'fill' : 'regular'}
                     style={{ transition: 'color 0.2s ease-in' }}
                   />
@@ -165,7 +157,7 @@ const SidebarContent = ({ onClose }: SidebarContentProps) => {
                 <Text
                   fontSize="14px"
                   fontWeight={isActive ? '500' : '400'}
-                  color={isActive ? 'var(--primary-500)' : 'var(--text-muted)'}
+                  color={isActive ? activeColor : 'var(--text-muted)'}
                   transition="color 0.2s ease-in, font-weight 0.2s ease-in"
                 >
                   {item.name}

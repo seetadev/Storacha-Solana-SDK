@@ -8,7 +8,7 @@ import {
   getUsdfcContractAddress,
   verifyErc20Transfer,
 } from '../services/fil/verify.service.js'
-import { gatewayUrl } from '../services/storage/pinata.service.js'
+import { gatewayUrl } from '../services/storage/meshkit.service.js'
 import { getSolPrice } from '../services/price/sol-price.service.js'
 import {
   getAmountInLamportsFromUSD,
@@ -232,6 +232,8 @@ export const confirmStorageRenewal = async (req: Request, res: Response) => {
         updated.fileType === 'directory'
           ? undefined
           : (updated.fileName ?? undefined),
+        undefined,
+        updated.kuboNodeUrl ?? undefined,
       ),
     })
   } catch (error) {
@@ -403,6 +405,8 @@ export const confirmRenewalUsdFC = async (req: Request, res: Response) => {
         updated.fileType === 'directory'
           ? undefined
           : (updated.fileName ?? undefined),
+        undefined,
+        updated.kuboNodeUrl ?? undefined,
       ),
     })
   } catch (error) {

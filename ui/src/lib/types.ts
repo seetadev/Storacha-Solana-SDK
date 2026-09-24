@@ -1,5 +1,8 @@
 export type PaymentChain = 'sol' | 'fil'
 
+/** Extended chain type that includes Sepolia (Ethereum testnet). */
+export type AppChain = 'sol' | 'fil' | 'sep'
+
 export interface UploadResultInfo {
   cid: string
   fileName?: string
@@ -36,4 +39,23 @@ export interface DashboardStats {
   totalStorage: number
   totalSpent: number
   activeFiles: number
+}
+
+// ─── Kubo node configuration ─────────────────────────────────────────────────
+
+export interface KuboNodeConfig {
+  id: string
+  label: string
+  /** Kubo RPC API URL, e.g. http://kubo.example.com:5001 */
+  apiUrl: string
+  /** Public IPFS gateway URL, e.g. http://kubo.example.com:8080 */
+  gatewayUrl: string
+}
+
+export interface NodeHealthResult {
+  ok: boolean
+  nodeUrl: string
+  pinCount?: number
+  latencyMs?: number
+  error?: string
 }

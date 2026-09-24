@@ -1,0 +1,365 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Isometric digital toolbox with wrench, gear, code, and plug icons">
+  <defs>
+    <!-- Colors -->
+    <linearGradient id="faceFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a9d9a"/>
+      <stop offset="100%" stop-color="#1a6b68"/>
+    </linearGradient>
+    <linearGradient id="faceSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e7a77"/>
+      <stop offset="100%" stop-color="#0f4543"/>
+    </linearGradient>
+    <linearGradient id="faceTop" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3ecfc9"/>
+      <stop offset="100%" stop-color="#2aa8a3"/>
+    </linearGradient>
+    <linearGradient id="lidTop" x1="0%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%" stop-color="#4ce0d9"/>
+      <stop offset="55%" stop-color="#2bb8b2"/>
+      <stop offset="100%" stop-color="#1a7a76"/>
+    </linearGradient>
+    <linearGradient id="lidSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a9d98"/>
+      <stop offset="100%" stop-color="#145a57"/>
+    </linearGradient>
+    <linearGradient id="iconFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b8fff8"/>
+      <stop offset="50%" stop-color="#5aefe6"/>
+      <stop offset="100%" stop-color="#2ec4bb"/>
+    </linearGradient>
+    <linearGradient id="iconDepth" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a8a85"/>
+      <stop offset="100%" stop-color="#0d4a47"/>
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="50%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#a8fff8" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#3dd9d0" stop-opacity="0.7"/>
+      <stop offset="70%" stop-color="#1a6b68" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#061a19" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="#000000"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff" opacity="0.85">
+    <circle cx="60" cy="80" r="1.2"/>
+    <circle cx="140" cy="45" r="0.9"/>
+    <circle cx="220" cy="120" r="1.1"/>
+    <circle cx="310" cy="30" r="0.8"/>
+    <circle cx="400" cy="70" r="1"/>
+    <circle cx="520" cy="40" r="1.3"/>
+    <circle cx="610" cy="95" r="0.9"/>
+    <circle cx="700" cy="55" r="1.1"/>
+    <circle cx="750" cy="150" r="0.8"/>
+    <circle cx="80" cy="200" r="1"/>
+    <circle cx="40" cy="320" r="0.9"/>
+    <circle cx="100" cy="480" r="1.2"/>
+    <circle cx="50" cy="600" r="0.8"/>
+    <circle cx="180" cy="700" r="1"/>
+    <circle cx="300" cy="740" r="0.9"/>
+    <circle cx="450" cy="760" r="1.1"/>
+    <circle cx="580" cy="720" r="0.8"/>
+    <circle cx="680" cy="680" r="1"/>
+    <circle cx="740" cy="560" r="0.9"/>
+    <circle cx="760" cy="420" r="1.2"/>
+    <circle cx="720" cy="300" r="0.8"/>
+    <circle cx="680" cy="200" r="1"/>
+    <circle cx="500" cy="20" r="0.7"/>
+    <circle cx="260" cy="650" r="0.9"/>
+    <circle cx="620" cy="640" r="1.1"/>
+    <circle cx="90" cy="550" r="0.7"/>
+    <circle cx="350" cy="50" r="0.8"/>
+    <circle cx="160" cy="360" r="0.6" opacity="0.6"/>
+    <circle cx="640" cy="380" r="0.6" opacity="0.5"/>
+  </g>
+
+  <!-- ============ CHEST BODY (isometric) ============ -->
+  <!-- Coordinate system: center ~400,400; iso: x' = x-y, y' = (x+y)/2 + z -->
+  <g stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- Floor / bottom face (visible slightly through glow) -->
+    <polygon
+      points="400,560 250,485 400,410 550,485"
+      fill="#0a2e2c"
+      stroke="none"
+    />
+
+    <!-- Left face (front-left wall) -->
+    <path
+      d="M250,485 L250,320 L400,245 L400,410 Z"
+      fill="url(#faceFront)"
+    />
+    <!-- Recessed panel left -->
+    <path
+      d="M275,460 L275,345 L375,295 L375,410 Z"
+      fill="none"
+      stroke="#0a2220"
+      stroke-width="2.5"
+      opacity="0.55"
+    />
+    <path
+      d="M285,445 L285,355 L365,315 L365,405 Z"
+      fill="#1a5c59"
+      stroke="#0d3533"
+      stroke-width="1.5"
+      opacity="0.6"
+    />
+
+    <!-- Right face (front-right wall) -->
+    <path
+      d="M400,410 L400,245 L550,320 L550,485 Z"
+      fill="url(#faceSide)"
+    />
+    <!-- Recessed panel right -->
+    <path
+      d="M425,410 L425,295 L525,345 L525,460 Z"
+      fill="none"
+      stroke="#061818"
+      stroke-width="2.5"
+      opacity="0.5"
+    />
+    <path
+      d="M435,405 L435,315 L515,355 L515,445 Z"
+      fill="#14504d"
+      stroke="#0a2a28"
+      stroke-width="1.5"
+      opacity="0.55"
+    />
+
+    <!-- Inner rim / top edge of walls (bright) -->
+    <path
+      d="M250,320 L400,245 L550,320"
+      fill="none"
+      stroke="#6ef0e8"
+      stroke-width="4"
+      opacity="0.9"
+    />
+    <path
+      d="M250,320 L400,395 L550,320"
+      fill="none"
+      stroke="#3ecfc9"
+      stroke-width="2"
+      opacity="0.4"
+    />
+
+    <!-- Inner glow -->
+    <ellipse cx="400" cy="400" rx="130" ry="70" fill="url(#innerGlow)" stroke="none"/>
+
+    <!-- ============ MESH NETWORK ============ -->
+    <g filter="url(#nodeGlow)" stroke="#7af5ee" stroke-width="1.4" fill="#c8fff9">
+      <!-- nodes -->
+      <circle cx="340" cy="420" r="3.2"/>
+      <circle cx="380" cy="400" r="2.8"/>
+      <circle cx="420" cy="415" r="3.5"/>
+      <circle cx="460" cy="395" r="2.6"/>
+      <circle cx="355" cy="390" r="2.4"/>
+      <circle cx="400" cy="375" r="3"/>
+      <circle cx="440" cy="385" r="2.5"/>
+      <circle cx="370" cy="440" r="2.7"/>
+      <circle cx="415" cy="445" r="2.3"/>
+      <circle cx="450" cy="430" r="2.9"/>
+      <circle cx="320" cy="400" r="2.2"/>
+      <circle cx="480" cy="415" r="2.4"/>
+      <circle cx="390" cy="455" r="2"/>
+      <circle cx="430" cy="360" r="2.3"/>
+      <!-- edges -->
+      <g stroke-opacity="0.85" fill="none">
+        <line x1="340" y1="420" x2="380" y2="400"/>
+        <line x1="380" y1="400" x2="420" y2="415"/>
+        <line x1="420" y1="415" x2="460" y2="395"/>
+        <line x1="380" y1="400" x2="355" y2="390"/>
+        <line x1="355" y1="390" x2="400" y2="375"/>
+        <line x1="400" y1="375" x2="440" y2="385"/>
+        <line x1="440" y1="385" x2="460" y2="395"/>
+        <line x1="340" y1="420" x2="370" y2="440"/>
+        <line x1="370" y1="440" x2="415" y2="445"/>
+        <line x1="415" y1="445" x2="450" y2="430"/>
+        <line x1="450" y1="430" x2="480" y2="415"/>
+        <line x1="420" y1="415" x2="450" y2="430"/>
+        <line x1="380" y1="400" x2="370" y2="440"/>
+        <line x1="400" y1="375" x2="420" y2="415"/>
+        <line x1="320" y1="400" x2="340" y2="420"/>
+        <line x1="320" y1="400" x2="355" y2="390"/>
+        <line x1="390" y1="455" x2="370" y2="440"/>
+        <line x1="390" y1="455" x2="415" y2="445"/>
+        <line x1="430" y1="360" x2="400" y2="375"/>
+        <line x1="430" y1="360" x2="440" y2="385"/>
+        <line x1="460" y1="395" x2="480" y2="415"/>
+      </g>
+    </g>
+
+    <!-- ============ ICONS ============ -->
+
+    <!-- WRENCH (left) -->
+    <g transform="translate(310,300)">
+      <!-- depth -->
+      <path
+        d="M8,10 L18,5 L22,25 L28,55 L22,62 L12,58 L16,28 Z"
+        fill="url(#iconDepth)"
+        stroke="#050505"
+        stroke-width="2.5"
+      />
+      <!-- face -->
+      <path
+        d="M0,8
+           C-6,-2 6,-10 14,-4
+           L18,8
+           L16,28
+           L22,55
+           C24,62 16,68 10,62
+           L4,55
+           L10,28 Z"
+        fill="url(#iconFace)"
+        stroke="#050505"
+        stroke-width="2.8"
+      />
+      <!-- jaw opening -->
+      <path
+        d="M2,2 C6,-4 12,-2 12,4 L8,10 C6,6 2,6 2,2 Z"
+        fill="#0a3030"
+        stroke="#050505"
+        stroke-width="1.5"
+      />
+    </g>
+
+    <!-- GEAR (center-back) -->
+    <g transform="translate(400,275)">
+      <!-- depth ring -->
+      <ellipse cx="4" cy="6" rx="28" ry="16" fill="url(#iconDepth)" stroke="#050505" stroke-width="2.5"/>
+      <!-- teeth (iso-ish) -->
+      <g fill="url(#iconFace)" stroke="#050505" stroke-width="2.2">
+        <path d="M0,-30 L8,-34 L12,-26 L4,-22 Z"/>
+        <path d="M22,-18 L30,-16 L28,-6 L20,-10 Z"/>
+        <path d="M26,8 L34,12 L28,20 L22,14 Z"/>
+        <path d="M8,26 L12,34 L4,32 L2,24 Z"/>
+        <path d="M-18,18 L-14,28 L-24,26 L-26,16 Z"/>
+        <path d="M-30,0 L-36,6 L-32,14 L-26,6 Z"/>
+        <path d="M-22,-18 L-28,-24 L-18,-28 L-14,-20 Z"/>
+      </g>
+      <!-- main disc -->
+      <ellipse cx="0" cy="0" rx="22" ry="13" fill="url(#iconFace)" stroke="#050505" stroke-width="2.8"/>
+      <!-- hub -->
+      <ellipse cx="0" cy="0" rx="8" ry="5" fill="#0d4542" stroke="#050505" stroke-width="2"/>
+      <ellipse cx="0" cy="0" rx="3.5" ry="2.2" fill="#5aefe6" stroke="#050505" stroke-width="1.2"/>
+    </g>
+
+    <!-- CODE </> (right) -->
+    <g transform="translate(470,310)" fill="url(#iconFace)" stroke="#050505" stroke-width="2.8" stroke-linejoin="round">
+      <!-- depth for &lt; -->
+      <path d="M-8,0 L8,-22 L14,-18 L-2,4 L14,26 L8,30 Z" fill="url(#iconDepth)" stroke-width="2"/>
+      <!-- &lt; -->
+      <path d="M-14,-4 L6,-28 L14,-22 L-2,-2 L14,18 L6,24 Z"/>
+      <!-- slash depth -->
+      <rect x="16" y="-8" width="10" height="36" rx="2" transform="rotate(18 21 10)" fill="url(#iconDepth)" stroke-width="2"/>
+      <!-- slash -->
+      <rect x="12" y="-12" width="10" height="36" rx="2" transform="rotate(18 17 6)" fill="url(#iconFace)"/>
+      <!-- &gt; depth -->
+      <path d="M42,0 L26,-22 L20,-18 L36,4 L20,26 L26,30 Z" fill="url(#iconDepth)" stroke-width="2"/>
+      <!-- &gt; -->
+      <path d="M48,-4 L28,-28 L20,-22 L36,-2 L20,18 L28,24 Z"/>
+    </g>
+
+    <!-- PLUG (front-center) -->
+    <g transform="translate(400,430)">
+      <!-- body depth -->
+      <path d="M-18,8 L18,8 L24,18 L-12,18 Z" fill="url(#iconDepth)" stroke="#050505" stroke-width="2.5"/>
+      <!-- body -->
+      <rect x="-22" y="-6" width="44" height="22" rx="4" fill="url(#iconFace)" stroke="#050505" stroke-width="2.8"/>
+      <!-- prongs depth -->
+      <rect x="-10" y="-28" width="7" height="24" rx="1.5" fill="url(#iconDepth)" stroke="#050505" stroke-width="2"/>
+      <rect x="7" y="-28" width="7" height="24" rx="1.5" fill="url(#iconDepth)" stroke="#050505" stroke-width="2"/>
+      <!-- prongs -->
+      <rect x="-14" y="-32" width="7" height="28" rx="1.5" fill="url(#iconFace)" stroke="#050505" stroke-width="2.5"/>
+      <rect x="3" y="-32" width="7" height="28" rx="1.5" fill="url(#iconFace)" stroke="#050505" stroke-width="2.5"/>
+      <!-- face detail -->
+      <rect x="-14" y="2" width="28" height="6" rx="2" fill="#1a6b68" opacity="0.45" stroke="none"/>
+    </g>
+
+    <!-- ============ LID ============ -->
+    <!-- Lid hinged at back (top of chest), open ~45� up-back -->
+    <!-- Lid underside (dark) -->
+    <path
+      d="M255,310 L400,235 L545,310 L400,160 Z"
+      fill="#0d3d3a"
+      opacity="0.85"
+      stroke="#050505"
+      stroke-width="3"
+    />
+    <!-- Lid top face -->
+    <path
+      d="M270,145 L400,80 L530,145 L400,210 Z"
+      fill="url(#lidTop)"
+      stroke="#050505"
+      stroke-width="3.5"
+    />
+    <!-- Lid left thickness -->
+    <path
+      d="M270,145 L270,175 L400,240 L400,210 Z"
+      fill="url(#lidSide)"
+      stroke="#050505"
+      stroke-width="3"
+    />
+    <!-- Lid right thickness -->
+    <path
+      d="M530,145 L530,175 L400,240 L400,210 Z"
+      fill="#145a57"
+      stroke="#050505"
+      stroke-width="3"
+    />
+    <!-- Lid edge highlight -->
+    <path
+      d="M270,145 L400,80 L530,145"
+      fill="none"
+      stroke="#9ffff6"
+      stroke-width="3"
+      opacity="0.75"
+    />
+    <!-- Panel recess on lid -->
+    <path
+      d="M310,140 L400,95 L490,140 L400,185 Z"
+      fill="none"
+      stroke="#0a2a28"
+      stroke-width="2"
+      opacity="0.45"
+    />
+
+    <!-- Outer chest outline accents (bottom edges) -->
+    <path
+      d="M250,485 L400,560 L550,485"
+      fill="none"
+      stroke="#050505"
+      stroke-width="3.5"
+    />
+    <path
+      d="M250,485 L250,320"
+      fill="none"
+      stroke="#050505"
+      stroke-width="3.5"
+    />
+    <path
+      d="M550,485 L550,320"
+      fill="none"
+      stroke="#050505"
+      stroke-width="3.5"
+    />
+  </g>
+
+  <!-- Soft ambient glow around chest -->
+  <ellipse cx="400" cy="420" rx="200" ry="100" fill="#2ec4bb" opacity="0.08" filter="url(#softGlow)"/>
+</svg>

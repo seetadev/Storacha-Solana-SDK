@@ -12,6 +12,7 @@ import '../styles/_globals.scss'
 import { ToastProvider } from './components/toast.tsx'
 import { config } from './config/wagmi.ts'
 import { WalletProviders } from './context/auth-provider.tsx'
+import { NodeProvider } from './context/node-provider.tsx'
 import reportWebVitals from './reportWebVitals.ts'
 
 const queryClient = new QueryClient()
@@ -42,10 +43,12 @@ if (rootElement && !rootElement.innerHTML) {
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <WalletProviders>
-            <ChakraProvider>
-              <RouterProvider router={router} />
-              <ToastProvider />
-            </ChakraProvider>
+            <NodeProvider>
+              <ChakraProvider>
+                <RouterProvider router={router} />
+                <ToastProvider />
+              </ChakraProvider>
+            </NodeProvider>
           </WalletProviders>
         </QueryClientProvider>
       </WagmiProvider>
