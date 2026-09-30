@@ -24,7 +24,7 @@ export const ConnectFilWallet = ({
   return (
     <ModalLayout
       title="Connect Wallet"
-      subTitle="Select your preferred Filecoin wallet"
+      subTitle="Select your preferred Ethereum / Arbitrum wallet"
       isOpen={isOpen}
       onClose={onClose}
       size="sm"

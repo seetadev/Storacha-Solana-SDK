@@ -24,15 +24,16 @@ export const HomeHeader = () => {
   const [isFilModalOpen, setIsFilModalOpen] = useState(false)
   const { selectedChain, setSelectedChain } = useChainContext()
   const { isAuthenticated, user, logout } = useAuthContext()
-  const { address: filAddress } = useConnection()
-  const { mutate: disconnectFil } = useDisconnect()
+  const { address: evmAddress } = useConnection()
+  const { mutate: disconnectEvm } = useDisconnect()
 
-  const isConnected = selectedChain === 'sol' ? isAuthenticated : !!filAddress
-  const connectedAddress = selectedChain === 'sol' ? user : filAddress
+  const isSol = selectedChain === 'sol'
+  const isConnected = isSol ? isAuthenticated : !!evmAddress
+  const connectedAddress = isSol ? user : evmAddress
 
   const handleDisconnect = () => {
-    if (selectedChain === 'sol') logout()
-    else disconnectFil()
+    if (isSol) logout()
+    else disconnectEvm()
   }
 
   const truncatePublicKey = (publicKey: string) => {
@@ -171,9 +172,7 @@ export const HomeHeader = () => {
                     }}
                     leftIcon={<WalletIcon size={18} weight="fill" />}
                     onClick={() =>
-                      selectedChain === 'sol'
-                        ? setIsModalOpen(true)
-                        : setIsFilModalOpen(true)
+                      isSol ? setIsModalOpen(true) : setIsFilModalOpen(true)
                     }
                   >
                     Connect Wallet

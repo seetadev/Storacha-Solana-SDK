@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import { PublicKey } from '@solana/web3.js'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import { db } from '../db/db.js'
+import { db, findUploadIdByTxHash } from '../db/db.js'
 import { configTable, uploads } from '../db/schema.js'
 import { getUserHistory, saveTransaction } from '../db/uploads.js'
 import {
@@ -33,6 +33,21 @@ import {
 } from '../services/storage/meshkit.service.js'
 
 /** Extract optional per-request Kubo node overrides from headers. */
+function errorText(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const cause = error.cause
+  const causeText =
+    cause instanceof Error
+      ? cause.message
+      : typeof cause === 'string'
+        ? cause
+        : ''
+  if (causeText && !error.message.includes(causeText)) {
+    return `${error.message} — ${causeText}`
+  }
+  return error.message
+}
+
 function extractNodeHeaders(req: {
   headers: Record<string, string | string[] | undefined>
 }) {
@@ -85,13 +100,9 @@ async function requirePptPayment(
     }
   }
 
-  const [existing] = await db
-    .select({ id: uploads.id })
-    .from(uploads)
-    .where(eq(uploads.transactionHash, txHash))
-    .limit(1)
+  const existingId = await findUploadIdByTxHash(txHash)
 
-  if (existing) {
+  if (existingId) {
     return {
       ok: false,
       status: 409,
@@ -993,11 +1004,11 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
   } catch (error) {
     Sentry.captureException(error)
     logger.error('Error in MeshKit upload', {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
     return res.status(500).json({
       message: 'Upload failed',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
   }
 }
@@ -1088,12 +1099,12 @@ export const retrieveMeshkit = async (req: Request, res: Response) => {
   } catch (error) {
     Sentry.captureException(error)
     logger.error('Error retrieving via MeshKit', {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
       cid: req.params.cid,
     })
     return res.status(404).json({
       message: 'Failed to retrieve file',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
   }
 }

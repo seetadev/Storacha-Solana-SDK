@@ -149,11 +149,18 @@ export const UploadSuccess = ({
                 color="var(--text-inverse)"
                 fontWeight="var(--font-weight-medium)"
               >
-                {uploadInfo.paymentChain === 'sol'
-                  ? `${formatSOL(uploadInfo.costInSOL)} SOL`
-                  : `${formatUSD(uploadInfo.costInUSDFC)} USDFC`}
+                {uploadInfo.paymentChain === 'arb'
+                  ? `${formatUSD(uploadInfo.costInUSDC ?? uploadInfo.costInUSDFC)} USDC`
+                  : uploadInfo.paymentChain === 'eth'
+                    ? formatSOL(
+                        uploadInfo.costInETH ?? uploadInfo.costInSOL,
+                      ).replace(/ SOL$/, ' ETH')
+                    : uploadInfo.paymentChain === 'sol'
+                      ? formatSOL(uploadInfo.costInSOL)
+                      : `${formatUSD(uploadInfo.costInUSDFC)} USDFC`}
               </Text>
-              {uploadInfo.paymentChain === 'sol' && (
+              {(uploadInfo.paymentChain === 'sol' ||
+                uploadInfo.paymentChain === 'eth') && (
                 <Text fontSize="var(--font-size-xs)" color="var(--text-muted)">
                   {formatUSD(uploadInfo.costInUSD)}
                 </Text>

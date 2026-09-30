@@ -1,7 +1,7 @@
-export type PaymentChain = 'sol' | 'fil'
+export type PaymentChain = 'sol' | 'fil' | 'eth' | 'arb'
 
 /** Extended chain type that includes Sepolia (Ethereum testnet). */
-export type AppChain = 'sol' | 'fil' | 'sep'
+export type AppChain = 'sol' | 'fil' | 'sep' | 'eth' | 'arb'
 
 export interface UploadResultInfo {
   cid: string
@@ -12,6 +12,8 @@ export interface UploadResultInfo {
   costInSOL: number
   costInUSD: number
   costInUSDFC: number
+  costInUSDC?: number
+  costInETH?: number
   paymentChain: PaymentChain
   transactionHash: string
 }
