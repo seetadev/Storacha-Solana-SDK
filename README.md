@@ -1,4 +1,4 @@
-# toju: Agentic Infrastructure, Observability & Portable Storage with Solana Pay
+### toju: Agentic Infrastructure, Observability & Portable Storage with Solana Pay
 
 **toju** provides enterprise infrastructure for AI agents with **portable storage, content-addressed data, verifiable observability, and machine-to-machine payments**.
 
