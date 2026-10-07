@@ -2,7 +2,7 @@
 
 **toju** provides enterprise infrastructure for AI agents with **portable storage, content-addressed data, verifiable observability, and machine-to-machine payments**.
 
-Built on **Solana Pay, libp2p and IPFS**, toju enables agents and enterprise applications to securely store, retrieve, verify, and exchange data and execution artifacts across clouds, storage providers, and infrastructure platforms—without being locked into a single vendor.
+Built on **Solana Pay, libp2p and IPFS**, toju enables agents and enterprise applications to securely store, retrieve, verify, and exchange data and execution artifacts across clouds, storage providers, and infrastructure platforms, without being locked into a single vendor.
 
 Content addressing gives enterprise agents **portable, verifiable, and tamper-evident identities** for data, state, telemetry, receipts, and execution artifacts. Combined with **Solana Pay**, these records can be linked to machine-to-machine payments, enabling verifiable agent commerce, auditable transactions, and vendor-neutral infrastructure.
 
