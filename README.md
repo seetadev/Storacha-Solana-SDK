@@ -253,7 +253,7 @@ Build applications where storage, identity, data, execution artifacts, and payme
 
 ---
 
-## Web App
+## Solana Deployments
 
 **Production (Mainnet):**
 https://toju.network
