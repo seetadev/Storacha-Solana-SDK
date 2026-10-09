@@ -26,7 +26,7 @@ const UPLOAD_COLUMNS = [
 
 let uploadSchemaReady: Promise<void> | null = null
 
-export function ensureUploadSchema(): Promise<void> {
+function ensureUploadSchema(): Promise<void> {
   uploadSchemaReady ??= (async () => {
     for (const statement of UPLOAD_COLUMNS) {
       await sql.query(statement)

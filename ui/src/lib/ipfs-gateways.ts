@@ -5,7 +5,7 @@
  * gateway. ipfs.io, dweb.link, Pinata, and w3s.link look the CID up on the
  * public network and do not have this pin.
  */
-export const HOSTED_KUBO_GATEWAY = 'https://kubo-render.onrender.com'
+const HOSTED_KUBO_GATEWAY = 'https://kubo-render.onrender.com'
 
 export const PUBLIC_IPFS_GATEWAYS = [
   { id: 'kubo-render', label: 'kubo-render', base: HOSTED_KUBO_GATEWAY },
@@ -25,7 +25,7 @@ function hostnameOf(base: string): string {
 }
 
 /** True for loopback gateway bases (localhost, 127.0.0.1, …). */
-export function isLocalGatewayBase(base: string): boolean {
+function isLocalGatewayBase(base: string): boolean {
   return LOCAL_HOSTS.has(hostnameOf(base))
 }
 

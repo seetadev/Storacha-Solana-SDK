@@ -3,13 +3,13 @@ import { logger } from '../../utils/logger.js'
 
 type KuboClient = Awaited<ReturnType<typeof init>>['meshkit']
 
-export type PinnedFile = {
+type PinnedFile = {
   name: string
   cid: string
   mimetype: string
 }
 
-export type PinFilesResult = {
+type PinFilesResult = {
   primaryCid: string
   files: PinnedFile[]
   /** Kubo API base that actually stored the bytes. */

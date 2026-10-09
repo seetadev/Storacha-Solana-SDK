@@ -11,7 +11,8 @@
       "**",
       "!!solana-programs",
       "!**/*.gen.ts",
-      "!**/routeTree.gen.ts"
+      "!**/routeTree.gen.ts",
+      "!**/dist"
     ]
   },
   "formatter": {

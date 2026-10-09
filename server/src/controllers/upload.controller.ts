@@ -1023,9 +1023,6 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
   }
 }
 
-/** @deprecated Use uploadMeshkit — kept as alias for older Sepolia UI path */
-export const uploadSepolia = uploadMeshkit
-
 /**
  * Retrieve file bytes by CID via meshkit.retrieve().
  * Requires a fresh 1 PPT payment (txHash + userAddress via query or headers).

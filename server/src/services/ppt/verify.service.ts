@@ -27,7 +27,7 @@ interface RpcReceipt {
   }>
 }
 
-export interface VerifyPptPaymentArgs {
+interface VerifyPptPaymentArgs {
   transactionHash: string
   from: string
   /** Defaults to PPT_TREASURY / deployer */
@@ -36,7 +36,7 @@ export interface VerifyPptPaymentArgs {
   expectedAmount?: bigint
 }
 
-export interface VerifyPptResult {
+interface VerifyPptResult {
   verified: boolean
   actualAmount?: bigint
   reason?: string

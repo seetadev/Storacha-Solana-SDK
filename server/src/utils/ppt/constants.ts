@@ -14,8 +14,6 @@ export const PPT_RPC_URL =
 /** 1 PPT per gated operation (18 decimals). */
 export const PPT_FEE_AMOUNT = 10n ** 18n
 
-export const PPT_DECIMALS = 18
-
 export const PPT_PAYMENT_CHAIN = 'arb-sep'
 
 export const PPT_PAYMENT_TOKEN = 'PPT'
