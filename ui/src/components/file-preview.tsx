@@ -23,6 +23,8 @@ export function PreviewPane({
   }
   if (type.startsWith('video/')) {
     return (
+      // Retrieved files do not include a caption track.
+      // biome-ignore lint/a11y/useMediaCaption: user file has no captions
       <video
         src={url}
         controls
@@ -31,7 +33,10 @@ export function PreviewPane({
     )
   }
   if (type.startsWith('audio/')) {
-    return <audio src={url} controls style={{ width: '100%' }} />
+    return (
+      // biome-ignore lint/a11y/useMediaCaption: user file has no captions
+      <audio src={url} controls style={{ width: '100%' }} />
+    )
   }
   if (type === 'application/pdf' || type.startsWith('text/')) {
     return (

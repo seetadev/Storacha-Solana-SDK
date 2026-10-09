@@ -97,6 +97,9 @@ export const UploadHistory = () => {
           'X-PPT-Tx-Hash': txHash,
           'X-User-Address': ppt.address.toLowerCase(),
         },
+        // Bound the verify + fetch round-trip so a stalled server can't
+        // leave the button on 'Paying…' forever.
+        signal: AbortSignal.timeout(300_000),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -142,7 +145,13 @@ export const UploadHistory = () => {
         })
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Retrieve failed', {
+      const message =
+        err instanceof DOMException && err.name === 'TimeoutError'
+          ? 'Retrieve timed out after 5 minutes — try again'
+          : err instanceof Error
+            ? err.message
+            : 'Retrieve failed'
+      toast.error(message, {
         id: toastId,
       })
     } finally {

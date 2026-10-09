@@ -1,7 +1,7 @@
 {
   "name": "@toju.network/fil",
   "version": "1.0.0",
-  "description": "Pay for storage with USDFC on IPFS using Storacha's Hot storage network.",
+  "description": "Pay for storage with USDFC on IPFS.",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.js",
@@ -27,7 +27,7 @@
   },
   "keywords": [
     "usdfc",
-    "storacha",
+    "kubo",
     "typescript",
     "web3",
     "ipfs",

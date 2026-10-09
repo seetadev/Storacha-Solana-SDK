@@ -1,4 +1,4 @@
-import type { PaymentChain } from '@toju.network/fil'
+import type { PaymentChain } from '@/lib/types'
 import React, { useState } from 'react'
 
 interface ChainContextValues {
@@ -9,7 +9,7 @@ interface ChainContextValues {
 export const ChainContext = React.createContext<ChainContextValues | null>(null)
 
 export const ChainProvider = ({ children }: { children: React.ReactNode }) => {
-  const [selectedChain, setSelectedChain] = useState<PaymentChain>('sol')
+  const [selectedChain, setSelectedChain] = useState<PaymentChain>('arb')
 
   return (
     <ChainContext.Provider value={{ selectedChain, setSelectedChain }}>

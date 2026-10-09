@@ -28,7 +28,6 @@
     "@tanstack/react-router": "^1.168.8",
     "@tanstack/react-router-devtools": "^1.166.11",
     "@tanstack/router-plugin": "^1.167.9",
-    "@toju.network/fil": "^1.0.0",
     "@toju.network/sol": "^1.0.0",
     "dayjs": "^1.11.20",
     "embla-carousel-react": "^8.6.0",

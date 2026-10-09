@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { XIcon } from '@phosphor-icons/react'
 
-export interface ModalLayoutProps extends ChakraProps {
+interface ModalLayoutProps extends ChakraProps {
   title?: string
   subTitle?: string
   children: React.ReactNode

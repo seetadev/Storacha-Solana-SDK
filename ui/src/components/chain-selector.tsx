@@ -1,5 +1,5 @@
 import { Box, Text } from '@chakra-ui/react'
-import type { PaymentChain } from '@toju.network/fil'
+import type { PaymentChain } from '@/lib/types'
 
 interface ChainSelectorProps {
   value: PaymentChain
@@ -7,15 +7,18 @@ interface ChainSelectorProps {
 }
 
 const CHAINS: Array<{ label: string; value: PaymentChain }> = [
-  { label: 'SOL', value: 'sol' },
-  { label: 'USDFC', value: 'fil' },
+  { label: 'ETH', value: 'eth' },
+  { label: 'Arbitrum', value: 'arb' },
 ]
 
-const TAB_WIDTH = '4.5em'
+const TAB_WIDTH = '5.5em'
 const GUTTER = 5
 
 export const ChainSelector = ({ value, onChange }: ChainSelectorProps) => {
-  const activeIndex = CHAINS.findIndex((c) => c.value === value)
+  const foundIndex = CHAINS.findIndex((c) => c.value === value)
+  // Fall back to Arbitrum for legacy values ('sol' | 'fil') so the
+  // indicator never mispositions when history holds an old chain.
+  const activeIndex = foundIndex === -1 ? 1 : foundIndex
 
   return (
     <Box

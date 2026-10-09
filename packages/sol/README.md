@@ -1,6 +1,6 @@
 ## @toju.network/sol
 
-Pay for decentralized storage on IPFS via Storacha with SOL. No credit cards, no subscriptions.
+Pay for decentralized storage on IPFS with SOL. No credit cards, no subscriptions.
 
 **Features:**
 

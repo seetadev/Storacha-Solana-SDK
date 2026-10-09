@@ -10,7 +10,7 @@ import { sha256 } from 'js-sha256'
 import { db } from '../../db/db.js'
 import { configTable } from '../../db/schema.js'
 import { logger } from '../logger.js'
-import { SolanaProgram as StorachaSolProgram } from './program.js'
+import { SolanaProgram } from './program.js'
 
 const CONFIG_SEED = 'config'
 const DEPOSIT_SEED = 'deposit'
@@ -105,7 +105,7 @@ async function createInitializeConfigInstruction(
   }
 
   const provider = new AnchorProvider(connection, wallet as any, {})
-  const program = new Program(idl as StorachaSolProgram, provider)
+  const program = new Program(idl as SolanaProgram, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],
@@ -345,7 +345,7 @@ export async function getEscrowBalance(): Promise<{
   }
 
   const provider = new AnchorProvider(connection, wallet as any, {})
-  const program = new Program(idl as StorachaSolProgram, provider)
+  const program = new Program(idl as SolanaProgram, provider)
 
   const [escrowVaultPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from('escrow')],
@@ -395,7 +395,7 @@ export async function withdrawFees(amountLamports: bigint): Promise<string> {
   }
 
   const provider = new AnchorProvider(connection, wallet as any, {})
-  const program = new Program(idl as StorachaSolProgram, provider)
+  const program = new Program(idl as SolanaProgram, provider)
 
   const [configPda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from(CONFIG_SEED)],

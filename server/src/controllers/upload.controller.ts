@@ -1,8 +1,9 @@
+import { isEncryptedPayload } from '@ipfs-meshkit/meshkit'
 import * as Sentry from '@sentry/node'
 import { PublicKey } from '@solana/web3.js'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import { db } from '../db/db.js'
+import { db, findUploadIdByTxHash } from '../db/db.js'
 import { configTable, uploads } from '../db/schema.js'
 import { getUserHistory, saveTransaction } from '../db/uploads.js'
 import {
@@ -33,6 +34,21 @@ import {
 } from '../services/storage/meshkit.service.js'
 
 /** Extract optional per-request Kubo node overrides from headers. */
+function errorText(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const cause = error.cause
+  const causeText =
+    cause instanceof Error
+      ? cause.message
+      : typeof cause === 'string'
+        ? cause
+        : ''
+  if (causeText && !error.message.includes(causeText)) {
+    return `${error.message} — ${causeText}`
+  }
+  return error.message
+}
+
 function extractNodeHeaders(req: {
   headers: Record<string, string | string[] | undefined>
 }) {
@@ -85,13 +101,9 @@ async function requirePptPayment(
     }
   }
 
-  const [existing] = await db
-    .select({ id: uploads.id })
-    .from(uploads)
-    .where(eq(uploads.transactionHash, txHash))
-    .limit(1)
+  const existingId = await findUploadIdByTxHash(txHash)
 
-  if (existing) {
+  if (existingId) {
     return {
       ok: false,
       status: 409,
@@ -894,7 +906,11 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
         ? fileArray[0].originalname
         : directoryName || `dir-${Date.now()}`
 
-    const { primaryCid, files: pinnedFiles } = await pinFiles(
+    const {
+      primaryCid,
+      files: pinnedFiles,
+      nodeUrl: pinnedOn,
+    } = await pinFiles(
       fileMap,
       dirLabel,
       nodeUrl,
@@ -939,7 +955,7 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
         warningSentAt: null,
         paymentChain: PPT_PAYMENT_CHAIN,
         paymentToken: PPT_PAYMENT_TOKEN,
-        kuboNodeUrl: nodeUrl || null,
+        kuboNodeUrl: pinnedOn || nodeUrl || null,
       })
 
       responseFiles.push({
@@ -947,7 +963,12 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
         size,
         type: pinned.mimetype,
         cid: pinned.cid,
-        url: gatewayUrl(pinned.cid, pinned.name, gatewayBase, nodeUrl),
+        url: gatewayUrl(
+          pinned.cid,
+          pinned.name,
+          gatewayBase,
+          pinnedOn || nodeUrl,
+        ),
         retrieveUrl: `/upload/retrieve/${encodeURIComponent(pinned.cid)}`,
       })
     }
@@ -993,17 +1014,14 @@ export const uploadMeshkit = async (req: Request, res: Response) => {
   } catch (error) {
     Sentry.captureException(error)
     logger.error('Error in MeshKit upload', {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
     return res.status(500).json({
       message: 'Upload failed',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
   }
 }
-
-/** @deprecated Use uploadMeshkit — kept as alias for older Sepolia UI path */
-export const uploadSepolia = uploadMeshkit
 
 /**
  * Retrieve file bytes by CID via meshkit.retrieve().
@@ -1025,22 +1043,11 @@ export const retrieveMeshkit = async (req: Request, res: Response) => {
       return res.status(payment.status).json({ message: payment.message })
     }
 
-    const { nodeUrl } = extractNodeHeaders(req)
+    const { nodeUrl: headerNodeUrl } = extractNodeHeaders(req)
     const password =
       typeof req.query.password === 'string' && req.query.password.length > 0
         ? req.query.password
         : undefined
-
-    // Prefer the Kubo node recorded at upload time when no override is sent
-    let resolvedNode = nodeUrl
-    if (!resolvedNode) {
-      const [record] = await db
-        .select()
-        .from(uploads)
-        .where(eq(uploads.contentCid, cid))
-        .limit(1)
-      resolvedNode = record?.kuboNodeUrl ?? undefined
-    }
 
     const [meta] = await db
       .select()
@@ -1048,7 +1055,52 @@ export const retrieveMeshkit = async (req: Request, res: Response) => {
       .where(eq(uploads.contentCid, cid))
       .limit(1)
 
-    const bytes = await retrieveFile(cid, resolvedNode, password)
+    // The content lives where it was pinned (recorded at upload time), so
+    // try that node first — the header node is only a fallback. Querying a
+    // node that never saw the CID forces a DHT hunt that usually stalls.
+    const candidateNodes = [
+      ...new Set(
+        [meta?.kuboNodeUrl, headerNodeUrl].filter(
+          (u): u is string => !!u && u.trim().length > 0,
+        ),
+      ),
+    ]
+
+    let bytes: Uint8Array | undefined
+    let resolvedNode: string | undefined
+    let lastError: unknown
+    for (const node of candidateNodes.length > 0
+      ? candidateNodes
+      : [undefined]) {
+      try {
+        bytes = await retrieveFile(cid, node, password)
+        resolvedNode = node
+        break
+      } catch (err) {
+        lastError = err
+        logger.warn('MeshKit retrieve failed on node, trying next', {
+          cid,
+          nodeUrl: node,
+          error: errorText(err),
+        })
+      }
+    }
+    if (!bytes) {
+      throw lastError instanceof Error
+        ? lastError
+        : new Error(`Could not retrieve ${cid} from any node`)
+    }
+
+    // Encrypted payload but no password: the bytes would download as
+    // undecryptable garbage. Fail fast WITHOUT consuming the PPT payment
+    // so the same transaction can be retried with the password.
+    if (!password && isEncryptedPayload(bytes)) {
+      return res.status(400).json({
+        message:
+          'This file is encrypted — provide the upload-time password to retrieve it',
+      })
+    }
+
     const filename = meta?.fileName || 'download'
     const mimetype = meta?.fileType || 'application/octet-stream'
 
@@ -1088,12 +1140,12 @@ export const retrieveMeshkit = async (req: Request, res: Response) => {
   } catch (error) {
     Sentry.captureException(error)
     logger.error('Error retrieving via MeshKit', {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
       cid: req.params.cid,
     })
     return res.status(404).json({
       message: 'Failed to retrieve file',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorText(error),
     })
   }
 }

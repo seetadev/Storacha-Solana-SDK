@@ -1,20 +1,4 @@
-export type PaymentChain = 'sol' | 'fil'
-
-/** Extended chain type that includes Sepolia (Ethereum testnet). */
-export type AppChain = 'sol' | 'fil' | 'sep'
-
-export interface UploadResultInfo {
-  cid: string
-  fileName?: string
-  fileSize: number
-  fileCount: number
-  duration: number
-  costInSOL: number
-  costInUSD: number
-  costInUSDFC: number
-  paymentChain: PaymentChain
-  transactionHash: string
-}
+export type PaymentChain = 'sol' | 'fil' | 'eth' | 'arb'
 
 export type State = 'idle' | 'loading' | 'uploading'
 /** uploaded data status (for filtering) */

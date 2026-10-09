@@ -5,8 +5,6 @@ import { arbitrumSepolia } from 'wagmi/chains'
 export const PPT_TOKEN_ADDRESS =
   '0x38c505EE3FDf02C0A041B08611aDB2F1d92DF410' as const
 
-export const PPT_CHAIN = arbitrumSepolia
-
 export const PPT_CHAIN_ID = arbitrumSepolia.id
 
 /** 1 PPT per MeshKit operation (18 decimals). */

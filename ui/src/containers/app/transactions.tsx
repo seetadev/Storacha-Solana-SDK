@@ -3,6 +3,11 @@ import { ArrowSquareOutIcon, CopyIcon } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useUploadHistory } from '@/hooks/upload-history'
 import { useChainContext } from '@/hooks/context'
+import {
+  getArbitrumExplorerTxUrl,
+  getEthereumExplorerTxUrl,
+  USDC_DECIMALS,
+} from '@/config/arbitrum'
 import type { UploadedFile } from '@/lib/types'
 
 export const Transactions = () => {
@@ -11,6 +16,7 @@ export const Transactions = () => {
 
   const SOL_DECIMALS = 4
   const USDFC_DECIMALS = 6
+  const ETH_DECIMALS = 4
 
   // Network is determined at build time via env var
   const configuredNetwork =
@@ -22,7 +28,11 @@ export const Transactions = () => {
   }
 
   const openExplorer = (signature: string) => {
-    if (selectedChain === 'fil') {
+    if (selectedChain === 'arb') {
+      window.open(getArbitrumExplorerTxUrl(signature), '_blank')
+    } else if (selectedChain === 'eth') {
+      window.open(getEthereumExplorerTxUrl(signature), '_blank')
+    } else if (selectedChain === 'fil') {
       const filfoxUrl =
         import.meta.env.VITE_FILECOIN_NETWORK === 'mainnet'
           ? 'https://filfox.info'
@@ -38,6 +48,20 @@ export const Transactions = () => {
         '_blank',
       )
     }
+  }
+
+  const getDecimals = () => {
+    if (selectedChain === 'arb') return USDC_DECIMALS
+    if (selectedChain === 'eth') return ETH_DECIMALS
+    if (selectedChain === 'fil') return USDFC_DECIMALS
+    return SOL_DECIMALS
+  }
+
+  const getTokenLabel = () => {
+    if (selectedChain === 'arb') return 'USDC'
+    if (selectedChain === 'eth') return 'ETH'
+    if (selectedChain === 'fil') return 'USDFC'
+    return 'SOL'
   }
 
   if (isLoading) {
@@ -95,16 +119,14 @@ export const Transactions = () => {
             fontWeight="var(--font-weight-bold)"
             color="var(--text-inverse)"
           >
-            {selectedChain === 'sol'
-              ? stats.totalSpent.toFixed(SOL_DECIMALS)
-              : stats.totalSpent.toFixed(USDFC_DECIMALS)}
+            {stats.totalSpent.toFixed(getDecimals())}
             <Text
               as="span"
               fontSize="var(--font-size-lg)"
               color="var(--text-muted)"
               ml="0.25em"
             >
-              {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
+              {getTokenLabel()}
             </Text>
           </Text>
         </Box>
@@ -216,11 +238,7 @@ export const Transactions = () => {
                     fontWeight="var(--font-weight-bold)"
                     color="var(--text-inverse)"
                   >
-                    -
-                    {file.cost.toFixed(
-                      selectedChain === 'sol' ? SOL_DECIMALS : USDFC_DECIMALS,
-                    )}{' '}
-                    {selectedChain === 'sol' ? 'SOL' : 'USDFC'}
+                    -{file.cost.toFixed(getDecimals())} {getTokenLabel()}
                   </Text>
                   <Text
                     fontSize="var(--font-size-xs)"

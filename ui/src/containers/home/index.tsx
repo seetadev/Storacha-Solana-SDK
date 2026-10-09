@@ -60,8 +60,8 @@ const styles = {
 
 export const HomePage = () => {
   const { isAuthenticated } = useAuthContext()
-  const { address: filAddress } = useConnection()
-  const isAnyWalletConnected = isAuthenticated || !!filAddress
+  const { address: evmAddress } = useConnection()
+  const isAnyWalletConnected = isAuthenticated || !!evmAddress
 
   return (
     <Box position="relative" overflow="hidden">
@@ -124,7 +124,7 @@ export const HomePage = () => {
             lineHeight="var(--line-height-relaxed)"
             pt="-0.8em"
           >
-            Pay per upload with SOL, USDFC, or USDC on Base. No credit cards, no
+            Pay per upload with the PPT token on Arbitrum. No credit cards, no
             subscriptions. Pay only for what you store.
           </Text>
 
@@ -157,24 +157,6 @@ export const HomePage = () => {
             >
               {isAnyWalletConnected ? 'Get started' : 'Connect wallet'}
             </Button>
-
-            <Box
-              as="code"
-              height="54px"
-              px="2.5em"
-              alignItems="center"
-              border="1px solid rgba(255,255,255,0.1)"
-              cursor="pointer"
-              background="rgba(255,255,255,0.05)"
-              borderRadius="full"
-              color="var(--text-muted)"
-              width={{ base: '100%', lg: 'fit-content', md: 'fit-content' }}
-              fontFamily="monospace"
-              fontSize="var(--font-size-base)"
-              display={{ lg: 'flex', md: 'flex', base: 'none' }}
-            >
-              pnpm i @toju.network/sol
-            </Box>
           </HStack>
         </VStack>
       </Container>
@@ -244,8 +226,9 @@ export const HomePage = () => {
                     color="var(--text-muted)"
                     fontSize="var(--font-size-sm)"
                   >
-                    Settle your storage fees instantly with SOL or USDFC. No
-                    credit card required. Only pay for what you use.
+                    Settle your storage fees instantly with ETH or USDC on
+                    Arbitrum. No credit card required. Only pay for what you
+                    use.
                   </Text>
                 </Stack>
               </Stack>
@@ -321,8 +304,8 @@ export const HomePage = () => {
                     >
                       @toju.network/x402
                     </Box>{' '}
-                    to store files and pay with USDC on Base — no human in the
-                    loop.
+                    to store files and pay with USDC on Arbitrum — no human in
+                    the loop.
                   </Text>
                 </Stack>
               </Stack>
@@ -369,7 +352,7 @@ export const HomePage = () => {
                 color="var(--text-inverse)"
                 fontWeight="bold"
               >
-                Filecoin
+                Ethereum
               </Text>
             </HStack>
             <HStack cursor="pointer">
@@ -384,7 +367,7 @@ export const HomePage = () => {
                 color="var(--text-inverse)"
                 fontWeight="bold"
               >
-                Solana
+                Arbitrum
               </Text>
             </HStack>
             <HStack cursor="pointer">

@@ -2,7 +2,6 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "start": "tsx scripts/migrate.ts production && tsc -b && node dist/index.js",
