@@ -1,5 +1,5 @@
-export type PaymentChain = 'sol' | 'fil'
-export type PaymentToken = 'SOL' | 'USDFC' | 'FIL'
+export type PaymentChain = 'sol' | 'fil' | 'eth' | 'arb'
+export type PaymentToken = 'SOL' | 'USDFC' | 'FIL' | 'ETH' | 'USDC'
 
 /**
  * Result returned after a successful file upload with USDFC payment

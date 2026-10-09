@@ -24,7 +24,7 @@ docs/                 # Mintlify documentation
   ```
 - [Anchor Framework](https://www.anchor-lang.com/docs/installation)
 - [Node.js >= 20](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation)
-- [Storacha CLI](https://storacha.network) - `npm install -g @storacha/cli`
+- [Kubo](https://github.com/ipfs/kubo) — the IPFS node this app pins to (`KUBO_NODES`)
 
 ## Branch Strategy
 
@@ -113,51 +113,11 @@ Fill in your `.env`:
 - `RESEND_API_KEY` - Get from [resend.com](https://resend.com)
 - `BTRSTACK_SOURCE_TOKEN` / `BTRSTACK_SOURCE_ID` - For Betterstack logging
 - `ADMIN_KEYPAIR` - Output from generate-admin-key.sh
-- `STORACHA_KEY` / `STORACHA_PROOF` - See Storacha setup below
+- `KUBO_NODES` - Kubo RPC URL for the IPFS node (see IPFS node below)
 
-### Storacha Setup
+### IPFS node
 
-Generate `STORACHA_KEY` and `STORACHA_PROOF`:
-
-```bash
-# 1. Login to Storacha
-storacha login
-
-# 2. Create a space
-storacha space create my-space-name
-
-# 3. Generate server agent key
-storacha key create
-# Output: did:key:z6Mk... (server agent DID)
-# Also outputs private key - save as STORACHA_KEY
-
-# 4. Select your space
-storacha space use did:key:z6Mk...  # your space DID
-
-# 5. Create delegation with all capabilities
-storacha delegation create did:key:z6Mk... \
-  --can 'space/*' \
-  --can 'blob/*' \
-  --can 'index/*' \
-  --can 'store/*' \
-  --can 'upload/*' \
-  --can 'access/*' \
-  --can 'filecoin/*' \
-  --can 'usage/*' \
-  --base64
-# Output: base64 string - save as STORACHA_PROOF
-```
-
-**Important:** All capabilities above are required:
-- `store/*` and `upload/*` - file uploads
-- `upload/*` - deleting expired files (`upload/remove`)
-- `usage/*` - usage monitoring and reporting
-
-**Finding your server agent DID from an existing key:**
-```bash
-cd server
-node -e "import('@storacha/client/principal/ed25519').then(({Signer}) => console.log(Signer.parse('YOUR_STORACHA_KEY_VALUE').did()))"
-```
+Uploads are pinned with Kubo, not a separate storage network. Point `KUBO_NODES` at a running Kubo RPC, for example `https://kubo-render.onrender.com` or `http://127.0.0.1:5001`.
 
 ### Database Migrations
 

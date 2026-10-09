@@ -28,7 +28,7 @@
   },
   "keywords": [
     "solana",
-    "storacha",
+    "kubo",
     "typescript",
     "web3",
     "ipfs",
@@ -38,7 +38,7 @@
   ],
   "author": "toju.network",
   "license": "Apache-2.0",
-  "description": "Pay for storage with SOL on IPFS using Storacha's Hot storage network.",
+  "description": "Pay for storage with SOL on IPFS.",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",

@@ -124,7 +124,7 @@ export const HomePage = () => {
             lineHeight="var(--line-height-relaxed)"
             pt="-0.8em"
           >
-            Pay per upload with ETH or USDC on Arbitrum. No credit cards, no
+            Pay per upload with the PPT token on Arbitrum. No credit cards, no
             subscriptions. Pay only for what you store.
           </Text>
 

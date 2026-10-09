@@ -17,7 +17,7 @@ import {
  * 2. Server calculates cost and returns deposit info
  * 3. User sends USDFC to recipient address
  * 4. Verify payment on-chain
- * 5. Server confirms and stores on Storacha
+ * 5. Server confirms and stores on IPFS
  *
  * @param args - CreateDepositArgs
  * @param apiEndpoint - Backend API URL

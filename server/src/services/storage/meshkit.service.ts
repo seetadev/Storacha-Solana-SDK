@@ -12,6 +12,8 @@ export type PinnedFile = {
 export type PinFilesResult = {
   primaryCid: string
   files: PinnedFile[]
+  /** Kubo API base that actually stored the bytes. */
+  nodeUrl: string
 }
 
 /**
@@ -20,6 +22,29 @@ export type PinFilesResult = {
  * subsequent calls for the same set are served from the cache.
  */
 const _pool = new Map<string, KuboClient>()
+
+/** Bound for meshkit client init (health checks have no built-in timeout). */
+const INIT_TIMEOUT_MS = 30_000
+/** Bound for a single node retrieve — `ipfs.cat` never resolves on DHT miss. */
+const RETRIEVE_TIMEOUT_MS = 60_000
+
+/**
+ * Race a promise against a timeout so hanging Kubo RPC calls surface as
+ * errors instead of stalling the request forever.
+ */
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out`)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  })
+}
 
 function isLocalUrl(url: string): boolean {
   // Only treat URLs that explicitly target the standard Kubo daemon port (5001)
@@ -90,7 +115,13 @@ async function getClientForNodes(nodeUrls?: string[]): Promise<KuboClient> {
     // Talk to the listed RPC URLs. Do not spawn a daemon when a remote
     // node is available: a dead localhost must not block that failover,
     // and spawning `ipfs` throws before the remote node is tried.
-    const result = await init({ nodes: urls })
+    // init() health-checks each node with no built-in timeout, so a
+    // black-holed node would stall here forever — bound it explicitly.
+    const result = await withTimeout(
+      init({ nodes: urls }),
+      INIT_TIMEOUT_MS,
+      `meshkit init (${urls.join(', ')})`,
+    )
     meshkit = result.meshkit
   }
 
@@ -168,23 +199,42 @@ function isTransientFetch(error: unknown): boolean {
   )
 }
 
-function candidateNodeUrls(nodeUrl?: string): string[] {
-  const urls: string[] = []
-  const push = (url?: string) => {
-    const trimmed = url?.trim()
-    if (trimmed && !urls.includes(trimmed)) urls.push(trimmed)
+/**
+ * The node the caller asked for is the only place bytes may land.
+ * Appending KUBO_NODES let meshkit fail over to localhost, return that CID,
+ * and record kubo-render — retrieve then looked on a node that never got the file.
+ */
+function targetNodeUrl(nodeUrl?: string): string {
+  const explicit = nodeUrl?.trim().replace(/\/+$/, '')
+  if (explicit) return explicit
+  const fallback = resolveNodeUrls()[0]?.trim().replace(/\/+$/, '')
+  if (!fallback) {
+    throw new Error(
+      'No Kubo node configured. Set KUBO_NODES or pass X-Kubo-Node-URL.',
+    )
   }
-  push(nodeUrl)
-  for (const url of resolveNodeUrls()) push(url)
-  return urls
+  return fallback
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+async function assertBlockOnNode(nodeUrl: string, cid: string): Promise<void> {
+  const base = nodeUrl.replace(/\/+$/, '')
+  const statRes = await fetch(
+    `${base}/api/v0/block/stat?arg=${encodeURIComponent(cid)}`,
+    { method: 'POST', signal: AbortSignal.timeout(20_000) },
+  )
+  if (!statRes.ok) {
+    const body = await statRes.text().catch(() => '')
+    throw new Error(
+      `CID ${cid} is not in the repo at ${base} (${statRes.status}): ${body.slice(0, 180)}`,
+    )
+  }
+}
+
 /**
- * Pin via Kubo's HTTP API. Used when meshkit.upload() fails with a transport
- * error ("fetch failed") after the node already answered a health check.
- * Encryption stays on the meshkit path — this only sends plaintext bytes.
+ * Write plaintext bytes to one Kubo node with POST /api/v0/add?pin=true,
+ * then confirm the root block is in that node's repo.
  */
 async function pinWithKuboHttp(
   nodeUrl: string,
@@ -196,11 +246,20 @@ async function pinWithKuboHttp(
 
   for (const [name, { buffer, mimetype }] of Object.entries(fileMap)) {
     const form = new FormData()
-    form.append('file', new Blob([Buffer.from(buffer)]), name)
+    form.append(
+      'file',
+      new Blob([Buffer.from(buffer)], {
+        type: mimetype || 'application/octet-stream',
+      }),
+      name,
+    )
 
+    // CIDv0 (Qm…) is what this Kubo node serves. CIDv1 (bafy…) was stored
+    // under a different codec, so cat/retrieve on the same node missed it.
+    // raw-leaves must stay off: a raw leaf cannot be CIDv0.
     const addRes = await fetch(
-      `${base}/api/v0/add?cid-version=1&pin=false&quieter=true`,
-      { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) },
+      `${base}/api/v0/add?cid-version=0&raw-leaves=false&hash=sha2-256&pin=true&quieter=true`,
+      { method: 'POST', body: form, signal: AbortSignal.timeout(90_000) },
     )
     if (!addRes.ok) {
       const body = await addRes.text().catch(() => '')
@@ -215,16 +274,7 @@ async function pinWithKuboHttp(
     const cid = parsed.Hash
     if (!cid) throw new Error(`Kubo add at ${base} did not return a CID`)
 
-    const pinRes = await fetch(
-      `${base}/api/v0/pin/add?arg=${encodeURIComponent(cid)}`,
-      { method: 'POST', signal: AbortSignal.timeout(60_000) },
-    )
-    if (!pinRes.ok) {
-      const body = await pinRes.text().catch(() => '')
-      throw new Error(
-        `Kubo pin failed (${pinRes.status}) at ${base}: ${body.slice(0, 180)}`,
-      )
-    }
+    await assertBlockOnNode(base, cid)
 
     files.push({ name, cid, mimetype })
     logger.info('kubo http: file uploaded and pinned', {
@@ -241,7 +291,7 @@ async function pinWithKuboHttp(
     primaryCid,
     nodeUrl: base,
   })
-  return { primaryCid, files }
+  return { primaryCid, files, nodeUrl: base }
 }
 
 async function pinWithMeshkit(
@@ -249,7 +299,7 @@ async function pinWithMeshkit(
   fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
   directoryName: string,
   encryptPassword?: string,
-): Promise<PinFilesResult> {
+): Promise<Omit<PinFilesResult, 'nodeUrl'>> {
   const uploadOpts = encryptPassword
     ? { encrypt: { password: encryptPassword } }
     : undefined
@@ -291,19 +341,15 @@ async function pinWithMeshkit(
 }
 
 /**
- * Uploads every file in fileMap to the target Kubo node and pins each one
- * using meshkit.upload() + meshkit.pin() — the MeshKit Kubo round-trip.
+ * Uploads every file to one Kubo node and pins it there.
  *
- * Each file gets its own CID (MeshKit uploads raw bytes, not directories).
- * `primaryCid` is the first file's CID for DB / legacy callers.
+ * The requested node (X-Kubo-Node-URL, else KUBO_NODES) is the only target.
+ * Failover onto a second node was returning a CID that kubo-render never stored,
+ * so retrieve against the hosted node found nothing.
  *
- * The node from the request is tried first, then KUBO_NODES / the hosted
- * fallback. A dead localhost no longer fails the upload when another node
- * is reachable. Plaintext uploads fall back to Kubo's HTTP API when
- * meshkit's client reports "fetch failed".
- *
- * @param encryptPassword  Optional AES-256-GCM password (MeshKit encrypt option).
- * @param nodeUrl  Optional override from X-Kubo-Node-URL request header.
+ * Plaintext goes through POST /api/v0/add?pin=true first. Meshkit's RPC client
+ * often errors with "fetch failed" against the hosted HTTPS API and never
+ * writes the bytes. Encryption still uses meshkit (the HTTP path cannot encrypt).
  */
 export async function pinFiles(
   fileMap: Record<string, { buffer: Uint8Array; mimetype: string }>,
@@ -311,51 +357,80 @@ export async function pinFiles(
   nodeUrl?: string,
   encryptPassword?: string,
 ): Promise<PinFilesResult> {
-  const urls = candidateNodeUrls(nodeUrl)
+  const target = targetNodeUrl(nodeUrl)
+  let httpError: unknown
   let meshkitError: unknown
 
+  if (!encryptPassword) {
+    try {
+      const pinned = await pinWithKuboHttp(target, fileMap, directoryName)
+      logger.info('kubo http: files stored on target node', {
+        directoryName,
+        fileCount: pinned.files.length,
+        primaryCid: pinned.primaryCid,
+        nodeUrl: target,
+      })
+      return pinned
+    } catch (err) {
+      httpError = err
+      logger.warn('kubo http: pin failed, trying meshkit on the same node', {
+        nodeUrl: target,
+        error: describeError(err),
+      })
+    }
+  }
+
   try {
-    const client = await getClientForNodes(urls)
+    const client = await getClientForNodes([target])
     const pinned = await pinWithMeshkit(
       client,
       fileMap,
       directoryName,
       encryptPassword,
     )
+    for (const file of pinned.files) {
+      await assertBlockOnNode(target, file.cid)
+    }
     logger.info('meshkit: all files pinned', {
       directoryName,
       fileCount: pinned.files.length,
       primaryCid: pinned.primaryCid,
-      nodeUrl,
+      nodeUrl: target,
       encrypted: Boolean(encryptPassword),
     })
-    return pinned
+    return { ...pinned, nodeUrl: target }
   } catch (err) {
     meshkitError = err
     logger.warn('meshkit: pin failed', {
       error: describeError(err),
-      urls,
+      nodeUrl: target,
       encrypted: Boolean(encryptPassword),
     })
   }
 
-  if (encryptPassword) {
+  const details = [httpError, meshkitError]
+    .filter((err) => err != null)
+    .map((err) => describeError(err))
+    .join(' | ')
+  throw new Error(`Could not pin files on ${target}: ${details}`)
+}
+
+async function catWithKuboHttp(
+  nodeUrl: string,
+  cid: string,
+): Promise<Uint8Array> {
+  const base = nodeUrl.replace(/\/+$/, '')
+  const res = await fetch(`${base}/api/v0/cat?arg=${encodeURIComponent(cid)}`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(RETRIEVE_TIMEOUT_MS),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
     throw new Error(
-      `Could not pin encrypted files: ${describeError(meshkitError)}`,
+      `Kubo cat failed (${res.status}) at ${base}: ${body.slice(0, 180)}`,
     )
   }
-
-  let httpError: unknown = meshkitError
-  for (const url of urls) {
-    try {
-      return await pinWithKuboHttp(url, fileMap, directoryName)
-    } catch (err) {
-      httpError = err
-      logger.warn('kubo http: pin failed', { url, error: describeError(err) })
-    }
-  }
-
-  throw new Error(`Could not pin files: ${describeError(httpError)}`)
+  return new Uint8Array(await res.arrayBuffer())
 }
 
 /**
@@ -367,13 +442,43 @@ export async function retrieveFile(
   nodeUrl?: string,
   password?: string,
 ): Promise<Uint8Array> {
-  const client = await getClientForNodes(nodeUrl ? [nodeUrl] : undefined)
+  const target = targetNodeUrl(nodeUrl)
+
+  // Plaintext is written with the Kubo HTTP API, so read it back the same way.
+  // meshkit's RPC client often cannot cat from the hosted node even when the
+  // block is pinned there.
+  if (!password) {
+    try {
+      const bytes = await catWithKuboHttp(target, cid)
+      logger.info('kubo http: file retrieved', {
+        cid,
+        byteLength: bytes.byteLength,
+        nodeUrl: target,
+      })
+      return bytes
+    } catch (err) {
+      logger.warn('kubo http: cat failed, trying meshkit', {
+        cid,
+        nodeUrl: target,
+        error: describeError(err),
+      })
+    }
+  }
+
+  const client = await getClientForNodes([target])
   const retrieveOpts = password ? { password } : undefined
-  const bytes = await client.retrieve(cid, retrieveOpts)
+  // `ipfs.cat` hangs indefinitely when the node cannot find the content
+  // (e.g. pinned elsewhere and undiscoverable via DHT) — bound it so the
+  // caller can fail over to the next node instead of stalling forever.
+  const bytes = await withTimeout(
+    client.retrieve(cid, retrieveOpts),
+    RETRIEVE_TIMEOUT_MS,
+    `meshkit retrieve ${cid}`,
+  )
   logger.info('meshkit: file retrieved', {
     cid,
     byteLength: bytes.byteLength,
-    nodeUrl,
+    nodeUrl: target,
     decrypted: Boolean(password),
   })
   return bytes

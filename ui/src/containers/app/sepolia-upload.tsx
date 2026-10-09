@@ -1,6 +1,7 @@
 import { FileUpload } from '@/components/upload'
 import { KuboNodeSelector } from '@/components/kubo-node-selector'
 import { useNodeContext } from '@/hooks/context'
+import { sanitizeGatewayUrl } from '@/lib/ipfs-gateways'
 import { formatFileSize } from '@/lib/utils'
 import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react'
 import {
@@ -41,7 +42,7 @@ export const SepoliaUpload = () => {
   const { disconnect } = useDisconnect()
   const { switchChain } = useSwitchChain()
 
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<Array<File>>([])
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<UploadResult | null>(null)
   const [copiedCid, setCopiedCid] = useState(false)
@@ -119,6 +120,9 @@ export const SepoliaUpload = () => {
 
   // ─── Success view ───────────────────────────────────────────────────────────
   if (result) {
+    // The API builds `result.url` from the active Kubo node's gateway, which
+    // is a localhost URL when the Local node is selected — never link that.
+    const viewUrl = sanitizeGatewayUrl(result.url)
     return (
       <VStack spacing="1.5em" align="stretch">
         <HStack spacing="0.75em">
@@ -194,19 +198,19 @@ export const SepoliaUpload = () => {
               flex={1}
               noOfLines={1}
             >
-              {result.url}
+              {viewUrl}
             </Text>
             <HStack spacing="0.4em">
               <IconButton
                 text={copiedUrl ? 'Copied!' : 'Copy URL'}
                 icon={<CopyIcon size={14} />}
-                onClick={() => copyToClipboard(result.url, setCopiedUrl)}
+                onClick={() => copyToClipboard(viewUrl, setCopiedUrl)}
                 isSuccess={copiedUrl}
               />
               <IconButton
                 text="Open in browser"
                 icon={<ArrowSquareOutIcon size={14} />}
-                onClick={() => window.open(result.url, '_blank')}
+                onClick={() => window.open(viewUrl, '_blank')}
               />
             </HStack>
           </HStack>
@@ -250,7 +254,7 @@ export const SepoliaUpload = () => {
                   </Text>
                   <Box
                     as="a"
-                    href={f.url}
+                    href={sanitizeGatewayUrl(f.url)}
                     target="_blank"
                     color="var(--text-muted)"
                     _hover={{ color: 'var(--primary-500)' }}

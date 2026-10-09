@@ -105,6 +105,7 @@ export const Upload = () => {
 
     try {
       const txHash = await ppt.payOnePpt()
+      console.info('[upload] PPT payment submitted', txHash)
       setPendingPayHash(txHash)
       toast.loading('Waiting for PPT confirmation…', { id: toastId })
       await waitForTxReceipt(txHash)
@@ -128,8 +129,16 @@ export const Upload = () => {
             'X-IPFS-Gateway-URL': activeNode.gatewayUrl,
           },
           body: form,
+          // Bound the whole verify + pin round-trip so a stalled server
+          // can't leave the toast on 'Uploading via MeshKit…' forever.
+          signal: AbortSignal.timeout(300_000),
         })
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'TimeoutError') {
+          throw new Error(
+            'Upload timed out after 5 minutes — check history before retrying to avoid paying twice',
+          )
+        }
         const detail = err instanceof Error ? err.message : 'network error'
         throw new Error(
           `Cannot reach the storage API at ${apiBase} (${detail})`,
@@ -204,6 +213,9 @@ export const Upload = () => {
           'X-PPT-Tx-Hash': txHash,
           'X-User-Address': ppt.address.toLowerCase(),
         },
+        // Bound the verify + fetch round-trip so a stalled server can't
+        // leave the button on 'Paying…' forever.
+        signal: AbortSignal.timeout(300_000),
       })
 
       if (!res.ok) {
@@ -258,7 +270,13 @@ export const Upload = () => {
       }
     } catch (err) {
       setPendingPayHash(undefined)
-      toast.error(err instanceof Error ? err.message : 'Retrieve failed', {
+      const message =
+        err instanceof DOMException && err.name === 'TimeoutError'
+          ? 'Retrieve timed out after 5 minutes — try again'
+          : err instanceof Error
+            ? err.message
+            : 'Retrieve failed'
+      toast.error(message, {
         id: toastId,
       })
     } finally {
@@ -288,11 +306,7 @@ export const Upload = () => {
   }
 
   const gatewayUrlFor = (file: UploadedFileResult) =>
-    publicGatewayUrl(
-      file.cid,
-      file.name,
-      gatewayByCid[file.cid] ?? PUBLIC_IPFS_GATEWAYS[0].base,
-    )
+    publicGatewayUrl(file.cid, gatewayByCid[file.cid] ?? activeNode.gatewayUrl)
 
   const shareFileLink = async (file: UploadedFileResult) => {
     const shareData = {
@@ -543,8 +557,8 @@ export const Upload = () => {
                       </Text>
                       {PUBLIC_IPFS_GATEWAYS.map((g) => {
                         const isActive =
-                          (gatewayByCid[file.cid] ??
-                            PUBLIC_IPFS_GATEWAYS[0].base) === g.base
+                          (gatewayByCid[file.cid] ?? activeNode.gatewayUrl) ===
+                          g.base
                         return (
                           <Button
                             key={g.id}

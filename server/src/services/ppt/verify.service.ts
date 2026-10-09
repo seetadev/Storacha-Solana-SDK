@@ -13,6 +13,10 @@ const ERC20_TRANSFER_TOPIC =
 
 const RECEIPT_TIMEOUT_MS = 90_000
 const RECEIPT_POLL_INTERVAL_MS = 2_000
+// Bound for a single receipt poll. node-fetch has no default timeout, so
+// without this a stalled RPC would freeze the deadline loop below forever
+// and the upload request would hang with no response.
+const RECEIPT_REQUEST_TIMEOUT_MS = 15_000
 
 interface RpcReceipt {
   status: string
@@ -51,6 +55,7 @@ async function getReceipt(
       params: [txHash],
       id: 1,
     }),
+    signal: AbortSignal.timeout(RECEIPT_REQUEST_TIMEOUT_MS),
   })
 
   if (!response.ok) {
@@ -68,8 +73,17 @@ async function waitForReceipt(
   const deadline = Date.now() + RECEIPT_TIMEOUT_MS
 
   while (Date.now() < deadline) {
-    const receipt = await getReceipt(rpcUrl, txHash)
-    if (receipt) return receipt
+    try {
+      const receipt = await getReceipt(rpcUrl, txHash)
+      if (receipt) return receipt
+    } catch (err) {
+      // Transient RPC failure (timeout, 5xx, network blip) — keep polling
+      // until the deadline instead of failing a valid payment instantly.
+      logger.warn('PPT verify: receipt poll failed, retrying', {
+        txHash,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
 
     logger.info('PPT verify: waiting for receipt', {
       txHash,

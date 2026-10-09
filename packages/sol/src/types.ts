@@ -9,7 +9,7 @@ export type PaymentChain = 'sol' | 'fil'
 export type PaymentToken = 'SOL' | 'USDFC'
 
 export interface ServerOptions {
-  /** URL pointing to the server (mostly Storacha's) */
+  /** URL pointing to the storage API */
   url?: string
 }
 

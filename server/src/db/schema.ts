@@ -74,7 +74,7 @@ export const usage = pgTable('usage', {
   createdAt: date('created_at', { mode: 'date' }).notNull().defaultNow(),
 })
 
-// compares whatver we've stored in our db with the data (capability.usage.report) we get from storacha
+// compares what we've stored in our db with the pin set reported by the IPFS node
 export const usageComparison = pgTable('usage_comparison', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   comparisonDate: date('comparison_date', { mode: 'date' })

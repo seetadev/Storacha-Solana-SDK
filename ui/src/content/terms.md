@@ -4,13 +4,13 @@
 
 ## 1. Introduction
 
-Welcome to toju ("we," "our," or "us"). toju is a payment bridge that enables users to pay for decentralized storage on IPFS via Storacha using cryptocurrency — SOL on Solana, USDFC on Filecoin, and USDC on Base. toju also supports agentic payments via the x402 protocol, enabling AI agents to pay for storage autonomously.
+Welcome to toju ("we," "our," or "us"). toju is a payment bridge that enables users to pay for decentralized storage on IPFS using cryptocurrency — SOL on Solana, USDFC on Filecoin, and USDC on Base. toju also supports agentic payments via the x402 protocol, enabling AI agents to pay for storage autonomously.
 
 By using our service, you agree to these Terms of Use. Please read them carefully.
 
 ## 2. Service Description
 
-toju is a **payment middleware layer** — we facilitate cryptocurrency payments for decentralized storage. We do not operate the underlying storage infrastructure. Your data is stored on IPFS (InterPlanetary File System) via Storacha's network, which utilizes Filecoin for long-term persistence.
+toju is a **payment middleware layer** — we facilitate cryptocurrency payments for decentralized storage. We do not operate the public IPFS network. Your data is stored on IPFS (InterPlanetary File System) and pinned on a Kubo node.
 
 **What we provide:**
 - A bridge to pay for IPFS storage using cryptocurrency
@@ -19,7 +19,7 @@ toju is a **payment middleware layer** — we facilitate cryptocurrency payments
 - Storage duration tracking and renewal capabilities
 
 **What we do not provide:**
-- The storage infrastructure itself (provided by Storacha/IPFS/Filecoin)
+- The storage infrastructure itself (provided by IPFS and the Kubo node that pins your files)
 - Data encryption or privacy services
 - Exclusive access to your stored content
 
@@ -62,7 +62,7 @@ toju is a payment layer, not a data custodian. Your data is stored on the decent
 - Example gateways: `https://w3s.link/ipfs/{CID}`, `https://ipfs.io/ipfs/{CID}`
 - You can also run your own IPFS node to retrieve data directly
 
-**We do not hold your data hostage.** Even if our service were to cease operations, your data would remain accessible via the IPFS network for as long as it is pinned by Storacha or other nodes.
+**We do not hold your data hostage.** Even if our service were to cease operations, your data would remain accessible via the IPFS network for as long as it is pinned by our Kubo node or other nodes.
 
 ### 4.2 CID Preservation
 
@@ -85,7 +85,7 @@ Our service operates on a pay-as-you-go model. You pay for a specific storage du
 ### 5.2 After Expiration
 
 When your paid storage duration expires:
-- We will unpin your files from Storacha's infrastructure
+- We will unpin your files from our IPFS node
 - Your data may remain accessible via IPFS for approximately 30 days due to network caching
 - After the IPFS retention period, data availability is not guaranteed
 - We are not responsible for data loss after expiration
@@ -97,7 +97,7 @@ When your paid storage duration expires:
 Due to the nature of decentralized storage and cryptocurrency payments, **full refunds are not available** once data has been uploaded.
 
 **Why refunds are limited:**
-1. **Storage costs are immediate:** When you upload data, we immediately pay Storacha for the storage space. These costs cannot be recovered.
+1. **Storage costs are immediate:** When you upload data, we immediately pin it on IPFS. These costs cannot be recovered.
 2. **IPFS network behavior:** Even if we delete your files from our pinning service, IPFS nodes across the network may continue to cache and serve your data for up to 30 days.
 3. **Cryptocurrency transactions:** Blockchain transactions are irreversible by design.
 
@@ -216,7 +216,7 @@ We are not liable for:
 - Third-party access to your unencrypted data
 - Cryptocurrency losses due to wallet compromise
 - IPFS network outages or performance issues
-- Storacha service interruptions
+- IPFS node outages
 
 ## 10. Indemnification
 

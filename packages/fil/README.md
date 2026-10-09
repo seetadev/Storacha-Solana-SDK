@@ -1,6 +1,6 @@
 ## @toju.network/fil
 
-Pay for decentralized storage on IPFS via Storacha with USDFC (Filecoin stablecoin). No credit cards, no subscriptions.
+Pay for decentralized storage on IPFS with USDFC (Filecoin stablecoin). No credit cards, no subscriptions.
 
 **Features:**
 

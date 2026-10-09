@@ -23,6 +23,6 @@ We will acknowledge receipt within 48 hours and aim to provide a fix or mitigati
 
 ## Out of Scope
 
-- Storacha network infrastructure
+- Public IPFS gateways and third-party Kubo nodes
 - Solana blockchain itself
 - Third-party dependencies (report upstream)
